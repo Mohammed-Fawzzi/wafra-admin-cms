@@ -1,0 +1,7 @@
+{
+  "name": "wafra-admin-cms",
+  "private": true,
+  "scripts": {
+    "dev": "npx --yes serve -l 5500"
+  }
+}
