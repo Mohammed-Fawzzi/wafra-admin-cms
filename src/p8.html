@@ -1,0 +1,100 @@
+<style>
+/* Additions reuse the existing design tokens and remain isolated from the base screens. */
+.state-box{min-height:210px;display:grid;place-items:center;text-align:center;padding:28px;color:var(--muted)}
+.state-box b{display:block;color:var(--ink);font-family:'Expo Arabic','Cairo';margin:8px 0 4px}.state-box p{max-width:460px;margin:0}
+.skeleton{height:13px;border-radius:999px;background:linear-gradient(90deg,#edf0f5 25%,#f8f9fb 37%,#edf0f5 63%);background-size:400% 100%;animation:shimmer 1.2s infinite;margin:9px auto}.skeleton:nth-child(2){width:78%}.skeleton:nth-child(3){width:54%}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+.map-canvas{position:relative;min-height:360px;overflow:hidden;border:1px solid var(--line);border-radius:var(--r-m);background:linear-gradient(135deg,#eff4ef,#dbe8ea)}
+.map-canvas:before{content:'';position:absolute;inset:-20%;opacity:.38;background:repeating-linear-gradient(30deg,transparent 0 36px,#fff 37px 39px,transparent 40px 76px),repeating-linear-gradient(115deg,transparent 0 52px,#fff 53px 55px,transparent 56px 108px)}
+.map-point{position:absolute;z-index:1;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--coral);color:#fff;border:3px solid #fff;box-shadow:var(--sh-m);font-size:12px;font-weight:700}.map-point:hover{transform:translate(-50%,-50%) scale(1.13)}
+.impersonation{position:sticky;top:0;z-index:140;background:var(--amber);color:#3c3000;padding:9px 20px;display:flex;gap:12px;align-items:center;justify-content:center;font-weight:700;font-size:12px}.impersonation button{border:1px solid rgba(60,48,0,.45);border-radius:var(--r-xs);padding:3px 10px;font-size:11px}
+.restricted [data-privileged]{pointer-events:none!important;opacity:.48;filter:grayscale(.35)}
+.integration-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-inline-end:6px}.integration-dot.ok{background:var(--green)}.integration-dot.off{background:var(--muted-2)}.integration-dot.bad{background:var(--red)}.integration-dot.warn{background:var(--amber)}
+</style>
+<script id="feature-integrations">
+/*
+ * API boundary for production.  This project did not include a backend, auth client,
+ * environment loader, or map SDK. Requests are made only when WAFRA_API_BASE_URL is
+ * explicitly configured; otherwise the UI presents the real configuration-required state.
+ */
+const WafraFeatureApi = (() => {
+  const base = String(window.WAFRA_API_BASE_URL || '').replace(/\/$/, '');
+  const request = async (path, options={}) => {
+    if(!base) throw Object.assign(new Error('API_NOT_CONFIGURED'), {code:'API_NOT_CONFIGURED'});
+    const response = await fetch(base + path, {credentials:'include', headers:{'Content-Type':'application/json', ...(options.headers||{})}, ...options});
+    if(!response.ok) throw Object.assign(new Error('HTTP_'+response.status), {status:response.status});
+    return response.status===204 ? null : response.json();
+  };
+  return {
+    configured:()=>Boolean(base),
+    passwordReset:(email)=>request('/admin/auth/password-reset',{method:'POST',body:JSON.stringify({email})}),
+    confirmReset:(token,password)=>request('/admin/auth/password-reset/confirm',{method:'POST',body:JSON.stringify({token,password})}),
+    load:(resource, query='')=>request('/admin/'+resource+query),
+    update:(resource,id,body)=>request('/admin/'+resource+'/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify(body)}),
+    audit:(body)=>request('/admin/audit-log',{method:'POST',body:JSON.stringify(body)}),
+    startImpersonation:(userId,reason)=>request('/admin/impersonations',{method:'POST',body:JSON.stringify({userId,reason})}),
+    endImpersonation:(id)=>request('/admin/impersonations/'+encodeURIComponent(id),{method:'DELETE'}),
+  };
+})();
+
+const featureState = (kind, title, copy, action='') => `<div class="state-box"><div><span style="font-size:28px">${kind==='loading'?'◌':kind==='error'?'⚠':kind==='success'?'✓':'⌁'}</span><b>${title}</b><p>${copy}</p>${action}</div></div>`;
+const featureSkeleton = ()=>`<div class="state-box"><div style="width:min(430px,100%)"><div class="skeleton" style="width:42%"></div><div class="skeleton"></div><div class="skeleton"></div></div></div>`;
+async function mountResource(hostId, resource, renderData){
+  const host=document.getElementById(hostId); if(!host) return;
+  host.innerHTML=featureSkeleton();
+  try { const data=await WafraFeatureApi.load(resource); host.innerHTML=renderData(data); }
+  catch(error){
+    const missing=error.code==='API_NOT_CONFIGURED';
+    host.innerHTML=featureState('error',missing?'تحتاج هذه الميزة إلى ربط API':'تعذّر تحميل البيانات',missing?'لم يُضبط WAFRA_API_BASE_URL بعد. بيانات هذه الشاشة لا تُحاكى كخدمة خلفية.':'تحقّق من الاتصال والصلاحيات ثم أعد المحاولة.',`<button class="btn sm" onclick="mountResource('${hostId}','${resource}',${renderData.name})">إعادة المحاولة</button>`);
+  }
+}
+function initFeatureRoute(route, resource, renderData){ requestAnimationFrame(()=>mountResource('resource-'+route,resource,renderData)); }
+
+/* Password reset: the token is deliberately supplied by the reset email URL, never stored locally. */
+S.resetPassword = () => `<div style="min-height:calc(100vh - 150px);display:grid;place-items:center"><div style="width:min(430px,100%)">${phead('إعادة تعيين كلمة المرور','أرسل رابطًا آمنًا إلى بريدك الإداري')}
+  <div class="card"><div class="card-b" id="reset-password-form">${fld('البريد الإلكتروني الإداري',`<input id="reset-email" class="native-input" type="email" autocomplete="email" placeholder="name@wafra.sa">`,'سنرسل رابطًا صالحًا لمرة واحدة فقط.')}
+  <div style="margin-top:18px"><button class="btn coral" onclick="requestPasswordReset()">إرسال رابط إعادة التعيين</button><a class="btn ghost" href="#login">رجوع للدخول</a></div></div></div></div></div>`;
+window.requestPasswordReset = async ()=>{
+  const email=document.getElementById('reset-email')?.value.trim(); const host=document.getElementById('reset-password-form');
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ host.insertAdjacentHTML('beforeend',`<p style="color:var(--red-ink);font-size:12px">أدخل بريدًا إلكترونيًا صالحًا.</p>`); return; }
+  host.innerHTML=featureSkeleton();
+  try{ await WafraFeatureApi.passwordReset(email); host.innerHTML=featureState('success','تحقّق من بريدك','إذا كان الحساب موجودًا ومخوّلًا، أُرسل إليه رابط إعادة التعيين.'); }
+  catch(e){ host.innerHTML=featureState('error',e.code==='API_NOT_CONFIGURED'?'خدمة إعادة التعيين غير مهيأة':'تعذّر إرسال الرابط',e.code==='API_NOT_CONFIGURED'?'يلزم ربط POST /admin/auth/password-reset بخدمة الهوية والبريد.':'أعد المحاولة لاحقًا.'); }
+};
+S.confirmPasswordReset = () => { const token=new URLSearchParams(location.hash.split('?')[1]||'').get('token')||''; return `<div style="min-height:calc(100vh - 150px);display:grid;place-items:center"><div style="width:min(430px,100%)">${phead('تعيين كلمة مرور جديدة','اختر كلمة قوية لحساب الإدارة')}<div class="card"><div class="card-b" id="confirm-password-form">${token?`${fld('كلمة المرور الجديدة',`<input id="new-password" class="native-input" type="password" autocomplete="new-password">`,'8 أحرف على الأقل، وتتضمن حرفًا ورقمًا.')}${fld('تأكيد كلمة المرور',`<input id="confirm-password" class="native-input" type="password" autocomplete="new-password">`)}<button class="btn coral" onclick="confirmPasswordReset('${esc(token)}')">حفظ كلمة المرور</button>`:featureState('error','رابط غير صالح','لم نجد رمز إعادة التعيين. اطلب رابطًا جديدًا.')}</div></div></div></div>`; };
+window.confirmPasswordReset=async token=>{const a=document.getElementById('new-password')?.value||'',b=document.getElementById('confirm-password')?.value||'',host=document.getElementById('confirm-password-form');if(a.length<8||!/[A-Za-z]/.test(a)||!/[0-9]/.test(a)||a!==b){host.insertAdjacentHTML('beforeend',`<p style="color:var(--red-ink);font-size:12px">تحقّق من تطابق كلمة المرور ومن استيفاء متطلبات القوة.</p>`);return;}host.innerHTML=featureSkeleton();try{await WafraFeatureApi.confirmReset(token,a);host.innerHTML=featureState('success','تم تحديث كلمة المرور','يمكنك الآن تسجيل الدخول.',`<a class="btn" href="#login">الانتقال للدخول</a>`)}catch(e){host.innerHTML=featureState('error','تعذّر تحديث كلمة المرور',e.code==='API_NOT_CONFIGURED'?'يلزم ربط POST /admin/auth/password-reset/confirm بخدمة الهوية.':'ربما انتهت صلاحية الرابط أو استُخدم سابقًا.');}};
+
+/* New route surfaces reuse phead/card/table/filters/pager from the existing design system. */
+S.bookingMap=()=>phead('خريطة الحجوزات','توزيع الحجوزات حسب المدينة والموقع',['FR-ADB-MAP-01'])+card(cardH('الحجوزات النشطة','تحتاج بيانات الموقع إلى API أو إعداد مزوّد الخرائط')+`<div id="resource-bookingMap"></div>`);
+function renderBookingMap(data){ const cities=data.cities||[]; return `<div class="card-b"><div class="map-canvas">${cities.map((c,i)=>`<button class="map-point" style="inset-inline-start:${c.x||20+i*18}%;top:${c.y||40+(i%2)*22}%" title="${esc(c.name)}: ${c.count}">${c.count}</button>`).join('')}</div><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${cities.map(c=>`<span class="badge flat b">${esc(c.name)} · ${c.count} حجز</span>`).join('')}</div></div>`; }
+S.objections=()=>phead('اعتراضات الرسوم والغرامات','مراجعة اعتراض العميل على رسوم أو غرامة مرتبطة بحجز',['FR-ADO-01','FR-ADO-02'])+card(tabs([{t:'مفتوحة',on:1},{t:'بانتظار قرار'},{t:'مغلقة'}])+filters(['الحالة','المزوّد','المدينة','النوع'],'ابحث برقم الاعتراض أو الحجز…')+`<div id="resource-objections"></div>`);
+function renderObjections(data){return table(['الاعتراض','الحجز','العميل','المزوّد','المبلغ','السبب','الحالة','الإجراءات'],(data.items||[]).map(x=>[{v:x.id,c:'strong num'},{v:x.bookingId,c:'num'},x.customer,x.provider,{v:x.amount,c:'num'},x.reason,bdg(x.status,x.status==='مغلق'?'g':'a'),`<a class="btn sm" href="#objection?id=${encodeURIComponent(x.id)}">فتح</a>`]))+pager(data.total||0,Math.max(1,Math.ceil((data.total||0)/5)));}
+S.objection=()=>phead('تفاصيل اعتراض رسوم/غرامة','الحجز والقرار والسجل الكامل',['FR-ADO-02'],`<a class="btn ghost" href="#objections">‹ رجوع</a>`)+`<div id="resource-objection"></div>`;
+function renderObjection(data){return `<div class="g-2-1"><div>${card(cardH('تفاصيل الاعتراض')+`<div class="card-b">${dl([['رقم الاعتراض',data.id],['الحجز',data.bookingId],['العميل',data.customer],['المزوّد',data.provider],['المبلغ',data.amount],['سبب الرسوم',data.reason],['تفاصيل الاعتراض',data.details],['الحالة',bdg(data.status,'a')]])}</div>`)}${card(cardH('قرار الإدارة')+`<div class="card-b">${fld('القرار',`<select id="objection-status" class="native-input"><option>قبول الاعتراض</option><option>رفض الاعتراض</option><option>طلب معلومات إضافية</option></select>`)}${fld('توضيح القرار',`<textarea id="objection-note" class="native-input" rows="3"></textarea>`)}<button class="btn coral" onclick="updateObjection('${esc(data.id)}')">حفظ القرار</button></div>`)}</div><div>${card(cardH('سجل الاعتراض')+`<div class="card-b">${timeline(data.history||[])}</div>`)}</div></div>`;}
+window.updateObjection=async id=>{try{await WafraFeatureApi.update('fee-objections',id,{status:document.getElementById('objection-status').value,note:document.getElementById('objection-note').value});__toast('تم حفظ القرار وتسجيله في السجل.');}catch(e){__toast(e.code==='API_NOT_CONFIGURED'?'لا يمكن حفظ القرار قبل ربط API.':'تعذّر حفظ القرار.');}};
+
+S.supportReports=()=>phead('تقارير الدعم','اتجاهات التذاكر وأوقات الاستجابة والالتزام بالاتفاقية',['FR-ADS-RPT-01'])+card(tabs([{t:'ملخص الدعم',on:1},{t:'التذاكر'},{t:'أداء الفريق'}])+filters(['من تاريخ','إلى تاريخ','الحالة','الفريق'],'ابحث…')+`<div id="resource-supportReports"></div>`);
+function renderSupportReports(data){return `<div class="card-b">${kpi((data.kpis||[]).map(x=>({i:x.icon||'◌',l:x.label,v:x.value,u:x.unit||'',d:x.note||'',t:x.tone||'up'}))) }${card(cardH('التفصيل حسب الحالة')+table(['الحالة','العدد','متوسط أول رد','نسبة الالتزام'],data.rows||[]))}</div>`;}
+S.integrationStatus=()=>phead('حالة التكاملات','متابعة اتصال الدفع والرسائل والخرائط',['FR-ADX-INT-01'])+card(cardH('الخدمات المتصلة','تظهر الحالة من نقطة الصحة الخلفية')+`<div id="resource-integrationStatus"></div>`);
+function renderIntegrationStatus(data){return `<div class="card-b">${table(['الخدمة','الحالة','آخر فحص','التهيئة','الإجراء'],(data.items||[]).map(x=>[x.name,`<span class="integration-dot ${x.tone}"></span>${x.status}`,x.checkedAt||'—',x.configured?'مهيّأة':'تحتاج إعدادًا',`<button class="btn sm" onclick="mountResource('resource-integrationStatus','integrations/status',renderIntegrationStatus)">إعادة الفحص</button>`]))}</div>`;}
+S.welcomeCoupon=()=>phead('كوبون الترحيب','تعيين كوبون تلقائيًا للعميل عند التسجيل',['FR-CPN-WELCOME-01'])+card(cardH('إعداد قاعدة الترحيب','يُطبّق فقط على التسجيلات الجديدة بعد التفعيل')+`<div id="resource-welcomeCoupon"></div>`);
+function renderWelcomeCoupon(data){return `<div class="card-b"><div class="frow">${fld('الحالة',`<select class="native-input" id="welcome-active"><option ${data.active?'selected':''}>مفعّل</option><option ${!data.active?'selected':''}>معطّل</option></select>`)}${fld('الكوبون',`<input class="native-input" id="welcome-code" value="${esc(data.code||'')}">`)}</div><div class="frow">${fld('النوع',`<select class="native-input" id="welcome-type"><option>${esc(data.type||'نسبة مئوية')}</option><option>مبلغ ثابت</option></select>`)}${fld('القيمة',`<input class="native-input" id="welcome-value" value="${esc(data.value||'')}">`)}</div><div class="frow">${fld('حد الاستخدام لكل عميل',`<input class="native-input" id="welcome-limit" value="${esc(data.perCustomerLimit||1)}">`)}${fld('الحد الإجمالي',`<input class="native-input" id="welcome-total" value="${esc(data.totalLimit||'')}">`)}</div>${note('info','سجل التعيين','يجب أن يحتفظ الخادم بسجل لكل كوبون أُسند تلقائيًا لمنع تكرار التعيين.') }<button class="btn coral" onclick="saveWelcomeCoupon()">حفظ الإعداد</button></div>`;}
+window.saveWelcomeCoupon=async()=>{const body={active:document.getElementById('welcome-active').value==='مفعّل',code:document.getElementById('welcome-code').value,type:document.getElementById('welcome-type').value,value:document.getElementById('welcome-value').value,perCustomerLimit:document.getElementById('welcome-limit').value,totalLimit:document.getElementById('welcome-total').value};try{await WafraFeatureApi.update('settings','welcome-coupon',body);__toast('تم حفظ إعداد كوبون الترحيب.')}catch(e){__toast(e.code==='API_NOT_CONFIGURED'?'لا يمكن حفظ الإعداد قبل ربط API.':'تعذّر حفظ الإعداد.');}};
+
+/* Authorized, server-issued impersonation only. No client-side role escalation or local audit fallback. */
+let impersonation=null;
+function renderImpersonation(){document.getElementById('impersonation-banner')?.remove();if(!impersonation)return;const b=document.createElement('div');b.id='impersonation-banner';b.className='impersonation';b.innerHTML=`أنت تشاهد كـ ${esc(impersonation.name)}. الإجراءات الحساسة معطّلة. <button onclick="endViewAsUser()">إنهاء العرض</button>`;document.body.prepend(b);document.body.classList.add('restricted');}
+window.startViewAsUser=async()=>{const id=document.getElementById('view-user-id')?.value.trim(),reason=document.getElementById('view-user-reason')?.value.trim();if(!id||reason.length<20){__toast('أدخل معرّف المستخدم وسببًا من 20 حرفًا على الأقل.');return;}try{const result=await WafraFeatureApi.startImpersonation(id,reason);impersonation={id:result.id,name:result.user?.name||id};await WafraFeatureApi.audit({action:'VIEW_AS_USER_STARTED',entity:id,reason});closeM();renderImpersonation();__toast('بدأ العرض المقيد وسُجل في سجل التدقيق.');}catch(e){__toast(e.code==='API_NOT_CONFIGURED'?'ميزة العرض كمستخدم تتطلب API وخدمة تدقيق موثوقة.':'تعذّر بدء العرض.');}};
+window.endViewAsUser=async()=>{if(!impersonation)return;try{await WafraFeatureApi.endImpersonation(impersonation.id);await WafraFeatureApi.audit({action:'VIEW_AS_USER_ENDED',entity:impersonation.id});impersonation=null;renderImpersonation();__toast('تم إنهاء العرض كمستخدم.');}catch(e){__toast('تعذّر إنهاء الجلسة؛ أبقينا القيود مفعلة للحماية.');}};
+M.viewAsUser=()=>modal('العرض كمستخدم',`${note('warn','وضع مقيد ومراقَب','يتطلب صلاحية خادمية، ويعطّل الإجراءات الحساسة ويكتب قيد تدقيق غير قابل للتعديل.')}${fld('معرّف المستخدم',`<input class="native-input" id="view-user-id" placeholder="USR-… أو البريد">`)}${fld('سبب العرض (20 حرفًا على الأقل)',`<textarea class="native-input" id="view-user-reason" rows="3"></textarea>`)}`,`<button class="btn coral" onclick="startViewAsUser()">بدء العرض المقيد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+/* Existing report route gains all requested domains without duplicating its filters/layout. */
+const baseReports=S.reports;
+S.reports=()=>baseReports()+card(cardH('تقارير تفصيلية','الحجوزات · المالية · الأداء · نمو المستخدمين · المزوّدون · العملاء')+`<div class="card-b"><div class="grid3">${[['الحجوزات','booking-report'],['المالية','finance-report'],['الأداء','performance-report'],['نمو المستخدمين','user-growth-report'],['المزوّدون','providers-report'],['العملاء','customers-report']].map(x=>`<a href="#reports?report=${x[1]}" class="card" style="padding:16px"><b>${x[0]}</b><span class="sub">تاريخ · حالة · مزوّد · مدينة</span></a>`).join('')}</div><div id="resource-reports"></div></div>`);
+function renderReports(data){return `<div style="margin-top:16px">${note('info','نتائج التقرير','تمت قراءة النتائج من خدمة التقارير مع الفلاتر المحددة.')}${table(data.columns||[],data.rows||[])}</div>`;}
+const oldRender=window.render;
+window.render=function(){oldRender();renderImpersonation();const route=window.cur;const objectionId=new URLSearchParams(location.hash.split('?')[1]||'').get('id');const mounts={bookingMap:['bookings/map',renderBookingMap],objections:['fee-objections',renderObjections],objection:[objectionId?'fee-objections/'+encodeURIComponent(objectionId):'fee-objections/current',renderObjection],supportReports:['support/reports',renderSupportReports],integrationStatus:['integrations/status',renderIntegrationStatus],welcomeCoupon:['settings/welcome-coupon',renderWelcomeCoupon],reports:['reports',renderReports]};if(mounts[route])initFeatureRoute(route,mounts[route][0],mounts[route][1]);};
+/* p8 is appended after the original router so that it can extend existing routes. */
+window.addEventListener('hashchange', window.render);
+window.render();
+</script>

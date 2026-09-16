@@ -1,0 +1,200 @@
+<style>
+.car-thumb{width:54px;height:38px;border-radius:var(--r-sm);background:var(--grey-bg);border:1px solid var(--line);
+  display:grid;place-items:center;font-size:15px;color:var(--muted-2);flex:0 0 54px}
+.drop{border:1.5px dashed var(--line-strong);border-radius:var(--r-m);background:var(--bg);padding:26px;text-align:center;color:var(--muted)}
+.drop .ic{font-size:26px;opacity:.4;display:block;margin-bottom:7px}
+.drop b{display:block;font-family:'Expo Arabic','Cairo';font-size:13px;color:var(--ink);margin-bottom:3px}
+.n-item{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:flex-start}
+.n-item:last-child{border-bottom:0}
+.n-item.unread{background:var(--blue-bg)}
+.n-item .ic{width:34px;height:34px;border-radius:var(--r-sm);display:grid;place-items:center;font-size:14px;flex:0 0 34px}
+.n-item .bd{flex:1;min-width:0}
+.n-item .bd b{font-size:13px;display:block}
+.n-item .bd p{margin:2px 0 0;font-size:12.5px;color:var(--ink-2)}
+.n-item .tm{font-size:11px;color:var(--muted);white-space:nowrap;direction:ltr}
+.n-item .go{display:flex;gap:7px;margin-top:9px}
+.conv{display:flex;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line);align-items:flex-start;cursor:pointer}
+.conv.on{background:var(--blue-bg);border-inline-end:3px solid var(--navy)}
+.conv .av{width:36px;height:36px;border-radius:var(--r-round);background:var(--navy);color:#fff;
+  display:grid;place-items:center;font-size:12px;font-weight:700;font-family:'Expo Arabic','Cairo';flex:0 0 36px}
+.conv .av.c{background:var(--green-ink)} .conv .av.v{background:var(--navy-700)}
+.conv .bd{flex:1;min-width:0}
+.conv .bd .top{display:flex;align-items:center;gap:7px}
+.conv .bd b{font-size:12.8px}
+.conv .bd .tm{margin-inline-start:auto;font-size:10.5px;color:var(--muted);direction:ltr}
+.conv .bd p{margin:2px 0 0;font-size:11.8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv .nb{background:var(--coral);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;
+  border-radius:var(--r-round);display:grid;place-items:center;padding:0 5px}
+</style>
+<script>
+/* ========== 46. الماركات والموديلات ========== */
+S.models = () => phead('الماركات والموديلات','مرجع السيارات — تضيفه المنصّة وحدها، ويختار منه المزوّد عند إضافة مركبة',['FR-ADX-02','FR-ADF-05'],
+  `<a class="btn ghost" href="#modelRequests">طلبات المزوّدين (6)</a><button class="btn" onclick="openM(M.newModel())">＋ موديل جديد</button>`)
++ note('info','الإضافة من المنصّة فقط','المزوّد لا ينشئ موديلاً بنفسه بل يختار من هذه القائمة، وإن لم يجد ما يريد يرسل طلب إضافة. هذا يمنع تكرار الموديل الواحد بأسماء مختلفة، وهو ما يفكّك الفلاتر ويشتّت نتائج البحث لدى العميل.')
++ card(tabs([{t:'الموديلات',n:412,on:1},{t:'الماركات',n:34},{t:'الفئات',n:9},{t:'بلا صورة',n:91}])
++ filters(['الماركة','الفئة','سنة الصنع','ناقل الحركة','الحالة'],'ابحث بالماركة أو الموديل…')
++ table(['الصورة','الموديل','الماركة','الفئة','السنوات','الوقود','ناقل الحركة','الركاب','سيارات مرتبطة','الحالة','الإجراءات'],[
+  ['<div class="car-thumb">🚗</div>',{v:'كامري<span class="sub">Camry</span>',c:'strong'},'تويوتا','سيدان','2018 – 2026','بنزين','أوتوماتيك','5','284',bdg('مفعّل','g'),acts([{i:'✎'},{i:'👁'},{i:'⏸'}])],
+  ['<div class="car-thumb">🚗</div>',{v:'إلنترا<span class="sub">Elantra</span>',c:'strong'},'هيونداي','اقتصادية','2019 – 2026','بنزين','أوتوماتيك','5','196',bdg('مفعّل','g'),acts([{i:'✎'},{i:'👁'},{i:'⏸'}])],
+  ['<div class="car-thumb">🚙</div>',{v:'تاهو<span class="sub">Tahoe</span>',c:'strong'},'شيفروليه','دفع رباعي','2020 – 2026','بنزين','أوتوماتيك','7','88',bdg('مفعّل','g'),acts([{i:'✎'},{i:'👁'},{i:'⏸'}])],
+  ['<div class="car-thumb">🚗</div>',{v:'ES 350<span class="sub">ES 350</span>',c:'strong'},'لكزس','فاخرة','2021 – 2026','بنزين','أوتوماتيك','5','41',bdg('مفعّل','g'),acts([{i:'✎'},{i:'👁'},{i:'⏸'}])],
+  ['<div class="car-thumb" style="border-style:dashed">🖼</div>',{v:'سيراتو<span class="sub">Cerato</span>',c:'strong'},'كيا','اقتصادية','2020 – 2026','بنزين','أوتوماتيك','5','63',bdg('بلا صورة','a'),acts([{i:'✎'},{i:'👁'},{i:'⏸'}])],
+  ['<div class="car-thumb">🚐</div>',{v:'هايس<span class="sub">Hiace</span>',c:'strong'},'تويوتا','عائلية','2017 – 2024','ديزل','يدوي','12','12',bdg('موقوف','n'),acts([{i:'✎'},{i:'▶'}])],
+])
++ pager(412,42))
++ card(cardH('اكتمال الصور','الموديل بلا صورة يظهر للعميل بأيقونة عامة في نتائج البحث وبطاقات الفئات')+`<div class="card-b">
+  ${bars([['موديلات لها صورة',78],['موديلات بلا صورة',22,'var(--amber)']])}
+  <div style="margin-top:12px"><button class="btn ghost sm">عرض الـ91 موديلاً بلا صورة</button></div></div>`);
+
+/* ========== 46ب. طلبات إضافة موديل ========== */
+S.modelRequests = () => phead('طلبات إضافة موديل','طلبات واردة من المزوّدين لموديلات غير موجودة في المرجع',['FR-ADX-02'],
+  `<a class="btn ghost" href="#models">‹ رجوع للمرجع</a>`)
++ note('warn','المزوّد متوقّف عن نشر مركبته حتى تُضاف','بما أن الإضافة من المنصّة وحدها، فكل طلب هنا يعني سيارة جاهزة لا تظهر للعملاء. المهلة المقترحة يوم عمل واحد، والطلبات المتأخّرة مميّزة بالأحمر.')
++ card(tabs([{t:'معلّقة',n:6,on:1},{t:'مُضافة',n:84},{t:'مرفوضة',n:11}])
++ filters(['المزوّد','الماركة','عمر الطلب'],'ابحث بالموديل أو الشركة…')
++ table(['رقم الطلب','الموديل المطلوب','الماركة','مقدّم الطلب','مركبات متوقّفة','عمر الطلب','الإجراءات'],[
+  [{v:'MR-118',c:'strong num'},{v:'سيلتوس<span class="sub">Seltos · 2023 – 2026 · كروس أوفر</span>',c:'strong'},'كيا','كي رنت','7',bdg('3 أيام','r'),`<button class="btn sm" onclick="openM(M.addFromRequest())">إضافة الموديل</button>`],
+  [{v:'MR-117',c:'strong num'},{v:'تيغوان<span class="sub">Tiguan · 2024 – 2026 · دفع رباعي</span>',c:'strong'},'فولكسفاجن','شركة الصحراء','4',bdg('يومان','a'),`<button class="btn sm" onclick="openM(M.addFromRequest())">إضافة الموديل</button>`],
+  [{v:'MR-116',c:'strong num'},{v:'MG 5<span class="sub">MG 5 · 2023 – 2026 · اقتصادية</span>',c:'strong'},'إم جي','مسار','11',bdg('يومان','a'),`<button class="btn sm" onclick="openM(M.addFromRequest())">إضافة الموديل</button>`],
+  [{v:'MR-114',c:'strong num'},{v:'كامري هايبرد<span class="sub">طلب تكرار — الموديل موجود باسم «كامري»</span>',c:'strong'},'تويوتا','درب الخليج','2',bdg('يوم واحد','g'),`<button class="btn sm ghost" onclick="openM(M.addFromRequest())">دمج مع القائم</button>`],
+])
++ pager(6,1));
+
+/* ========== 47. مركز إشعارات الإدارة ========== */
+S.inbox = () => phead('مركز الإشعارات','الإشعارات الواردة لفريق الإدارة — ما يحدث على المنصّة لحظة بلحظة',['FR-ADU-09','FR-ADL-06'],
+  `<button class="btn ghost">تعليم الكل كمقروء</button><button class="btn ghost" onclick="openM(M.notifPrefs())">⚙ تفضيلات الإشعارات</button>`)
++ card(tabs([{t:'الكل',n:7,on:1},{t:'غير مقروءة',n:4},{t:'حسّاسة',n:2},{t:'مالية',n:3},{t:'تشغيلية',n:2}])
++ filters(['التصنيف','الأهمّية','الفترة'],'ابحث في الإشعارات…')
++ `<div class="card-b flush">
+  <div class="n-item unread"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">⛔</span>
+    <div class="bd"><b>تغيير استثنائي على حجز نهائي</b> <span class="badge r flat" style="font-size:10px">حسّاس</span>
+      <p>نفّذ سعد الشمري تغييراً استثنائياً على الحجز BK-20240 (منتهية ← ملغاة) مستنداً إلى التذكرة SUP-1029.</p>
+      <div class="go"><button class="btn sm ghost">فتح الحجز</button><button class="btn sm ghost">عرض في سجل التدقيق</button></div>
+    </div><span class="tm">قبل 12 دقيقة</span></div>
+
+  <div class="n-item unread"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">🏦</span>
+    <div class="bd"><b>طلب تغيير حساب بنكي — كي رنت</b> <span class="badge r flat" style="font-size:10px">حسّاس</span>
+      <p>رفع المزوّد آيباناً جديداً وشهادة إثبات. لا يسري التغيير قبل اعتماد الإدارة، وأي تسوية قادمة ستُصرف على الحساب القديم حتى ذلك الحين.</p>
+      <div class="go"><button class="btn sm">مراجعة الطلب</button></div>
+    </div><span class="tm">قبل 40 دقيقة</span></div>
+
+  <div class="n-item unread"><span class="ic" style="background:var(--amber-bg);color:var(--amber-ink)">⚖</span>
+    <div class="bd"><b>تصعيد تلقائي — التظلّم DS-3092</b> <span class="badge a flat" style="font-size:10px">مالية</span>
+      <p>تجاوز التظلّم مهلة المعالجة بأربعة أيام وصُعِّد للمسؤول الأعلى. القيمة محل النزاع 1,850 ر.س محتجزة من تسوية الوسام كار.</p>
+      <div class="go"><a class="btn sm" href="#dispute">فتح التظلّم</a></div>
+    </div><span class="tm">قبل ساعتين</span></div>
+
+  <div class="n-item unread"><span class="ic" style="background:var(--amber-bg);color:var(--amber-ink)">💳</span>
+    <div class="bd"><b>دورة التسوية الأسبوعية جاهزة للاعتماد</b> <span class="badge a flat" style="font-size:10px">مالية</span>
+      <p>11 كشفاً بإجمالي 486,300 ر.س. كشف واحد محتجز بسبب تظلّم قائم.</p>
+      <div class="go"><a class="btn sm" href="#settlements">فتح التسويات</a></div>
+    </div><span class="tm">اليوم 08:00</span></div>
+
+  <div class="n-item"><span class="ic" style="background:var(--blue-bg);color:var(--blue-ink)">🏢</span>
+    <div class="bd"><b>طلب اعتماد مزوّد جديد — أسطول الشمال</b> <span class="badge b flat" style="font-size:10px">تشغيلية</span>
+      <p>اكتملت الوثائق الخمس. الطلب في الطابور منذ ستة أيام وتجاوز مهلة المراجعة.</p>
+      <div class="go"><a class="btn sm ghost" href="#kycReview">مراجعة الطلب</a></div>
+    </div><span class="tm">أمس 16:20</span></div>
+
+  <div class="n-item"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">⚠</span>
+    <div class="bd"><b>فروقات في مطابقة بوابة الدفع</b> <span class="badge a flat" style="font-size:10px">مالية</span>
+      <p>13 فرقاً في مطابقة اليوم، منها معاملتان بفرق مبالغ إجماليه 84.50 ر.س. لا يُرحَّل اليوم محاسبياً قبل إغلاقها.</p>
+      <div class="go"><a class="btn sm ghost" href="#recon">فتح المطابقة</a></div>
+    </div><span class="tm">أمس 23:59</span></div>
+
+  <div class="n-item"><span class="ic" style="background:var(--grey-bg);color:var(--ink-2)">🛡</span>
+    <div class="bd"><b>كشف نمط مشبوه — 4 حسابات ببطاقة واحدة</b> <span class="badge b flat" style="font-size:10px">تشغيلية</span>
+      <p>أربعة حسابات تستخدم بطاقة تنتهي بـ 4419. لم يُتّخذ إجراء بعد.</p>
+      <div class="go"><a class="btn sm ghost" href="#fraud">مراجعة الحالة</a></div>
+    </div><span class="tm">2026/08/27</span></div>
+</div>`
++ pager(7,1));
+
+/* ========== 48. الرسائل ========== */
+S.messages = () => phead('الرسائل','المراسلات المباشرة بين الإدارة والمزوّدين والعملاء',['FR-ADV-10','FR-ADS-04'],
+  `<button class="btn" onclick="openM(M.newMsg())">＋ رسالة جديدة</button>`)
++ `<div class="g-1-2">`
++ card(tabs([{t:'الكل',n:24,on:1},{t:'غير مقروءة',n:3},{t:'المزوّدون'},{t:'العملاء'}])
++ `<div class="card-b flush">
+  <div class="conv on"><span class="av v">شص</span><div class="bd">
+    <div class="top"><b>شركة الصحراء</b><span class="tm">10:42</span></div>
+    <p>وصلتنا ملاحظتكم بخصوص معايير الصور، جاري…</p></div><span class="nb">2</span></div>
+  <div class="conv"><span class="av v">كر</span><div class="bd">
+    <div class="top"><b>كي رنت</b><span class="tm">09:15</span></div>
+    <p>مرفق شهادة الآيبان الجديدة كما طلبتم.</p></div><span class="nb">1</span></div>
+  <div class="conv"><span class="av c">تع</span><div class="bd">
+    <div class="top"><b>تركي العنزي</b><span class="tm">أمس</span></div>
+    <p>شكراً لكم، استلمت قرار التظلّم.</p></div></div>
+  <div class="conv"><span class="av v">مس</span><div class="bd">
+    <div class="top"><b>مسار لتأجير المركبات</b><span class="tm">أمس</span></div>
+    <p>نطلب تمديد مهلة الردّ في فرع الكورنيش.</p></div></div>
+  <div class="conv"><span class="av v">وك</span><div class="bd">
+    <div class="top"><b>الوسام كار</b><span class="tm">2026/08/25</span></div>
+    <p>بخصوص إيقاف فرع مكة المركزي…</p></div></div>
+</div>`)
++ card(cardH('شركة الصحراء لتأجير السيارات','خالد المطيري — مدير مالي · نشط قبل 4 دقائق',
+    `<a class="btn ghost sm" href="#vendorFile">ملف المزوّد</a><button class="btn ghost sm">تحويل إلى تذكرة</button>`)
++ `<div class="card-b"><div class="chat" style="max-height:420px">
+  <div class="msg us"><div class="bb">مساء الخير. لاحظنا أن 8 سيارات في فرع مطار الملك خالد لا تستوفي الحد الأدنى من الصور (4 صور من زوايا مختلفة). نرجو استكمالها خلال 5 أيام عمل وإلا ستُخفى تلقائياً من نتائج البحث.</div><div class="mt">محمد الصغير · أمس 15:20</div></div>
+  <div class="msg them"><div class="bb">وصلتنا ملاحظتكم بخصوص معايير الصور، جاري العمل عليها. هل يمكن اعتماد صور الاستوديو للموديلات المتطابقة بدل تصوير كل مركبة على حدة؟</div><div class="mt">خالد المطيري · اليوم 10:38</div></div>
+  <div class="msg them"><div class="bb">وأرفقنا نموذجاً لثلاث سيارات لمراجعته.</div><div class="mt">خالد المطيري · اليوم 10:42</div></div>
+  <div class="msg int"><div class="bb"><b style="font-family:'Expo Arabic','Cairo';font-size:11.5px;display:block;margin-bottom:3px">ملاحظة داخلية — لا تظهر للمزوّد</b>السياسة الحالية تشترط صور المركبة الفعلية لأن العميل يعترض عند اختلاف اللون. يُراجَع مع فريق المنتج قبل الردّ.</div><div class="mt">محمد العنزي · اليوم 10:55</div></div>
+</div>
+<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+  <div style="display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap">
+    <span class="fd" style="font-size:11.5px">ردود جاهزة ▾</span><span class="fd" style="font-size:11.5px">📎 إرفاق</span>
+    <span class="fd" style="font-size:11.5px;background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-ink)">ملاحظة داخلية</span></div>
+  ${inp('اكتب رسالتك…')}
+  <div style="margin-top:9px;display:flex;gap:9px"><button class="btn sm">إرسال</button>
+    <span style="font-size:11.5px;color:var(--muted);align-self:center">تصل كإشعار داخل المنصّة وبريد إلكتروني</span></div>
+</div></div>`)
++ `</div>`;
+
+/* ===================== MODALS للشاشات الجديدة ===================== */
+M.newModel = () => modal('موديل جديد', `
+  <div class="frow">${fld('الماركة', sel('تويوتا'))}${fld('اسم الموديل (عربي)', inp('كامري'))}</div>
+  <div class="frow">${fld('اسم الموديل (إنجليزي)', inp('Camry'))}${fld('الفئة', sel('سيدان'))}</div>
+  <div class="frow">${fld('من سنة', inp('2018'))}${fld('إلى سنة', inp('2026'))}</div>
+  <div class="frow">${fld('نوع الوقود', sel('بنزين'))}${fld('ناقل الحركة', sel('أوتوماتيك'))}</div>
+  <div class="frow">${fld('عدد الركاب', inp('5'))}${fld('سعة الحقائب', inp('2 كبيرة · 2 صغيرة'))}</div>
+  ${fld('صورة الموديل — صورة واحدة', `<div class="drop"><span class="ic">🖼</span>
+    <b>اسحب الصورة هنا أو اضغط للاختيار</b>
+    PNG أو WebP بخلفية شفافة · 1200×800 بكسل · 2 ميجا كحدّ أقصى</div>`,
+    'صورة واحدة لكل موديل. تُعرض في بطاقات الفئات ونتائج البحث وحين لا يرفع المزوّد صوراً كافية. الخلفية الشفافة ضرورية لأن البطاقة تتغيّر مع الوضع الليلي، وصورة بخلفية بيضاء ستظهر كمربّع أبيض فوق خلفية داكنة.')}
+  ${swRow('إتاحته للمزوّدين فوراً','يظهر في قائمة اختيار المركبة عند إضافة سيارة',1)}`,
+  `<button class="btn" onclick="closeM()">حفظ الموديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.addFromRequest = () => modal('إضافة موديل من طلب — كيا سيلتوس', `
+  ${note('warn','سبع مركبات لدى كي رنت متوقّفة عن النشر','لن تظهر للعملاء حتى يُضاف هذا الموديل. الطلب معلّق منذ 3 أيام.')}
+  <div class="grid2" style="margin-bottom:14px">
+    <div>${dl([['الماركة','كيا'],['الموديل','سيلتوس / Seltos'],['السنوات','2023 – 2026'],
+      ['الفئة المقترحة','كروس أوفر'],['الوقود','بنزين'],['ناقل الحركة','أوتوماتيك'],['الركاب','5'],['مقدّم الطلب','كي رنت']])}</div>
+    <div>${fld('صورة الموديل — صورة واحدة', `<div class="drop"><span class="ic">🖼</span>
+      <b>ارفع صورة الموديل</b>PNG أو WebP بخلفية شفافة · 1200×800</div>`,
+      'الصورة من مسؤولية المنصّة لا المزوّد، لتوحيد شكل البطاقات.')}</div>
+  </div>
+  ${fld('الفئة المعتمدة', sel('كروس أوفر'),'تصنيف الفئة يؤثّر على الفلاتر والتسعير المرجعي، فراجعه ولا تعتمده كما ورد في الطلب.')}
+  ${swRow('إشعار مقدّم الطلب عند الإضافة','يصل كي رنت إشعار بإتاحة الموديل',1)}`,
+  `<button class="btn coral" onclick="closeM()">إضافة الموديل</button>
+   <button class="btn ghost" onclick="closeM()">دمج مع موديل قائم</button>
+   <button class="btn danger" onclick="closeM()">رفض الطلب</button>`);
+
+M.notifPrefs = () => modal('تفضيلات الإشعارات', `
+  <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px">تحدّد ما يصل إليك أنت داخل لوحة الإدارة. الإشعارات الحسّاسة إلزامية ولا يمكن إيقافها.</p>
+  ${swRow('الإجراءات الحسّاسة','Override · تغيير عمولة · تغيير حساب بنكي · تعطيل مزوّد — إلزامي',1)}
+  ${swRow('التسويات المالية','جاهزية دورة التسوية والفروقات المالية',1)}
+  ${swRow('التظلّمات والتصعيد','فتح تظلّم أو تجاوزه للمهلة',1)}
+  ${swRow('طلبات اعتماد المزوّدين','طلب جديد أو تجاوز مهلة المراجعة',1)}
+  ${swRow('تذاكر تجاوزت الـ SLA','تنبيه فوري عند التجاوز',1)}
+  ${swRow('كشف الأنماط المشبوهة','حسابات متعدّدة · معدّل إلغاء مرتفع',0)}
+  ${swRow('نسخة بالبريد الإلكتروني','بالإضافة إلى الإشعار داخل اللوحة',1)}`,
+  `<button class="btn" onclick="closeM()">حفظ التفضيلات</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.newMsg = () => modal('رسالة جديدة', `
+  <div class="frow">${fld('المستلم', sel('مزوّد — اختر من القائمة'))}${fld('الموضوع', inp('مثال: مراجعة معايير الصور'))}</div>
+  ${fld('الرسالة', `<div class="inp" style="min-height:110px;color:var(--muted-2)">اكتب رسالتك…</div>`)}
+  ${swRow('إرسال نسخة بالبريد','إضافة إلى الإشعار داخل المنصّة',1)}
+  ${swRow('طلب إقرار بالاستلام','يُطلب من المستلم تأكيد قراءته، ويُسجَّل التاريخ',0)}
+  ${swRow('ربط بحجز أو فرع','لإظهار الرسالة في سياق الكيان المرتبط',0)}`,
+  `<button class="btn" onclick="closeM()">إرسال</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+</script>

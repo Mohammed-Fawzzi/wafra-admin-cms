@@ -1,0 +1,669 @@
+<script>
+/* ========== 28. الكوبونات ========== */
+S.coupons = () => phead('الكوبونات','كوبونات المنصّة وقواعد تطبيقها',['FR-CPN-01','FR-CPN-02','FR-CPN-03','FR-CPN-06'],
+  `<button class="btn" onclick="openM(M.newCoupon())">＋ كوبون جديد</button>`)
++ card(tabs([{t:'نشطة',n:12,on:1},{t:'مجدولة',n:4},{t:'منتهية',n:38},{t:'موقوفة',n:3}])
++ filters(['النوع','الشريحة','المتحمّل للتكلفة','الصلاحية'],'ابحث بكود الكوبون…')
++ table(['الكود','النوع','القيمة','الشريحة','الاستخدام','المتحمّل','الصلاحية','الحالة','الإجراءات'],[
+  [{v:'WELCOME10',c:'strong num'},'ترحيبي تلقائي','10% حتى 50 ر.س','مستخدمون جدد','1,204 / ∞','المنصّة','دائم',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'SUMMER25',c:'strong num'},'نسبة مئوية','25% حتى 150 ر.س','كل العملاء','842 / 2,000','المنصّة','حتى 30/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'SAHRA50',c:'strong num'},'مبلغ ثابت','50 ر.س','عملاء شركة الصحراء','311 / 500','المزوّد','حتى 15/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'FREEDEL',c:'strong num'},'إعفاء رسوم توصيل','رسوم التوصيل','الرياض وجدة','96 / 300','المنصّة','يبدأ 01/09/2026',bdg('مجدول','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])],
+  [{v:'BACK15',c:'strong num'},'نسبة مئوية','15% حتى 80 ر.س','عملاء لم يحجزوا منذ 90 يوماً','—','المنصّة','أُوقف في 22/08',bdg('موقوف','r'),acts([{i:'👁'},{i:'▶'}])],
+])
++ pager(12,2));
+
+/* ========== 29. الحملات الترويجية ========== */
+S.campaigns = () => phead('الحملات الترويجية','خصومات تظهر في واجهة العميل خلال فترة محدّدة',['FR-CPN-05','FR-CPN-07'],
+  `<button class="btn">＋ حملة جديدة</button>`)
++ card(tabs([{t:'نشطة',n:3,on:1},{t:'مجدولة',n:2},{t:'منتهية',n:19}])
++ table(['الحملة','الخصم','النطاق','الفترة','الظهور','الحجوزات الناتجة','الإيراد','الحالة','الإجراءات'],[
+  [{v:'عروض نهاية الصيف<span class="sub">بانر الرئيسية + إشعار</span>',c:'strong'},'25%','كل المدن','20/08 – 30/09',{v:'184,200',c:'num'},'842',{v:'318,400 ر.س',c:'num'},bdg('نشطة','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'خصم الفئة الاقتصادية<span class="sub">صفحة البحث</span>',c:'strong'},'15%','الرياض · جدة','15/08 – 15/09',{v:'96,800',c:'num'},'411',{v:'112,900 ر.س',c:'num'},bdg('نشطة','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'أسبوع التوصيل المجاني<span class="sub">بانر + كوبون FREEDEL</span>',c:'strong'},'رسوم التوصيل','الرياض · جدة','01/09 – 08/09','—','—','—',bdg('مجدولة','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])],
+]))
++ card(cardH('أثر الحملات النشطة','مقارنة بفترة مماثلة بلا حملة')+`<div class="card-b">
+  ${bars([['ارتفاع معدّل التحويل',34,'var(--green)'],['ارتفاع عدد الحجوزات',28,'var(--green)'],['انخفاض متوسّط قيمة الحجز',9,'var(--amber)']])}</div>`);
+
+/* ========== 30. البانرات ========== */
+S.banners = () => phead('البانرات','المحتوى الترويجي في واجهة العميل',['FR-BAN-01','FR-BAN-02','FR-BAN-03'],
+  `<button class="btn">＋ بانر جديد</button>`)
++ note('info','عند تعارض بانرين على نفس الموضع يُعرض صاحب الأولوية الأعلى','النظام ينبّه عند تداخل الفترات قبل الحفظ.')
++ card(tabs([{t:'نشطة',n:6,on:1},{t:'مجدولة',n:3},{t:'منتهية',n:24}])
++ filters(['الموضع','الحالة','الفترة'],'ابحث باسم البانر…')
++ table(['البانر','الموضع','الفترة','الأولوية','الشريحة','الظهور','النقرات','CTR','الحالة','الإجراءات'],[
+  [{v:'عروض نهاية الصيف<span class="sub">1200×400 · صورة + نص + رابط</span>',c:'strong'},'الرئيسية — أعلى','20/08 – 30/09','1','كل العملاء',{v:'184,200',c:'num'},{v:'8,940',c:'num'},'4.9%',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'استأجر سيارتك الآن<span class="sub">1200×400</span>',c:'strong'},'الرئيسية — وسط','01/08 – 31/12','2','زوّار غير مسجّلين',{v:'96,400',c:'num'},{v:'3,120',c:'num'},'3.2%',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'حوّل سيارتك لمصدر دخل<span class="sub">1200×300</span>',c:'strong'},'الرئيسية — أسفل','01/07 – 31/12','3','كل العملاء',{v:'142,700',c:'num'},{v:'2,410',c:'num'},'1.7%',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'أسبوع التوصيل المجاني<span class="sub">1200×400</span>',c:'strong'},'صفحة البحث','01/09 – 08/09','1','الرياض · جدة','—','—','—',bdg('مجدول','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])],
+])
++ pager(9,1));
+
+/* ========== 31. مراجعة إعلانات المزوّدين ========== */
+S.vendorAds = () => phead('إعلانات المزوّدين','طلبات الإعلان الواردة من المزوّدين والموافقة عليها',['FR-BAN-04','FR-BAN-05','FR-BAN-06'])
++ card(tabs([{t:'بانتظار الموافقة',n:5,on:1},{t:'نشطة',n:14},{t:'مرفوضة',n:7},{t:'مكتملة',n:63}])
++ filters(['المزوّد','نوع الإعلان','الميزانية'],'ابحث باسم الحملة أو المزوّد…')
++ table(['الحملة','المزوّد','نوع الإعلان','نطاق التغطية','الفترة','الميزانية','الأداء','الحالة','الإجراءات'],[
+  [{v:'عروض بداية الأسبوع — خصم 20%',c:'strong'},'شركة الصحراء','إشعار موجّه (Push)','مطار الملك عبدالعزيز — جدة','01/09 – 15/09',{v:'4,000 ر.س',c:'num'},'—',bdg('قيد المراجعة','a'),`<button class="btn sm" onclick="openM(M.approveAd())">مراجعة</button>`],
+  [{v:'أسطولنا الجديد 2026',c:'strong'},'كي رنت','بانر صفحة البحث','جدة','05/09 – 05/10',{v:'6,500 ر.س',c:'num'},'—',bdg('قيد المراجعة','a'),`<button class="btn sm" onclick="openM(M.approveAd())">مراجعة</button>`],
+  [{v:'خصم الفئة الفاخرة',c:'strong'},'مسار','بانر الرئيسية','الدمام · الخبر','20/08 – 20/09',{v:'9,000 ر.س',c:'num'},'الظهور 42,100<span class="sub">النقرات 1,840 · CTR 4.4%</span>',bdg('نشط','g'),acts([{i:'👁'},{i:'⏸'},{i:'📊'}])],
+  [{v:'ليموزين المطار',c:'strong'},'رحال ليموزين','إشعار موجّه (Push)','الرياض','—','—','—',bdg('مرفوض — المزوّد موقوف','r'),acts([{i:'👁'}])],
+])
++ pager(5,1));
+
+/* ========== 32. إرسال إشعار ========== */
+S.notifySend = () => phead('إرسال إشعار','محرّر الإشعارات مع معاينة لكل قناة قبل الإرسال',['FR-ADN-01','FR-ADN-02','FR-ADN-03','FR-ADN-07'],
+  `<a class="btn ghost" href="#notifyLog">سجل الإشعارات</a>`)
++ `<div class="g-2-1">`
++ `<div>`
++ card(cardH('محتوى الإشعار')+`<div class="card-b">
+  ${fld('القالب', sel('إشعار تسويقي عام'))}
+  <div class="frow">
+    ${fld('العنوان (عربي)', inp('','عروض نهاية الصيف — خصم حتى 25%'))}
+    ${fld('العنوان (إنجليزي)', inp('','End of summer — up to 25% off'))}
+  </div>
+  ${fld('النص (عربي)', `<div class="inp" style="min-height:80px;line-height:1.8">استأجر سيارتك بخصم يصل إلى 25% حتى 30 سبتمبر. الخصم يُطبَّق تلقائياً عند الحجز.</div>`,'المتغيّرات المتاحة: {اسم_العميل} · {المدينة} · {رقم_الحجز}')}
+  ${fld('رابط الوجهة', inp('','wafra://offers/summer'))}
+</div>`)
++ card(cardH('الشريحة المستهدفة')+`<div class="card-b">
+  <div class="frow">${fld('نوع المستخدم', sel('العملاء فقط'))}${fld('المدينة', sel('الرياض · جدة · الدمام'))}</div>
+  <div class="frow">${fld('النشاط', sel('حجز واحد على الأقل خلال 90 يوماً'))}${fld('لغة الحساب', sel('الكل'))}</div>
+  ${note('info','العدد التقديري للمستلمين: 18,420 مستخدماً','يُحدَّث فور تغيير أي فلتر. مستبعَد منهم 2,140 مستخدماً ألغوا الاشتراك التسويقي.')}
+</div>`)
++ `</div>`
++ `<div>`
++ card(cardH('القنوات')+`<div class="card-b">
+  ${swRow('داخل التطبيق (Push)','يصل فوراً للمستخدمين النشطين',1)}
+  ${swRow('البريد الإلكتروني','نسخة بتنسيق HTML',1)}
+  ${swRow('رسالة نصية (SMS)','تكلفة إضافية — 0.12 ر.س للرسالة',0)}
+</div>`)
++ card(cardH('التوقيت')+`<div class="card-b">
+  ${fld('وقت الإرسال', sel('مجدول — 1 سبتمبر 2026، 10:00 ص'))}
+  ${note('warn','خارج نافذة الإرسال التسويقي','النافذة المسموحة 9 ص – 9 م. الإرسال خارجها يحتاج اعتماد المسؤول الأعلى.')}
+</div>`)
++ card(cardH('المعاينة','داخل التطبيق')+`<div class="card-b">
+  <div style="border:1px solid var(--line-strong);border-radius:12px;padding:13px;background:#FAFBFE">
+    <div style="display:flex;gap:9px;align-items:flex-start">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700">و</div>
+      <div><b style="font-size:12.5px;display:block">عروض نهاية الصيف — خصم حتى 25%</b>
+      <span style="font-size:11.5px;color:var(--ink-2)">استأجر سيارتك بخصم يصل إلى 25% حتى 30 سبتمبر…</span></div>
+    </div></div>
+  <div style="margin-top:14px;display:flex;gap:9px"><button class="btn ghost sm">إرسال تجريبي</button><button class="btn coral sm" onclick="openM(M.confirmSend())">جدولة الإرسال</button></div>
+</div>`)
++ `</div></div>`;
+
+/* ========== 33. سجل الإشعارات ========== */
+S.notifyLog = () => phead('سجل الإشعارات','كل إشعار مُرسَل وحالة تسليمه',['FR-ADN-04','FR-ADN-05'],
+  `<button class="btn ghost">⤓ تصدير</button><a class="btn" href="#notifySend">＋ إشعار جديد</a>`)
++ card(tabs([{t:'الكل',n:284,on:1},{t:'مجدولة',n:3},{t:'قيد الإرسال',n:1},{t:'مكتملة',n:276},{t:'ملغاة',n:4}])
++ filters(['القناة','الشريحة','المُرسِل','التاريخ'],'ابحث بعنوان الإشعار…')
++ table(['الإشعار','المُرسِل','الشريحة','القنوات','المستلمون','تم التسليم','الفتح','الفاشل','التاريخ','الحالة'],[
+  [{v:'عروض نهاية الصيف<span class="sub">تسويقي</span>',c:'strong'},'محمد الصغير','عملاء · 3 مدن','Push · بريد',{v:'18,420',c:'num'},{v:'17,981',c:'num'},'42.1%',{v:'439',c:'num'},'2026/08/20',bdg('مكتمل','g')],
+  [{v:'تحديث الشروط والأحكام<span class="sub">إلزامي</span>',c:'strong'},'سعد الشمري','كل المستخدمين','Push · بريد · SMS',{v:'48,210',c:'num'},{v:'47,602',c:'num'},'68.4%',{v:'608',c:'num'},'2026/08/12',bdg('مكتمل','g')],
+  [{v:'صيانة مجدولة للمنصّة<span class="sub">تشغيلي</span>',c:'strong'},'النظام','المزوّدون','Push · بريد',{v:'58',c:'num'},{v:'58',c:'num'},'91.4%',{v:'0',c:'num'},'2026/08/08',bdg('مكتمل','g')],
+  [{v:'أسبوع التوصيل المجاني<span class="sub">تسويقي</span>',c:'strong'},'محمد الصغير','الرياض · جدة','Push',{v:'—',c:'num'},'—','—','—','01/09/2026',bdg('مجدول','b')],
+])
++ pager(284,20));
+
+/* ========== 34. قوالب الإشعارات ========== */
+S.templates = () => phead('قوالب الإشعارات','نص كل نوع إشعار بالعربية والإنجليزية مع متغيّراته',['FR-ADN-06'])
++ card(filters(['الفئة','اللغة'],'ابحث باسم القالب…')
++ table(['القالب','الفئة','القنوات','المتغيّرات','آخر تعديل','الحالة','الإجراءات'],[
+  [{v:'تأكيد الحجز',c:'strong'},'معاملاتي','Push · بريد · SMS','{اسم_العميل} {رقم_الحجز} {التاريخ}','2026/07/14',bdg('مفعّل','g'),acts([{i:'✎'},{i:'✉'}])],
+  [{v:'قبول المزوّد للطلب',c:'strong'},'معاملاتي','Push · بريد','{رقم_الحجز} {اسم_الفرع}','2026/06/30',bdg('مفعّل','g'),acts([{i:'✎'},{i:'✉'}])],
+  [{v:'تذكير قبل موعد الاستلام',c:'strong'},'معاملاتي','Push','{اسم_العميل} {الوقت} {اسم_الفرع}','2026/06/30',bdg('مفعّل','g'),acts([{i:'✎'},{i:'✉'}])],
+  [{v:'رمز التحقّق OTP',c:'strong'},'أمني','SMS','{الرمز}','2026/03/02',bdg('مفعّل — إلزامي','n'),acts([{i:'✎'}])],
+  [{v:'قرار التظلّم',c:'strong'},'معاملاتي','Push · بريد','{رقم_التظلّم} {القرار} {المبلغ}','2026/08/05',bdg('مفعّل','g'),acts([{i:'✎'},{i:'✉'}])],
+])
++ pager(24,3));
+
+/* ========== 35. التذاكر ========== */
+S.tickets = () => phead('تذاكر الدعم','متابعة الطلبات الواردة من العملاء والمزوّدين',['FR-ADS-01','FR-ADS-02','FR-ADS-03'],
+  `<button class="btn ghost">⤓ تصدير</button>`)
++ note('dngr','ستّ تذاكر تجاوزت الـ SLA','أعلاها أولوية: مشكلة دفع لعميل منذ 9 ساعات. التذاكر المتأخّرة تُصعَّد تلقائياً.')
++ card(tabs([{t:'الكل',n:142,on:1},{t:'مفتوحة',n:38},{t:'قيد المعالجة',n:24},{t:'بانتظار الردّ',n:11},{t:'محلولة',n:63},{t:'مغلقة',n:6}])
++ filters(['الحالة','الأولوية','الموضوع','المُسنَدة إلى','نوع مقدّم الطلب'],'ابحث برقم التذكرة أو الاسم…')
++ table(['رقم التذكرة','الموضوع','مقدّم الطلب','النوع','الأولوية','المُسنَدة إلى','SLA','الحالة','الإجراءات'],[
+  [{v:'SUP-1042',c:'strong num'},{v:'تأخّر في صرف المستحقّات المالية<span class="sub">لم تصلني تسوية الأسبوع الماضي</span>',c:'strong'},'شركة الصحراء',bdg('مزوّد','flat n'),bdg('عالية','r'),'—',bdg('متأخّرة 9 ساعات','r'),bdg('مفتوحة','a'),`<a class="btn sm" href="#ticket">فتح</a>`],
+  [{v:'SUP-1041',c:'strong num'},{v:'خطأ في ظهور سيارة بنتائج البحث<span class="sub">سيارة نشطة لا تظهر رغم توفّرها</span>',c:'strong'},'كي رنت',bdg('مزوّد','flat n'),bdg('متوسطة','a'),'محمد العنزي',bdg('متبقٍ 3 ساعات','a'),bdg('قيد المعالجة','b'),`<a class="btn sm" href="#ticket">فتح</a>`],
+  [{v:'SUP-1038',c:'strong num'},{v:'خُصم المبلغ مرتين<span class="sub">ظهر خصمان لنفس الحجز</span>',c:'strong'},'أحمد الشمري',bdg('عميل','flat b'),bdg('عاجلة','r'),'ليلى الدوسري',bdg('متأخّرة 2 ساعة','r'),bdg('قيد المعالجة','b'),`<a class="btn sm" href="#ticket">فتح</a>`],
+  [{v:'SUP-1035',c:'strong num'},{v:'استفسار عن سياسة الإلغاء',c:'strong'},'هند الشهري',bdg('عميل','flat b'),bdg('منخفضة','n'),'محمد العنزي',bdg('متبقٍ يومان','g'),bdg('بانتظار الردّ','n'),`<a class="btn sm" href="#ticket">فتح</a>`],
+])
++ pager(142,15));
+
+/* ========== 36. تفاصيل التذكرة ========== */
+S.ticket = () => phead('التذكرة SUP-1042','تأخّر في صرف المستحقّات المالية · شركة الصحراء لتأجير السيارات',['FR-ADS-04','FR-ADS-05'],
+  `<a class="btn ghost" href="#tickets">‹ رجوع</a>
+   <button class="btn ghost">تصعيد</button><button class="btn coral">إغلاق التذكرة</button>`)
++ `<div class="g-2-1">`
++ `<div>`
++ card(cardH('المحادثة','ما يظهر للمزوّد فقط ما هو خارج الملاحظات الداخلية')+`<div class="card-b"><div class="chat">
+  <div class="msg them"><div class="bb">لم تصلني تسوية الأسبوع الماضي رغم مرور الموعد المحدّد بثلاثة أيام. الكشف يظهر معتمداً في حسابي.</div><div class="mt">شركة الصحراء · أمس 14:22</div></div>
+  <div class="msg us"><div class="bb">شكراً لتواصلك. راجعنا الكشف ST-2189 ووجدناه معتمداً، والتحويل قيد التنفيذ لدى البنك. سنوافيك بمرجع الحوالة خلال 24 ساعة.</div><div class="mt">ليلى الدوسري · أمس 15:40</div></div>
+  <div class="msg int"><div class="bb"><b style="font-family:Cairo;font-size:11.5px;display:block;margin-bottom:3px">ملاحظة داخلية — لا تظهر للمزوّد</b>الحوالة عالقة بسبب اختلاف اسم المستفيد. تحتاج مراجعة من المالية قبل الردّ النهائي.</div><div class="mt">محمد العنزي · اليوم 09:12</div></div>
+</div>
+<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+  <div style="display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap">
+    <span class="fd" style="font-size:11.5px">ردود جاهزة ▾</span><span class="fd" style="font-size:11.5px">📎 إرفاق</span>
+    <span class="fd" style="font-size:11.5px;background:var(--amber-bg);border-color:#F2DFB4;color:#7A5210">ملاحظة داخلية</span></div>
+  ${inp('اكتب ردّك…')}
+  <div style="margin-top:9px"><button class="btn sm">إرسال الردّ</button></div>
+</div></div>`)
++ `</div>`
++ `<div>`
++ card(cardH('بيانات التذكرة')+`<div class="card-b">${dl([
+  ['الحالة',bdg('مفتوحة','a')],['الأولوية',bdg('عالية','r')],['التصنيف','مالي — تسويات'],
+  ['المُسنَدة إلى','غير مُسنَدة'],['SLA',bdg('متأخّرة 9 ساعات','r')],['فُتحت','2026/08/27 14:22']
+])}
+<div style="margin-top:14px">${fld('إسناد إلى', sel('اختر موظّف دعم'))}</div></div>`)
++ card(cardH('مقدّم الطلب')+`<div class="card-b">${dl([
+  ['الجهة','شركة الصحراء'],['المتواصل','خالد المطيري'],['الدور','مدير مالي'],['تذاكر سابقة','3']
+])}
+<div style="margin-top:12px"><a class="btn ghost sm" href="#vendorFile">فتح ملف المزوّد</a></div></div>`)
++ card(cardH('مرتبطة بـ')+`<div class="card-b">
+  <div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #F0F3F8">
+    <span style="font-size:15px">📄</span><div><b style="font-size:12.5px;display:block">كشف التسوية ST-2189</b><span style="font-size:11px;color:var(--muted)">معتمد · بانتظار التحويل</span></div>
+    <span style="margin-inline-start:auto;color:var(--muted)">‹</span></div>
+</div>`)
++ `</div></div>`;
+
+/* ========== 37. الشات بوت ========== */
+S.chatbot = () => phead('قاعدة معرفة الشات بوت','الأسئلة والأجوبة التي يعتمد عليها البوت، والأسئلة التي عجز عنها',['FR-ADS-06'],
+  `<button class="btn">＋ سؤال جديد</button>`)
++ `<div class="grid2">`
++ card(cardH('أسئلة لم يستطع البوت الإجابة عليها','مرتّبة بالأكثر تكراراً — تغذية القاعدة تبدأ من هنا')
++ table(['السؤال','التكرار','آخر مرة','الإجراء'],[
+  ['كيف أمدّد الحجز بعد الاستلام؟','142','اليوم',`<button class="btn sm">إضافة إجابة</button>`],
+  ['هل أقدر أستلم بدون رخصة سعودية؟','96','اليوم',`<button class="btn sm">إضافة إجابة</button>`],
+  ['متى يرجع مبلغ الضمان؟','78','أمس',`<button class="btn sm">إضافة إجابة</button>`],
+  ['أبغى أغيّر السيارة بعد الحجز','54','أمس',`<button class="btn sm">إضافة إجابة</button>`],
+]))
++ card(cardH('قاعدة المعرفة','128 سؤالاً وجواباً')
++ filters(['التصنيف','اللغة'],'ابحث…')
++ table(['السؤال','التصنيف','الاستخدام','الحالة','الإجراءات'],[
+  ['كيف ألغي حجزي؟','الحجز','2,410',bdg('مفعّل','g'),acts([{i:'✎'},{i:'🗑',d:1}])],
+  ['ما وسائل الدفع المقبولة؟','الدفع','1,884',bdg('مفعّل','g'),acts([{i:'✎'},{i:'🗑',d:1}])],
+  ['كم مدة استرداد المبلغ؟','الدفع','1,102',bdg('مفعّل','g'),acts([{i:'✎'},{i:'🗑',d:1}])],
+  ['ما الوثائق المطلوبة للاستلام؟','الحساب','942',bdg('مفعّل','g'),acts([{i:'✎'},{i:'🗑',d:1}])],
+]))
++ `</div>`;
+
+/* ========== 38. مركز المساعدة ========== */
+S.help = () => phead('مركز المساعدة','الأسئلة الشائعة ومقالات المساعدة الظاهرة في التطبيق',['FR-ADS-07'],
+  `<button class="btn">＋ مقال جديد</button>`)
++ card(tabs([{t:'منشور',n:42,on:1},{t:'مسودّة',n:6},{t:'مخفي',n:3}])
++ filters(['التصنيف','اللغة'],'ابحث بعنوان المقال…')
++ table(['المقال','التصنيف','اللغات','المشاهدات','التقييم','آخر تحديث','الحالة','الإجراءات'],[
+  [{v:'كيف تحجز سيارة خطوة بخطوة',c:'strong'},'البدء','عربي · إنجليزي',{v:'12,840',c:'num'},'👍 94%','2026/07/20',bdg('منشور','g'),acts([{i:'✎'},{i:'👁'}])],
+  [{v:'سياسة الإلغاء والاسترداد',c:'strong'},'الدفع','عربي · إنجليزي',{v:'9,412',c:'num'},'👍 81%','2026/08/12',bdg('منشور','g'),acts([{i:'✎'},{i:'👁'}])],
+  [{v:'الوثائق المطلوبة للمقيمين والزوّار',c:'strong'},'الحساب','عربي · إنجليزي',{v:'7,206',c:'num'},'👍 88%','2026/06/04',bdg('منشور','g'),acts([{i:'✎'},{i:'👁'}])],
+  [{v:'دليل استلام السيارة',c:'strong'},'الحجز','عربي فقط',{v:'—',c:'num'},'—','2026/08/25',bdg('مسودّة','n'),acts([{i:'✎'},{i:'👁'}])],
+])
++ pager(51,6));
+
+/* ========== 39. التقارير ========== */
+S.reports = () => phead('التقارير','تقارير المنصّة مع فلاتر موحّدة وتصدير',['FR-ADR-01','FR-ADR-05','FR-ADR-08'],
+  `<button class="btn ghost">⤓ تصدير إلى Excel</button><button class="btn ghost">📅 جدولة إرسال</button>`)
++ card(tabs([{t:'لوحة الإحصائيات الشاملة'},{t:'الحجوزات'},{t:'المالية'},{t:'الأداء'},{t:'الملغاة والفرص الضائعة',on:1},{t:'الطلب غير الملبّى'},{t:'نمو المستخدمين'}])
++ `<div class="filters" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end">
+  ${fld('المزوّد', sel('كل المزوّدين'))}${fld('الفرع', sel('كل الفروع'))}
+  ${fld('المدينة', sel('كل المدن'))}${fld('فئة السيارة', sel('كل الفئات'))}
+  ${fld('نوع الخدمة', sel('كل الأنواع'))}${fld('من تاريخ', inp('اختر التاريخ'))}
+  ${fld('إلى تاريخ', inp('اختر التاريخ'))}<div class="fld"><button class="btn" style="width:100%">تطبيق الفلاتر</button></div>
+</div>`
++ `<div class="card-b">
+  <div class="grid2" style="margin-bottom:20px">
+    <div style="background:#FAFBFE;border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center">
+      <div style="font-family:Cairo;font-size:28px;font-weight:700;color:var(--coral)">96,400 <span style="font-size:14px">ر.س</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px">قيمة الفرص الضائعة</div></div>
+    <div style="background:#FAFBFE;border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center">
+      <div style="font-family:Cairo;font-size:28px;font-weight:700">142</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px">إجمالي الحجوزات الملغاة</div></div>
+  </div>
+  <h4 style="font-size:13.5px;margin-bottom:14px">أسباب الإلغاء</h4>
+  ${bars([['تغيّر خطة العميل',34],['عدم توفّر السيارة عند الاستلام',27,'var(--coral)'],['مشكلة في الدفع',19,'var(--amber)'],['تأخّر الفرع في الردّ',12,'var(--coral)'],['أخرى',8]])}
+  ${note('warn','46% من الإلغاءات سببها المزوّد','عدم التوفّر وتأخّر الردّ يمثّلان معاً 46% من الإلغاءات. المزوّدون الثلاثة الأعلى في هذين السببين مرشّحون للمراجعة.')}
+</div>`);
+
+/* ========== 40. الإعدادات التشغيلية ========== */
+S.settings = () => phead('الإعدادات التشغيلية','القيم التي يعمل بها النظام — أي تعديل يحتاج اعتماد المسؤول الأعلى',['FR-ADX-01','FR-ADX-06'],
+  `<button class="btn ghost">إلغاء</button><button class="btn coral">حفظ التغييرات</button>`)
++ note('warn','هذه القيم تؤثّر على كل الحجوزات الجديدة','التعديل لا يسري على الحجوزات القائمة، ويُسجَّل في سجل التدقيق بالقيمة قبل وبعد.')
++ `<div class="grid2">`
++ card(cardH('الحجز والردّ')+`<div class="card-b">
+  <div class="frow">${fld('مهلة ردّ المزوّد', inp('','30 دقيقة'))}${fld('نافذة تسجيل عدم الحضور', inp('','60 دقيقة'))}</div>
+  <div class="frow">${fld('أقل مدة حجز', inp('','يوم واحد'))}${fld('أقصى مدة حجز', inp('','90 يوماً'))}</div>
+  ${fld('مدة السماح قبل احتساب التأخير', inp('','59 دقيقة'))}
+</div>`)
++ card(cardH('المالية')+`<div class="card-b">
+  <div class="frow">${fld('نسبة العمولة العامة', inp('','15%'))}${fld('رسوم الإلغاء بعد التأكيد', inp('','30%'))}</div>
+  <div class="frow">${fld('حد غرامة التأخير اليومية', inp('','100% من السعر اليومي'))}${fld('دورة التسوية الافتراضية', sel('أسبوعية'))}</div>
+  ${fld('ضريبة القيمة المضافة', inp('','15%'))}
+</div>`)
++ card(cardH('أوقات الذروة')+`<div class="card-b">
+  ${fld('فترات الذروة', inp('','الخميس والجمعة · مواسم الإجازات'))}
+  ${fld('نسبة الزيادة المسموحة في الذروة', inp('','حتى 40%'))}
+</div>`)
++ card(cardH('التوثيق والوصول')+`<div class="card-b">
+  ${swRow('إلزام توثيق رخصة القيادة قبل الحجز','يمنع إتمام الحجز قبل قبول الوثيقة',1)}
+  ${swRow('السماح بالحجز للزوّار','بدون إنشاء حساب',0)}
+  ${swRow('الإخفاء التلقائي عند انتهاء الاستمارة','تُخفى السيارة فور انتهاء وثيقتها',1)}
+</div>`)
++ `</div>`;
+
+/* ========== 41. البيانات المرجعية ========== */
+S.refdata = () => phead('البيانات المرجعية','القوائم التي تعتمد عليها كل الشاشات',['FR-ADX-02'],`<button class="btn">＋ إضافة عنصر</button>`)
++ card(tabs([{t:'المدن والأحياء',n:38,on:1},{t:'فئات السيارات',n:9},{t:'الماركات والموديلات',n:412},{t:'أنواع الخدمات',n:6},{t:'أسباب الإلغاء',n:11},{t:'أسباب الرفض',n:8},{t:'أنواع التظلّم',n:5}])
++ filters(['المنطقة','الحالة'],'ابحث باسم المدينة…')
++ table(['المدينة','المنطقة','الأحياء','المزوّدون','الفروع','الحجوزات','الحالة','الإجراءات'],[
+  ['الرياض','منطقة الرياض','142','21','58','1,842',bdg('مفعّلة','g'),acts([{i:'✎'},{i:'⏸'}])],
+  ['جدة','منطقة مكة المكرمة','96','14','41','1,204',bdg('مفعّلة','g'),acts([{i:'✎'},{i:'⏸'}])],
+  ['الدمام','المنطقة الشرقية','64','9','24','612',bdg('مفعّلة','g'),acts([{i:'✎'},{i:'⏸'}])],
+  ['أبها','منطقة عسير','38','2','4','86',bdg('مفعّلة','g'),acts([{i:'✎'},{i:'⏸'}])],
+  ['حائل','منطقة حائل','22','0','0','0',bdg('غير مفعّلة — لا مزوّدين','n'),acts([{i:'✎'},{i:'▶'}])],
+])
++ pager(38,4));
+
+/* ========== 42. المحتوى والشروط ========== */
+S.content = () => phead('المحتوى والشروط','الصفحات القانونية ونصوصها بالعربية والإنجليزية',['FR-ADX-03','FR-ADX-04'],
+  `<button class="btn" onclick="openM(M.publishTerms())">نشر نسخة جديدة</button>`)
++ note('info','النسخة النافذة حالياً: 3.2 — سارية منذ 12 أغسطس 2026','وافق عليها 47,602 مستخدماً من أصل 48,210. المتبقّون يُطالَبون بالموافقة قبل أي عملية حرجة.')
++ `<div class="grid2">`
++ card(cardH('الصفحات القانونية')
++ table(['الصفحة','النسخة النافذة','آخر تحديث','الموافقات','الحالة','الإجراءات'],[
+  [{v:'الشروط والأحكام',c:'strong'},'3.2','2026/08/12','98.7%',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
+  [{v:'سياسة الخصوصية',c:'strong'},'2.1','2026/05/03','100%',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
+  [{v:'سياسة الإلغاء والاسترداد',c:'strong'},'1.8','2026/07/22','—',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
+  [{v:'شروط المزوّدين',c:'strong'},'2.0','2026/06/14','96.5%',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
+  [{v:'الشروط والأحكام',c:'strong'},'3.3','—','—',bdg('مسودّة','n'),acts([{i:'✎'},{i:'👁'}])],
+]))
++ card(cardH('أرشيف نسخ الشروط','كل نسخة محفوظة بتاريخ سريانها ومن وافق عليها')
++ table(['النسخة','تاريخ السريان','نشرها','الموافقات','الحالة'],[
+  ['3.2','2026/08/12','محمد الصغير','47,602',bdg('نافذة','g')],
+  ['3.1','2026/04/01','سعد الشمري','44,180',bdg('مؤرشفة','n')],
+  ['3.0','2026/01/15','محمد الصغير','38,902',bdg('مؤرشفة','n')],
+  ['2.4','2025/09/20','سعد الشمري','29,441',bdg('مؤرشفة','n')],
+]))
++ `</div>`;
+
+/* ========== 43. الإداريون والصلاحيات ========== */
+S.admins = () => phead('الإداريون والصلاحيات','حسابات فريق وفرا ومصفوفة صلاحيات كل دور',['FR-ADA-03','FR-ADA-04','FR-ADA-05','FR-ADA-07'],
+  `<button class="btn">＋ إضافة إداري</button>`)
++ card(cardH('حسابات الإدارة')
++ table(['الاسم','البريد','الدور','آخر دخول','الجلسات النشطة','2FA','الحالة','الإجراءات'],[
+  [{v:'محمد الصغير',c:'strong'},'noura@wafra.sa',bdg('مسؤول أعلى','flat r'),'اليوم 08:12','1',bdg('مفعّل','g'),bdg('نشط','g'),acts([{i:'✎'},{i:'⏸'}])],
+  [{v:'سعد الشمري',c:'strong'},'saad@wafra.sa',bdg('مسؤول أعلى','flat r'),'أمس 17:40','2',bdg('مفعّل','g'),bdg('نشط','g'),acts([{i:'✎'},{i:'⏸'}])],
+  [{v:'ليلى الدوسري',c:'strong'},'laila@wafra.sa',bdg('مسؤول','flat b'),'اليوم 09:02','1',bdg('مفعّل','g'),bdg('نشط','g'),acts([{i:'✎'},{i:'⏸'}])],
+  [{v:'محمد العنزي',c:'strong'},'mohammed@wafra.sa',bdg('مسؤول','flat b'),'اليوم 07:55','1',bdg('مفعّل','g'),bdg('نشط','g'),acts([{i:'✎'},{i:'⏸'}])],
+  [{v:'ريان الحارثي',c:'strong'},'rayan@wafra.sa',bdg('مسؤول','flat b'),'2026/06/02','0',bdg('مفعّل','g'),bdg('معطّل','n'),acts([{i:'✎'},{i:'▶'}])],
+]))
++ card(cardH('مصفوفة الصلاحيات','✓ مسموح · ◐ يحتاج تأكيداً ثنائياً · — غير مسموح')
++ `<div class="tw"><table class="matrix"><thead><tr><th>الإجراء</th><th>مسؤول</th><th>مسؤول أعلى</th></tr></thead><tbody>
+  <tr><td>عرض كل الشاشات والتقارير</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+  <tr><td>اعتماد أو رفض مزوّد (KYC)</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+  <tr><td>تعطيل حساب مستخدم</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+  <tr><td>إيقاف مزوّد أو فرع</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+  <tr><td>إصدار قرار في تظلّم</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+  <tr><td>مراجعة كشف تسوية</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+  <tr><td>اعتماد تسوية وتنفيذ تحويل</td><td class="no">—</td><td class="cond">◐</td></tr>
+  <tr><td>اعتماد تغيير الحساب البنكي لمزوّد</td><td class="no">—</td><td class="cond">◐</td></tr>
+  <tr><td>تعديل نسبة العمولة</td><td class="no">—</td><td class="cond">◐</td></tr>
+  <tr><td>تغيير استثنائي على حجز (Override)</td><td class="no">—</td><td class="cond">◐</td></tr>
+  <tr><td>تعديل الإعدادات التشغيلية</td><td class="no">—</td><td class="cond">◐</td></tr>
+  <tr><td>نشر نسخة جديدة من الشروط</td><td class="no">—</td><td class="cond">◐</td></tr>
+  <tr><td>إدارة الحسابات الإدارية</td><td class="no">—</td><td class="yes">✓</td></tr>
+  <tr><td>تصدير سجل التدقيق</td><td class="no">—</td><td class="yes">✓</td></tr>
+</tbody></table></div>`);
+
+/* ========== 44. سجل التدقيق ========== */
+S.audit = () => phead('سجل التدقيق','كل إجراء إداري موثّق — غير قابل للتعديل أو الحذف',['FR-ADL-01','FR-ADL-02','FR-ADL-03','FR-ADL-05','FR-ADL-06'],
+  `<button class="btn ghost">⤓ تصدير للامتثال</button>`)
++ note('info','السجل للقراءة فقط','لا يملك أي دور — بما فيه المسؤول الأعلى — صلاحية تعديل السجل أو حذف أي قيد منه.')
++ card(tabs([{t:'الكل',n:'24,180',on:1},{t:'إجراءات حسّاسة',n:142},{t:'مالية',n:'1,204'},{t:'حسابات',n:'3,882'},{t:'إعدادات',n:96}])
++ filters(['المستخدم','نوع الإجراء','الكيان','التاريخ'],'ابحث في السجل…')
++ table(['التوقيت','المستخدم','الإجراء','الكيان','القيمة قبل','القيمة بعد','عنوان IP'],[
+  [{v:'2026/08/28 09:14',c:'num'},'محمد الصغير',{v:'اعتماد تسوية وتحويل',c:'strong'},'ST-2217 — مسار','قيد المراجعة','معتمدة · حوالة REF-99120',{v:'188.42.11.9',c:'num'}],
+  [{v:'2026/08/28 08:41',c:'num'},'سعد الشمري',{v:'تغيير استثنائي على حجز',c:'strong'},'BK-20240','منتهية','ملغاة · تذكرة SUP-1029',{v:'188.42.11.14',c:'num'}],
+  [{v:'2026/08/27 16:22',c:'num'},'ليلى الدوسري',{v:'تعطيل حساب',c:'strong'},'فهد الحربي — عميل','نشط','معطّل · بلاغات احتيال',{v:'188.42.11.22',c:'num'}],
+  [{v:'2026/08/27 11:05',c:'num'},'محمد الصغير',{v:'تعديل نسبة عمولة',c:'strong'},'شركة الصحراء','15%','12% · سريان 01/09',{v:'188.42.11.9',c:'num'}],
+  [{v:'2026/08/26 14:38',c:'num'},'محمد العنزي',{v:'إيقاف فرع',c:'strong'},'فرع مكة المركزي','يعمل','موقوف · مخالفة معايير الصور',{v:'188.42.11.31',c:'num'}],
+  [{v:'2026/08/26 09:12',c:'num'},'النظام',{v:'تصعيد تلقائي لتظلّم',c:'strong'},'DS-3092','مفتوح','مُصعَّد · تجاوز المهلة','—'],
+])
++ pager('24,180',20));
+
+/* ========== 45. تسجيل الدخول ========== */
+S.login = () => `<div style="min-height:calc(100vh - 150px);display:grid;place-items:center">
+  <div style="width:min(420px,100%)">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="width:56px;height:56px;border-radius:14px;background:var(--navy);color:#fff;display:grid;place-items:center;
+        font-family:Cairo;font-weight:800;font-size:22px;margin:0 auto 12px">و<span style="color:var(--coral)">.</span></div>
+      <h1 style="font-size:20px">لوحة إدارة منصّة وفرا</h1>
+      <p style="color:var(--muted);font-size:12.5px;margin:4px 0 0">الدخول مقصور على فريق وفرا</p>
+      <div class="reqs" style="justify-content:center;margin-top:10px"><span class="req">FR-ADA-01</span><span class="req">FR-ADA-02</span></div>
+    </div>
+    ${card(`<div class="card-b">
+      ${fld('البريد الإلكتروني', inp('name@wafra.sa'))}
+      ${fld('كلمة المرور', inp('••••••••'))}
+      ${fld('رمز التحقّق (OTP)', `<div style="display:flex;gap:8px;direction:ltr">
+        <div class="inp" style="text-align:center;font-family:Cairo;font-size:17px">4</div>
+        <div class="inp" style="text-align:center;font-family:Cairo;font-size:17px">8</div>
+        <div class="inp" style="text-align:center;font-family:Cairo;font-size:17px">2</div>
+        <div class="inp" style="text-align:center;font-family:Cairo;font-size:17px">1</div>
+        <div class="inp" style="text-align:center;color:#AAB3C7">·</div>
+        <div class="inp" style="text-align:center;color:#AAB3C7">·</div>
+      </div>`,'أُرسل رمز مكوّن من 6 أرقام إلى جوالك المنتهي بـ 4471 · تنتهي صلاحيته خلال 04:52')}
+      <button class="btn" style="width:100%;justify-content:center">تسجيل الدخول</button>
+      <div style="text-align:center;margin-top:13px;font-size:12.5px;color:var(--navy)"><a href="#resetPassword">نسيت كلمة المرور؟</a></div>
+    </div>`)}
+    ${note('info','التحقّق بخطوتين إلزامي لكل جلسة','تُغلق الجلسة تلقائياً بعد 15 دقيقة خمول، ويُقفل الحساب مؤقّتاً بعد 5 محاولات فاشلة.')}
+  </div></div>`;
+
+/* ===================== MODALS ===================== */
+M.approveVendor = () => modal('اعتماد المزوّد — أسطول الشمال', `
+  ${note('warn','بند واحد في قائمة التحقّق غير مطابق','اسم الحساب البنكي يختلف عن اسم الشركة. الاعتماد مع تجاوز هذا البند يتطلّب تعليلاً مكتوباً.')}
+  ${fld('سبب تجاوز البند غير المطابق', `<div class="inp" style="min-height:78px;color:#AAB3C7">اكتب التعليل… (إلزامي، 30 حرفاً على الأقل)</div>`)}
+  ${fld('رسالة ترحيبية للمزوّد (اختيارية)', `<div class="inp" style="min-height:60px;color:#AAB3C7">تصل للمزوّد مع إشعار الاعتماد</div>`)}
+  <div style="background:#FAFBFE;border:1px solid var(--line);border-radius:10px;padding:13px;font-size:12.5px">
+    <b style="font-family:Cairo;display:block;margin-bottom:7px">ما سيحدث عند الاعتماد</b>
+    • تفعيل حساب المزوّد ومنحه صلاحية الدخول<br>• إتاحة 2 فرع و41 سيارة للنشر بعد مراجعة المحتوى<br>• إرسال إشعار وبريد للمزوّد<br>• تسجيل الإجراء في سجل التدقيق
+  </div>`,
+  `<button class="btn coral" onclick="closeM()">اعتماد المزوّد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.rejectVendor = () => modal('رفض طلب التسجيل', `
+  ${fld('سبب الرفض', sel('اختر سبباً من القائمة'))}
+  ${fld('تفاصيل تصل للمزوّد', `<div class="inp" style="min-height:78px;color:#AAB3C7">وضّح ما ينقص حتى يتمكّن من إعادة التقديم</div>`)}
+  ${swRow('السماح بإعادة التقديم','يستطيع المزوّد تصحيح البيانات وإعادة الإرسال',1)}`,
+  `<button class="btn danger" onclick="closeM()">رفض الطلب</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.reqDocs = () => modal('طلب وثائق إضافية', `
+  ${fld('الوثائق المطلوبة', `<div style="display:flex;flex-direction:column;gap:9px">
+    <div style="display:flex;gap:9px;align-items:center"><span class="chk on">✓</span><span style="font-size:13px">شهادة آيبان باسم الشركة</span></div>
+    <div style="display:flex;gap:9px;align-items:center"><span class="chk"></span><span style="font-size:13px">خطاب تفويض محدّث</span></div>
+    <div style="display:flex;gap:9px;align-items:center"><span class="chk"></span><span style="font-size:13px">وثيقة تأمين الأسطول</span></div>
+  </div>`)}
+  ${fld('رسالة للمزوّد', `<div class="inp" style="min-height:70px">اسم المستفيد في شهادة الحساب البنكي لا يطابق اسم الشركة في السجل التجاري. نرجو رفع شهادة آيبان صادرة باسم الشركة.</div>`)}
+  ${fld('مهلة الاستجابة', sel('7 أيام'))}`,
+  `<button class="btn" onclick="closeM()">إرسال الطلب</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.suspendVendor = () => modal('إيقاف المزوّد — شركة الصحراء', `
+  ${note('dngr','الإيقاف يخفي كل سيارات المزوّد من نتائج البحث فوراً','الحجوزات القائمة لا تتأثّر وتستمر حتى نهايتها.')}
+  <div style="background:#FAFBFE;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px">
+    <b style="font-family:Cairo;font-size:13px;display:block;margin-bottom:9px">أثر الإيقاف</b>
+    <div class="dl-grid">
+      <div class="it"><div class="k">سيارات ستُخفى</div><div class="v" style="color:var(--red-ink)">214 سيارة</div></div>
+      <div class="it"><div class="k">فروع ستتوقّف</div><div class="v" style="color:var(--red-ink)">7 فروع</div></div>
+      <div class="it"><div class="k">حجوزات نشطة (تستمر)</div><div class="v">23 حجزاً</div></div>
+      <div class="it"><div class="k">تسويات معلّقة</div><div class="v">252,032 ر.س</div></div>
+    </div></div>
+  ${fld('سبب الإيقاف', sel('اختر سبباً'))}
+  ${fld('تفاصيل (إلزامية)', `<div class="inp" style="min-height:70px;color:#AAB3C7">لا يقلّ عن 30 حرفاً — يصل للمزوّد ويُسجَّل في سجل التدقيق</div>`)}`,
+  `<button class="btn danger" onclick="closeM()">إيقاف المزوّد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.commission = () => modal('تعديل نسبة العمولة', `
+  ${note('warn','لا يُطبَّق بأثر رجعي','النسبة الجديدة تسري على الحجوزات المُنشأة بعد تاريخ السريان فقط.')}
+  <div class="frow">${fld('النطاق', sel('شركة الصحراء'))}${fld('النسبة الجديدة', inp('','12%'))}</div>
+  <div class="frow">${fld('تاريخ السريان', inp('','01/09/2026'))}${fld('تاريخ الانتهاء (اختياري)', inp('','31/12/2026'))}</div>
+  ${fld('سبب التعديل (إلزامي)', `<div class="inp" style="min-height:66px">اتفاقية شراكة موسمية موقّعة بتاريخ 20/08/2026</div>`)}
+  ${fld('رمز التحقّق (OTP)', inp('أدخل الرمز المُرسَل لجوالك'),'التعديل المالي يتطلّب تأكيداً ثنائياً من المسؤول الأعلى')}`,
+  `<button class="btn coral" onclick="closeM()">حفظ التعديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.vendorMsg = () => modal('مراسلة المزوّد', `
+  ${fld('الموضوع', inp('','مراجعة معايير صور السيارات'))}
+  ${fld('الرسالة', `<div class="inp" style="min-height:100px">لاحظنا أن 8 سيارات لديكم لا تستوفي الحد الأدنى من الصور المطلوبة…</div>`)}
+  ${swRow('إرسال نسخة بالبريد','إضافة إلى الإشعار داخل المنصّة',1)}`,
+  `<button class="btn" onclick="closeM()">إرسال</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.dupPlate = () => modal('معالجة تكرار رقم اللوحة — ب ط ح 4471', `
+  ${note('dngr','لا يمكن أن تكون لوحة واحدة لدى مزوّدَين','اختر الطرف المُثبِت. سيارة الطرف الآخر تُخفى فوراً حتى يقدّم استمارة سارية.')}
+  <div class="grid2" style="margin-bottom:14px">
+    <div style="border:2px solid var(--navy);border-radius:10px;padding:13px">
+      <b style="font-size:13px;display:block">شركة الصحراء</b><span style="font-size:12px;color:var(--muted)">تويوتا كامري 2026</span>
+      <div style="margin-top:9px;font-size:12px">الاستمارة: ${bdg('سارية حتى 2027','g')}</div>
+      <div style="margin-top:5px;font-size:12px">حجوزات نشطة: 1</div></div>
+    <div style="border:1px solid var(--line-strong);border-radius:10px;padding:13px">
+      <b style="font-size:13px;display:block">درب الخليج</b><span style="font-size:12px;color:var(--muted)">شيفروليه تاهو 2025</span>
+      <div style="margin-top:9px;font-size:12px">الاستمارة: ${bdg('سارية حتى 2027','g')}</div>
+      <div style="margin-top:5px;font-size:12px">حجوزات نشطة: 0</div></div>
+  </div>
+  ${fld('الطرف المُثبِت', sel('شركة الصحراء'))}
+  ${fld('سبب القرار', `<div class="inp" style="min-height:60px;color:#AAB3C7">اكتب التعليل…</div>`)}`,
+  `<button class="btn coral" onclick="closeM()">تنفيذ القرار</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.disableUser = () => modal('تعطيل الحساب', `
+  ${fld('سبب التعطيل', sel('اختر سبباً'))}
+  ${fld('المدة', `<div style="display:flex;gap:9px"><div class="fd">مؤقّت<span class="cv">▾</span></div><div class="inp" style="flex:1">30 يوماً</div></div>`)}
+  ${fld('تفاصيل تصل لصاحب الحساب', `<div class="inp" style="min-height:66px;color:#AAB3C7">وضّح السبب بلغة مفهومة</div>`)}
+  <div style="background:#FAFBFE;border:1px solid var(--line);border-radius:10px;padding:13px;font-size:12.5px">
+    <b style="font-family:Cairo;display:block;margin-bottom:6px">أثر التعطيل</b>
+    • منع تسجيل الدخول والحجز الجديد<br>• حجز نشط واحد يستمر حتى نهايته<br>• إشعار صاحب الحساب بالسبب والمدة
+  </div>`,
+  `<button class="btn danger" onclick="closeM()">تعطيل الحساب</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.override = () => modal('تغيير استثنائي على الحجز BK-20418', `
+  ${note('dngr','هذا الإجراء استثنائي ويظهر كوسم دائم على الحجز','يتطلّب كلمة مرور المسؤول الأعلى ورمز تحقّق وسبباً لا يقلّ عن 50 حرفاً ورقم تذكرة دعم.')}
+  <div class="frow">${fld('الحالة الحالية', inp('','جارية'))}${fld('الحالة الجديدة', sel('اختر الحالة'))}</div>
+  ${fld('رقم تذكرة الدعم (إلزامي)', inp('SUP-XXXX'))}
+  ${fld('سبب التغيير (50 حرفاً على الأقل)', `<div class="inp" style="min-height:88px;color:#AAB3C7">اشرح الحالة الاستثنائية بالتفصيل…</div>`,'0 / 50 حرفاً')}
+  <div class="frow">${fld('كلمة مرور المسؤول الأعلى', inp('••••••••'))}${fld('رمز التحقّق (OTP)', inp('6 أرقام'))}</div>`,
+  `<button class="btn danger" onclick="closeM()">تنفيذ التغيير الاستثنائي</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.adminCancel = () => modal('إلغاء إداري للحجز BK-20418', `
+  ${fld('سبب الإلغاء', sel('اختر سبباً'))}
+  ${fld('الطرف المتحمّل للرسوم', sel('المزوّد'))}
+  <div style="background:#FAFBFE;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px">
+    <b style="font-family:Cairo;font-size:13px;display:block;margin-bottom:9px">الأثر المالي قبل التأكيد</b>
+    <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px"><span>يُستردّ للعميل</span><b class="num">570.00 ر.س</b></div>
+    <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px"><span>يُخصم من تسوية المزوّد</span><b class="num" style="color:var(--red-ink)">501.60 ر.س</b></div>
+    <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12.5px"><span>عمولة المنصّة</span><b class="num">0.00 ر.س</b></div>
+  </div>
+  ${fld('تعليل (إلزامي)', `<div class="inp" style="min-height:66px;color:#AAB3C7">يصل للطرفين ويُسجَّل في سجل التدقيق</div>`)}`,
+  `<button class="btn danger" onclick="closeM()">تأكيد الإلغاء</button><button class="btn ghost" onclick="closeM()">تراجع</button>`);
+
+M.askParty = () => modal('طلب ردّ من طرف', `
+  ${fld('الطرف المطلوب ردّه', sel('المزوّد — الوسام كار'))}
+  ${fld('ما المطلوب تحديداً', `<div class="inp" style="min-height:78px">نرجو تزويدنا بصور التسليم الأصلية بدقّة أعلى، وتوضيح تاريخ تقرير الورشة.</div>`)}
+  ${fld('مهلة الردّ', sel('48 ساعة'))}
+  ${swRow('إيقاف احتساب مهلة المعالجة','تتوقّف المهلة حتى يصل الردّ',1)}`,
+  `<button class="btn" onclick="closeM()">إرسال الطلب</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.disputeDecision = () => modal('إصدار قرار في التظلّم DS-3092', `
+  ${fld('القرار', `<div style="display:flex;flex-direction:column;gap:9px">
+    <div style="display:flex;gap:9px;align-items:center;border:2px solid var(--navy);border-radius:10px;padding:11px">
+      <span class="chk on">✓</span><div><b style="font-size:13px;display:block">لصالح العميل</b><span style="font-size:11.5px;color:var(--muted)">يُستردّ كامل المبلغ محل النزاع</span></div></div>
+    <div style="display:flex;gap:9px;align-items:center;border:1px solid var(--line-strong);border-radius:10px;padding:11px">
+      <span class="chk"></span><div><b style="font-size:13px;display:block">لصالح المزوّد</b><span style="font-size:11.5px;color:var(--muted)">يُصرف المبلغ المحتجز للمزوّد</span></div></div>
+    <div style="display:flex;gap:9px;align-items:center;border:1px solid var(--line-strong);border-radius:10px;padding:11px">
+      <span class="chk"></span><div><b style="font-size:13px;display:block">تسوية جزئية</b><span style="font-size:11.5px;color:var(--muted)">تحديد مبلغ لكل طرف</span></div></div>
+  </div>`)}
+  ${fld('المبلغ المستردّ للعميل', inp('','1,850.00 ر.س'))}
+  ${fld('تعليل القرار (إلزامي)', `<div class="inp" style="min-height:88px">صور التسليم المؤرّخة 20/08 تُظهر الخدش الجانبي قبل الاستلام، ولم يقدّم المزوّد ما ينفي ذلك. يُستردّ كامل المبلغ للعميل.</div>`)}
+  ${note('warn','تنفيذ مالي آلي بعد التأكيد','يُستردّ 1,850 ر.س للعميل، ويُخصم المبلغ من كشف تسوية الوسام كار ST-2216، ويُشعَر الطرفان بنصّ القرار.')}`,
+  `<button class="btn coral" onclick="closeM()">إصدار القرار وتنفيذه</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.approveSettlement = () => modal('اعتماد التسوية وتنفيذ التحويل', `
+  <div style="background:#FAFBFE;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px;text-align:center">
+    <div style="font-size:12px;color:var(--muted)">المبلغ المُعتمَد للتحويل</div>
+    <div style="font-family:Cairo;font-size:30px;font-weight:700;color:var(--navy);direction:ltr">252,032.00 ر.س</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:3px">شركة الصحراء · مصرف الراجحي · SA03 8000 …7519</div>
+  </div>
+  ${fld('مرجع الحوالة البنكية', inp('REF-XXXXX'))}
+  ${fld('تاريخ التحويل', inp('','28/08/2026'))}
+  ${fld('رمز التحقّق (OTP)', inp('6 أرقام'),'الاعتماد المالي يتطلّب تأكيداً ثنائياً')}
+  ${note('info','بعد الاعتماد','تتغيّر حالة الكشف إلى «محوّل»، ويُشعَر المزوّد، ويُسجَّل الإجراء في سجل التدقيق مع مرجع الحوالة.')}`,
+  `<button class="btn coral" onclick="closeM()">اعتماد وتحويل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.rejectSettlement = () => modal('رفض كشف التسوية', `
+  ${fld('سبب الرفض', sel('اختر سبباً'))}
+  ${fld('تفاصيل (إلزامية)', `<div class="inp" style="min-height:78px;color:#AAB3C7">وضّح ما يحتاج تصحيحاً قبل إعادة الاحتساب</div>`)}
+  ${swRow('إعادة الاحتساب تلقائياً','يعيد النظام بناء الكشف بعد التصحيح',1)}`,
+  `<button class="btn danger" onclick="closeM()">رفض الكشف</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.newCoupon = () => modal('كوبون جديد', `
+  <div class="frow">${fld('الكود', inp('SUMMER25'))}${fld('نوع الخصم', sel('نسبة مئوية'))}</div>
+  <div class="frow">${fld('القيمة', inp('25%'))}${fld('سقف قيمة الخصم', inp('150 ر.س'))}</div>
+  <div class="frow">${fld('الحد الأدنى للحجز', inp('200 ر.س'))}${fld('المتحمّل للتكلفة', sel('المنصّة'))}</div>
+  <div class="frow">${fld('سقف الاستخدام الكلي', inp('2000'))}${fld('سقف الاستخدام لكل عميل', inp('1'))}</div>
+  <div class="frow">${fld('من تاريخ', inp('01/09/2026'))}${fld('إلى تاريخ', inp('30/09/2026'))}</div>
+  ${fld('الشريحة المستهدفة', sel('كل العملاء'))}
+  ${fld('قواعد التطبيق', `<div style="display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;gap:9px;align-items:center"><span class="chk on">✓</span><span style="font-size:12.5px">لا يُجمع مع عروض أخرى</span></div>
+    <div style="display:flex;gap:9px;align-items:center"><span class="chk"></span><span style="font-size:12.5px">استثناء فئة السيارات الفاخرة</span></div>
+    <div style="display:flex;gap:9px;align-items:center"><span class="chk"></span><span style="font-size:12.5px">لا يسري في أوقات الذروة</span></div>
+  </div>`)}`,
+  `<button class="btn" onclick="closeM()">حفظ الكوبون</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.approveAd = () => modal('مراجعة طلب إعلان — شركة الصحراء', `
+  <div class="grid2" style="margin-bottom:14px">
+    <div><div style="font-size:11.5px;color:var(--muted);margin-bottom:7px">معاينة الإعلان</div>
+      <div class="docv" style="height:150px"><span class="ph">🖼</span></div></div>
+    <div>${dl([['نوع الإعلان','إشعار موجّه (Push)'],['نطاق التغطية','مطار الملك عبدالعزيز — جدة'],
+      ['الفترة','01/09 – 15/09'],['الميزانية','4,000 ر.س'],['العملاء المستهدفون','~10,000'],['التكلفة لكل ألف','400 ر.س']])}</div>
+  </div>
+  ${fld('نصّ الإعلان', `<div class="inp" style="min-height:60px">عروض بداية الأسبوع — خصم 20% على كل سيارات فرع مطار جدة.</div>`)}
+  ${note('info','ضوابط الإرسال مطبّقة','لن يصل هذا الإعلان لمن ألغى الاشتراك التسويقي، ولا يُحتسب ضمنه أكثر من رسالتين تسويقيتين أسبوعياً للمستخدم الواحد.')}`,
+  `<button class="btn coral" onclick="closeM()">الموافقة على الإعلان</button>
+   <button class="btn danger" onclick="closeM()">رفض</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.confirmSend = () => modal('تأكيد جدولة الإرسال', `
+  <div style="background:#FAFBFE;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px">
+    ${dl([['المستلمون','18,420 مستخدماً'],['القنوات','Push · بريد'],['موعد الإرسال','01/09/2026 — 10:00 ص'],['التكلفة التقديرية','0 ر.س']])}
+  </div>
+  ${note('warn','لا يمكن التراجع بعد بدء الإرسال','يمكن إلغاء الإرسال المجدول قبل موعده فقط.')}`,
+  `<button class="btn coral" onclick="closeM()">جدولة الإرسال</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`, 1);
+
+M.publishTerms = () => modal('نشر نسخة جديدة من الشروط', `
+  ${fld('رقم النسخة', inp('','3.3'))}
+  ${fld('تاريخ السريان', inp('','15/09/2026'))}
+  ${fld('ملخّص التغييرات', `<div class="inp" style="min-height:78px">تحديث بنود الإلغاء والاسترداد، وإضافة بند غرامات التأخير.</div>`)}
+  ${swRow('إلزام المستخدمين بالموافقة من جديد','تُطلب الموافقة قبل أي عملية حرجة',1)}
+  ${swRow('إشعار كل المستخدمين','Push وبريد قبل تاريخ السريان بأسبوع',1)}
+  ${note('warn','48,210 مستخدماً سيُطالَبون بالموافقة','لن يتمكّنوا من إنشاء حجز جديد قبل الموافقة على النسخة 3.3.')}`,
+  `<button class="btn coral" onclick="closeM()">نشر النسخة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+/* ===================== NAV + ROUTER ===================== */
+const NAV = [
+  {g:null, items:[
+    {k:'dashboard',t:'لوحة التحكم',i:'▦'},
+    {k:'inbox',t:'مركز الإشعارات',i:'🔔',n:4},
+    {k:'messages',t:'الرسائل',i:'📨',n:3},
+  ]},
+  {g:'المزوّدون', items:[
+    {k:'vendors',t:'قائمة المزوّدين',i:'🏢'},
+    {k:'kyc',t:'طابور الاعتماد',i:'📋',n:9},
+    {k:'kycReview',t:'مراجعة وثائق',i:'🔍',sub:'kyc'},
+    {k:'vendorFile',t:'ملف مزوّد',i:'📁',sub:'vendors'},
+  ]},
+  {g:'الأسطول', items:[
+    {k:'branches',t:'الفروع',i:'📍'},
+    {k:'fleet',t:'السيارات',i:'🚗'},
+    {k:'fleetReview',t:'مراقبة الجودة',i:'⚠',n:49},
+    {k:'models',t:'الماركات والموديلات',i:'🏷'},
+    {k:'modelRequests',t:'طلبات إضافة موديل',i:'📥',n:6},
+  ]},
+  {g:'المستخدمون', items:[
+    {k:'users',t:'كل الحسابات',i:'👥'},
+    {k:'customer',t:'ملف عميل',i:'👤',sub:'users'},
+    {k:'deletions',t:'طلبات الحذف',i:'🗑'},
+    {k:'fraud',t:'حسابات مشبوهة',i:'🛡',n:17},
+  ]},
+  {g:'الحجوزات', items:[
+    {k:'bookings',t:'كل الحجوزات',i:'📆'},
+    {k:'bookingMap',t:'خريطة الحجوزات',i:'🗺'},
+    {k:'booking',t:'تفاصيل حجز',i:'📄',sub:'bookings'},
+    {k:'extensions',t:'طلبات التمديد',i:'⏱',n:12},
+    {k:'stuck',t:'الحجوزات المتعثّرة',i:'⚑',n:19},
+  ]},
+  {g:'التظلّمات', items:[
+    {k:'disputes',t:'قائمة التظلّمات',i:'⚖',n:14},
+    {k:'objections',t:'اعتراضات الرسوم والغرامات',i:'⚑'},
+    {k:'objection',t:'تفاصيل اعتراض',i:'📑',sub:'objections'},
+    {k:'dispute',t:'تفاصيل تظلّم',i:'📑',sub:'disputes'},
+  ]},
+  {g:'المالية', items:[
+    {k:'finance',t:'النظرة المالية',i:'💰'},
+    {k:'transactions',t:'سجل المعاملات',i:'📊'},
+    {k:'failed',t:'معاملات فاشلة',i:'⚠',n:8},
+    {k:'settlements',t:'تسويات المزوّدين',i:'🏦',n:11},
+    {k:'settlement',t:'كشف تسوية',i:'🧾',sub:'settlements'},
+    {k:'refunds',t:'الاستردادات',i:'↩',n:9},
+    {k:'invoices',t:'الفواتير',i:'📃'},
+    {k:'recon',t:'مطابقة بوابة الدفع',i:'⇄',n:13},
+    {k:'commissions',t:'نسب العمولة',i:'%'},
+  ]},
+  {g:'التسويق', items:[
+    {k:'coupons',t:'الكوبونات',i:'🎟'},
+    {k:'campaigns',t:'الحملات',i:'📣'},
+    {k:'banners',t:'البانرات',i:'🖼'},
+    {k:'vendorAds',t:'إعلانات المزوّدين',i:'📢',n:5},
+  ]},
+  {g:'الإشعارات', items:[
+    {k:'notifySend',t:'إرسال إشعار',i:'✉'},
+    {k:'notifyLog',t:'سجل الإشعارات',i:'📬'},
+    {k:'templates',t:'القوالب',i:'📝'},
+  ]},
+  {g:'الدعم', items:[
+    {k:'tickets',t:'التذاكر',i:'🎫',n:38},
+    {k:'supportReports',t:'تقارير الدعم',i:'📊'},
+    {k:'ticket',t:'تفاصيل تذكرة',i:'💬',sub:'tickets'},
+    {k:'chatbot',t:'الشات بوت',i:'🤖'},
+    {k:'help',t:'مركز المساعدة',i:'❓'},
+  ]},
+  {g:'التقارير', items:[{k:'reports',t:'مركز التقارير',i:'📈'}]},
+  {g:'النظام', items:[
+    {k:'settings',t:'الإعدادات التشغيلية',i:'⚙'},
+    {k:'refdata',t:'البيانات المرجعية',i:'🗂'},
+    {k:'content',t:'المحتوى والشروط',i:'📜'},
+    {k:'admins',t:'الإداريون والصلاحيات',i:'🔑'},
+    {k:'audit',t:'سجل التدقيق',i:'🕘'},
+    {k:'integrationStatus',t:'حالة التكاملات',i:'🔌'},
+    {k:'welcomeCoupon',t:'كوبون الترحيب',i:'🎁'},
+    {k:'resetPassword',t:'إعادة تعيين كلمة المرور',i:'🔁'},
+    {k:'confirmPasswordReset',t:'تأكيد كلمة المرور',i:'🔐',sub:'resetPassword'},
+    {k:'login',t:'شاشة الدخول',i:'🔒'},
+  ]},
+];
+
+window.SUBOF = {};
+const SUBOF = window.SUBOF;
+window.TITLES = {};
+NAV.forEach(g=>g.items.forEach(i=>{ window.TITLES[i.k]=i.t; }));
+NAV.forEach(g=>g.items.forEach(i=>{ if(i.sub) SUBOF[i.k]=i.sub; }));
+let cur = 'dashboard';
+function renderNav(){
+  let html = `<div class="brand"><div class="mark">و<span>.</span></div><div><b>وفرا</b><small>لوحة إدارة المنصّة</small></div></div>`;
+  NAV.forEach(g=>{
+    html += `<div class="nav-group">`;
+    if(g.g) html += `<div class="gh">${g.g}</div>`;
+    g.items.forEach(i=>{
+      if(i.sub) return;                                  // detail screens are reached from their list, not the sidebar
+      const on = i.k===cur || i.k===(SUBOF[cur]||'');     // highlight the parent while a detail screen is open
+      html += `<a class="nav-item ${on?'active':''}" href="#${i.k}"><span class="ic">${i.i}</span>${i.t}${i.n?`<span class="count">${i.n}</span>`:''}</a>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('sidebar').innerHTML = html;
+}
+function go(k){ location.hash = k; }
+/* topbar bell / chat now resolve to real screens */
+document.addEventListener('click', e=>{
+  const b = e.target.closest('.topbar .icon-btn');
+  if(!b) return;
+  const i = [...document.querySelectorAll('.topbar .icon-btn')].indexOf(b);
+  go(i===2 ? 'inbox' : i===1 ? 'messages' : 'tickets');
+});
+function render(){
+  const k = (location.hash.replace('#','').split('?')[0]) || 'dashboard';
+  cur = S[k] ? k : 'dashboard';
+  window.cur = cur;
+  document.getElementById('view').innerHTML = S[cur]();
+  renderNav();
+  if(window.enhance) window.enhance(document.getElementById('view'));
+  const idx = (()=>{let n=0;for(const g of NAV){for(const i of g.items){if(i.sub)continue;n++;if(i.k===cur)return n;}}return 0;})();
+  const tot = NAV.reduce((a,g)=>a+g.items.filter(i=>!i.sub).length,0);
+  document.getElementById('stag').textContent = `${idx} / ${tot} — ${cur}`;
+  window.scrollTo(0,0);
+  if(window.enhance) window.enhance(document.getElementById('view'));
+}
+window.addEventListener('hashchange', render);
+render();
+</script>
