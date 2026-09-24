@@ -72,6 +72,13 @@ src/p4.html   الشاشات 28–45  التسويق · الإشعارات · ا
               + كل النوافذ المنبثقة + قائمة التنقّل + الموجّه (router)
 src/p12.html  تعديلات التشغيل الموحدة: المزودون والفروع، مركز الرسائل والإشعارات،
               التسعير والخدمات، وإتاحة السيارات وطلبات الموديلات
+src/p13.html  تطبيق متطلبات ملف Admin: لوحة التحكم، فصل المزودين والفروع،
+              وإدارة أسطول تفصيلية
+src/p14.html  تبويبات ومحتوى تفصيلي للماركات والموديلات وملف المزود،
+              وإجراءات طلبات الاعتماد وحالة مركبة موحّدة
+src/p15.html  إدارة الفروع التفصيلية: قائمة وبطاقات، ملف فرع، إضافة وتعديل،
+              ساعات العمل، إعدادات التوصيل وطاقم العمل
+src/p16.html  قائمة مزودين تفصيلية تتطابق حقولها التشغيلية مع قائمة الفروع
 ```
 
 ### إعادة البناء بعد أي تعديل
@@ -79,7 +86,7 @@ src/p12.html  تعديلات التشغيل الموحدة: المزودون و�
 ترتيب الدمج مُلزم — `p4` أخيراً لأنه يحوي الموجّه، و`p1` أولاً لأنه يعرّف المكوّنات:
 
 ```bash
-cat src/p1.html src/p2.html src/p3.html src/p5.html src/p6.html src/p7.html src/p4.html src/p8.html src/p9.html src/p10.html src/p11.html src/p12.html \
+cat src/p1.html src/p2.html src/p3.html src/p5.html src/p6.html src/p7.html src/p4.html src/p8.html src/p9.html src/p10.html src/p11.html src/p12.html src/p13.html src/p14.html src/p15.html src/p16.html \
     > deliverables/wafra-admin-screens.html
 ```
 
