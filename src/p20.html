@@ -1,0 +1,21 @@
+<script>
+/* بيانات محلية لعرض خريطة الحجوزات عندما لا تتوفر خدمة API بعد. */
+(function(){
+  const sampleBookingMap={cities:[
+    {name:'الرياض',count:1620,available:428,active:184,x:57,y:72,tone:'#F06C6C'},
+    {name:'جدة',count:1105,available:312,active:126,x:23,y:78,tone:'#20A16E'},
+    {name:'الخبر',count:734,available:186,active:82,x:74,y:54,tone:'#EAA631'},
+    {name:'الدمام',count:612,available:164,active:68,x:78,y:49,tone:'#EAA631'},
+    {name:'تبوك',count:216,available:74,active:21,x:20,y:32,tone:'#5267A9'},
+    {name:'حائل',count:184,available:61,active:16,x:39,y:45,tone:'#5267A9'}
+  ]};
+  const mapCard=()=>`<div class="card-b"><div class="map-canvas" style="background:linear-gradient(135deg,#F4F7FF,#E1EAFF)"><svg viewBox="0 0 900 390" width="100%" height="390" style="position:absolute;inset:0"><path d="M95 245 L235 88 L392 112 L530 200 L670 220 L785 322 L665 352 L492 331 L356 358 L188 322 Z" fill="#DCE6FF" stroke="#A9BCEB" stroke-width="3"/></svg>${sampleBookingMap.cities.map(c=>`<button class="map-point" style="inset-inline-start:${c.x}%;top:${c.y}%;background:${c.tone};width:${Math.min(68,25+Math.round(c.count/45))}px;height:${Math.min(68,25+Math.round(c.count/45))}px" onclick="WafraOps.mapCity('${c.name}')" title="${c.name}: ${c.count} حجزاً">${c.count>999?'1.6K':c.count}</button><span style="position:absolute;inset-inline-start:${c.x}%;top:calc(${c.y}% - 44px);transform:translateX(-50%);z-index:2;font-weight:800;color:#23386D;white-space:nowrap">${c.name}</span>`).join('')}<div style="position:absolute;top:14px;inset-inline-start:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px;z-index:3;font-size:11px;line-height:1.8"><b>حالة النقاط</b><br><span style="color:#F06C6C">●</span> ضغط حجوزات مرتفع<br><span style="color:#EAA631">●</span> يحتاج متابعة إتاحة<br><span style="color:#20A16E">●</span> أداء مستقر</div></div><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">${sampleBookingMap.cities.map(c=>`<button class="btn ghost sm" onclick="WafraOps.mapCity('${c.name}')">${c.name} · ${c.count} حجز</button>`).join('')}</div>${table(['المدينة','الحجوزات النشطة','السيارات المتاحة','متوسط الاستجابة','الحالة'],sampleBookingMap.cities.map(c=>[c.name,c.active,c.available,'34 دقيقة',c.count>1000?bdg('ضغط مرتفع','r'):c.available<180?bdg('متابعة الإتاحة','a'):bdg('مستقر','g')]))}</div>`;
+  const liveMount=mountResource;
+  window.mountResource=async function(hostId,resource,renderData){
+    if(hostId==='resource-bookingMap'){const host=document.getElementById(hostId);if(host)host.innerHTML=mapCard();return;}
+    return liveMount(hostId,resource,renderData);
+  };
+  S.bookingMap=()=>phead('خريطة الحجوزات','متابعة التوزيع والإتاحة حسب المدينة والموقع — بيانات تجريبية محلية',[])+card(cardH('الحجوزات النشطة','اضغط على أي مدينة لاستعراض ملخصها')+`<div id="resource-bookingMap">${mapCard()}</div>`);
+  render();
+})();
+</script>

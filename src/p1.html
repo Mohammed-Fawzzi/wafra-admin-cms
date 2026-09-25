@@ -394,7 +394,7 @@ const esc = (s) => String(s);
 
 function phead(t, s, reqs, acts){
   return `<div class="phead"><div><h1>${t}</h1><p>${s||''}</p>
-    ${reqs?`<div class="reqs">${reqs.map(r=>`<span class="req">${r}</span>`).join('')}</div>`:''}</div>
+    </div>
     ${acts?`<div class="acts">${acts}</div>`:''}</div>`;
 }
 function card(inner, cls){ return `<div class="card ${cls||''}">${inner}</div>`; }

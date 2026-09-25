@@ -79,6 +79,8 @@ src/p14.html  تبويبات ومحتوى تفصيلي للماركات والم
 src/p15.html  إدارة الفروع التفصيلية: قائمة وبطاقات، ملف فرع، إضافة وتعديل،
               ساعات العمل، إعدادات التوصيل وطاقم العمل
 src/p16.html  قائمة مزودين تفصيلية تتطابق حقولها التشغيلية مع قائمة الفروع
+src/p17.html  تطبيق ملاحظات Admin-2: لوحة تشغيلية ومالية، دورة الحجوزات،
+              التسعير الديناميكي، جودة الأسطول، والتحليلات
 ```
 
 ### إعادة البناء بعد أي تعديل
@@ -86,7 +88,7 @@ src/p16.html  قائمة مزودين تفصيلية تتطابق حقولها �
 ترتيب الدمج مُلزم — `p4` أخيراً لأنه يحوي الموجّه، و`p1` أولاً لأنه يعرّف المكوّنات:
 
 ```bash
-cat src/p1.html src/p2.html src/p3.html src/p5.html src/p6.html src/p7.html src/p4.html src/p8.html src/p9.html src/p10.html src/p11.html src/p12.html src/p13.html src/p14.html src/p15.html src/p16.html \
+cat src/p1.html src/p2.html src/p3.html src/p5.html src/p6.html src/p7.html src/p4.html src/p8.html src/p9.html src/p10.html src/p11.html src/p12.html src/p13.html src/p14.html src/p15.html src/p16.html src/p17.html \
     > deliverables/wafra-admin-screens.html
 ```
 
