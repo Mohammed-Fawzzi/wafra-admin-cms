@@ -81,6 +81,11 @@ src/p15.html  إدارة الفروع التفصيلية: قائمة وبطاق�
 src/p16.html  قائمة مزودين تفصيلية تتطابق حقولها التشغيلية مع قائمة الفروع
 src/p17.html  تطبيق ملاحظات Admin-2: لوحة تشغيلية ومالية، دورة الحجوزات،
               التسعير الديناميكي، جودة الأسطول، والتحليلات
+src/p18–p21.html  التحليلات التفصيلية، خريطة الحجوزات المحلية، التقييمات
+src/p22–p26.html  استكمال ملاحظات Admin2 وAdmin-3، نماذج الاعتماد والمستندات،
+                  بيانات الحالة المحلية، التصدير، والتقارير التفصيلية
+src/p27–p31.html  تفعيل تعديل المزودين والعملاء، بيانات الفروع والصلاحيات،
+                  أداء المزودين، والتحليل الفني والنقل بين الفروع
 ```
 
 ### إعادة البناء بعد أي تعديل
@@ -88,7 +93,7 @@ src/p17.html  تطبيق ملاحظات Admin-2: لوحة تشغيلية وما�
 ترتيب الدمج مُلزم — `p4` أخيراً لأنه يحوي الموجّه، و`p1` أولاً لأنه يعرّف المكوّنات:
 
 ```bash
-cat src/p1.html src/p2.html src/p3.html src/p5.html src/p6.html src/p7.html src/p4.html src/p8.html src/p9.html src/p10.html src/p11.html src/p12.html src/p13.html src/p14.html src/p15.html src/p16.html src/p17.html \
+cat src/p1.html src/p2.html src/p3.html src/p5.html src/p6.html src/p7.html src/p4.html src/p8.html src/p9.html src/p10.html src/p11.html src/p12.html src/p13.html src/p14.html src/p15.html src/p16.html src/p17.html src/p18.html src/p19.html src/p20.html src/p21.html src/p22.html src/p23.html src/p24.html src/p25.html src/p26.html src/p27.html src/p28.html src/p29.html src/p30.html src/p31.html \
     > deliverables/wafra-admin-screens.html
 ```
 

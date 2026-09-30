@@ -1,0 +1,9 @@
+<script>
+/* دوال عرض مشتركة للمسارات المضافة؛ تبقى مستقلة عن نطاق كل شاشة. */
+function money(value){ return {v:String(value)+' ر.س',c:'num'}; }
+function pill(value){
+  const good=['نشط','مفعلة','مكتمل','معتمد','مقبول','ضمن الهدف','متاحة','مكتفية','مغلق'];
+  const bad=['متأخر','مرفوض','موقفة','غير نشط','عجز','مفتوح'];
+  return bdg(value,good.includes(value)?'g':bad.includes(value)?'r':'a');
+}
+</script>

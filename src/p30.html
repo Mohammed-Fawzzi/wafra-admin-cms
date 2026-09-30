@@ -1,0 +1,16 @@
+<script>
+/* تحفظ صلاحيات الفروع محلياً مع بقية بيانات النموذج عند إعادة فتح الصفحة. */
+(function(){
+  const state=window.WAFRA_DATA;
+  if(!state) return;
+  window.__branchPermissions=state.branchPermissions||window.__branchPermissions||{};
+  WafraOps.togglePermission=(branch,key)=>{
+    state.branchPermissions=state.branchPermissions||{};
+    const id=`${branch}:${key}`;
+    state.branchPermissions[id]=!state.branchPermissions[id];
+    window.__branchPermissions=state.branchPermissions;
+    localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));
+    render();
+  };
+})();
+</script>

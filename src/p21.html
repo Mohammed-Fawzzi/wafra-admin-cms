@@ -1,0 +1,41 @@
+<script>
+/* التقييمات والمراجعات — واجهات عربية مبنية على ثيم وفرا. */
+(function(){
+  const ratingTabs=(active)=>`<div class="tabs"><a class="tab ${active==='criteria'?'on':''}" href="#ratingCriteria">معايير التقييم</a><a class="tab ${active==='manage'?'on':''}" href="#ratingManage">إدارة التقييمات</a></div>`;
+  const star=v=>`<span style="color:#D89A00;font-weight:800">★ ${v}</span>`;
+  const score=(v,t='g')=>bdg(v+'/10',t);
+  const amount=v=>({v:v,c:'num'});
+  const criteria=[
+    ['راحة السيارة','مدى راحة المقاعد والمساحة وجودة القيادة','4.3','a'],
+    ['نظافة السيارة','نظافة المقصورة الداخلية والخارجية','9.1','g'],
+    ['سرعة الاستلام','الوقت المستغرق لتسليم السيارة للعميل','9.6','g'],
+    ['سرعة التسليم','الوقت المستغرق لإتمام إرجاع السيارة','9.6','g'],
+    ['سهولة الوصول للفرع','وضوح الموقع وسهولة الوصول لمكان الاستلام','7.2','g'],
+    ['جودة خدمة الموظفين','احترافية فريق الفرع وسرعة تجاوبه','9.6','g'],
+    ['القيمة مقابل السعر','مدى تناسب السعر مع جودة الخدمة','4.8','a']
+  ];
+  const providers=[
+    ['شركة الصحراء لتأجير السيارات','الرياض','مطار الملك خالد','8.2','24','26 سبتمبر 2026'],
+    ['كي رنت','جدة','مطار الملك عبدالعزيز','7.6','18','25 سبتمبر 2026'],
+    ['مسار لتأجير المركبات','الخبر','مطار الدمام','7.9','12','24 سبتمبر 2026'],
+    ['الوسام كار','الرياض','وسط المدينة','7.4','10','22 سبتمبر 2026'],
+    ['درب الخليج','جدة','مطار الملك عبدالعزيز','8.7','16','20 سبتمبر 2026']
+  ];
+  const reviews=[
+    ['محمد القحطاني','BK-458721','شركة الصحراء','الرياض','مطار الملك خالد','9.2','إيجابي','26 سبتمبر 2026'],
+    ['سارة الدوسري','BK-458692','كي رنت','جدة','مطار الملك عبدالعزيز','7.6','إيجابي','25 سبتمبر 2026'],
+    ['عبدالله الحربي','BK-458651','مسار','الخبر','مطار الدمام','6.8','سلبي','24 سبتمبر 2026'],
+    ['ريم الفهد','BK-458630','الوسام كار','الرياض','وسط المدينة','8.9','إيجابي','22 سبتمبر 2026'],
+    ['فيصل المطيري','BK-458605','درب الخليج','جدة','مطار الملك عبدالعزيز','8.1','إيجابي','20 سبتمبر 2026'],
+    ['نورة السبيعي','BK-458571','شركة الصحراء','الرياض','مطار الملك خالد','9.5','إيجابي','19 سبتمبر 2026'],
+    ['عمر الشهري','BK-458534','كي رنت','جدة','وسط المدينة','5.8','سلبي','18 سبتمبر 2026']
+  ];
+  const filterRow=()=>`<div class="filters" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">${fld('الفترة',`<select class="native-input"><option>26 سبتمبر – 26 أكتوبر 2026</option><option>هذا الشهر</option><option>آخر 3 أشهر</option></select>`)}${fld('المدينة',`<select class="native-input"><option>كل المدن</option><option>الرياض</option><option>جدة</option><option>الخبر</option></select>`)}${fld('المزود',`<select class="native-input"><option>كل المزودين</option><option>شركة الصحراء</option><option>كي رنت</option></select>`)}${fld('الفرع',`<select class="native-input"><option>كل الفروع</option><option>مطار الملك خالد</option><option>وسط المدينة</option></select>`)}</div>`;
+  S.ratingCriteria=()=>phead('إدارة معايير التقييم','تعريف العناصر التي يُقيّم بها العميل تجربة التأجير والمزود',[],`<button class="btn coral" onclick="WafraOps.demoAction('إضافة معيار تقييم')">＋ إضافة معيار</button>`)+card(ratingTabs('criteria')+`<div class="card-b">${table(['#','اسم المعيار','الوصف','الوزن','الحالة','الإجراءات'],criteria.map((x,i)=>[i+1,{v:x[0],c:'strong'},x[1],score(x[2],x[3]),bdg('مفعّل','g'),`<div class="acts-cell"><button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل معيار ${x[0]}')">تعديل</button><button class="btn danger sm" onclick="WafraOps.demoAction('إلغاء معيار ${x[0]}')">إيقاف</button></div>`]))}</div>`)+card(cardH('أداء المزودين وفق المعايير','يظهر الملخص بعد اختيار المزود والفترة')+filterRow()+`<div class="card-b"><div class="grid2">${card(`<div class="card-b" style="display:flex;align-items:center;gap:14px"><div style="background:var(--navy);color:#fff;border-radius:12px;padding:15px;font-size:22px;font-weight:800">7.7</div><div><b>متوسط تقييم المزود</b><span class="sub">81 مراجعة خلال الفترة المحددة</span></div></div>`)}${card(`<div class="card-b"><b>تفصيل المعايير</b><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">${criteria.map(x=>`<div><span class="sub">${x[0]} ${x[2]}</span><div style="height:6px;border-radius:8px;background:var(--grey-bg);overflow:hidden"><i style="display:block;height:100%;width:${x[2]*10}%;background:${x[3]==='a'?'var(--amber)':'var(--green)'}"></i></div></div>`).join('')}</div></div>`)}</div>${table(['#','المزود','المدينة','الفرع','التقييم العام','المراجعات','آخر تحديث','الإجراء'],providers.map((p,i)=>[i+1,{v:p[0],c:'strong'},...p.slice(1,3),score(p[3]),p[4],p[5],`<button class="btn ghost sm" onclick="WafraOps.demoAction('عرض تفاصيل تقييم ${p[0]}')">عرض التفاصيل</button>`]))}</div>`);
+  S.ratingManage=()=>phead('إدارة تقييمات العملاء','عرض ومتابعة تقييمات العملاء ومراجعاتهم لجميع المزودين والفروع',[],`<button class="btn ghost" onclick="WafraOps.demoAction('تصدير تقييمات العملاء')">⤓ تصدير إلى Excel</button>`)+card(ratingTabs('manage')+filterRow()+`<div class="filters" style="padding-top:0"><button class="btn ghost sm" onclick="WafraOps.demoAction('عرض التقييمات الإيجابية')">👍 الإيجابية فقط</button><button class="btn ghost sm" onclick="WafraOps.demoAction('عرض التقييمات السلبية')">👎 السلبية فقط</button><button class="btn ghost sm" onclick="WafraOps.demoAction('ترتيب التقييمات')">◷ الأحدث أولاً</button><button class="btn coral sm" onclick="WafraOps.demoAction('تطبيق فلاتر التقييمات')">تطبيق الفلاتر</button></div>`)+`<div class="card-b">${kpi([{i:'★',l:'إجمالي التقييمات',v:'1,248',d:'▲ 12% عن الفترة السابقة',t:'up'},{i:'👍',l:'تقييمات إيجابية',v:'1,021',d:'81.9% من الإجمالي',t:'up'},{i:'👎',l:'تقييمات سلبية',v:'227',d:'▼ 1.1% عن الفترة السابقة',t:'up'},{i:'★',l:'متوسط التقييم',v:'7.8',u:'/ 10',d:'▲ 0.3 نقطة',t:'up'}])}</div>`+card(cardH('قائمة التقييمات','عرض 7 من أصل 1,248 تقييم')+`<div class="card-b">${table(['#','اسم العميل','رقم الحجز','المزود','المدينة','الفرع','التقييم','النوع','التاريخ','الإجراءات'],reviews.map((r,i)=>[i+1,{v:r[0],c:'strong'},amount(r[1]),r[2],r[3],r[4],star(r[5]),bdg(r[6],r[6]==='إيجابي'?'g':'r'),r[7],`<div class="acts-cell"><button class="btn ghost sm" onclick="WafraOps.demoAction('عرض تقييم ${r[1]}')">👁</button><button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل تقييم ${r[1]}')">✎</button><button class="btn danger sm" onclick="WafraOps.demoAction('إخفاء تقييم ${r[1]}')">حذف</button></div>`]))}${pager(1248,125)}</div>`);
+  const customerNav=NAV.find(g=>g.g==='العملاء');
+  if(customerNav&&!customerNav.items.some(i=>i.k==='ratingManage'))customerNav.items.push({k:'ratingManage',t:'إدارة التقييمات',i:'★'},{k:'ratingCriteria',t:'معايير التقييم',i:'☷'});
+  NAV.forEach(g=>g.items.forEach(i=>window.TITLES[i.k]=i.t));
+  render();
+})();
+</script>

@@ -244,7 +244,7 @@ function setupTable(table){
 
   /* ---- tabs ---- */
   const tabs = [...card.querySelectorAll('.tabs .tab')];
-  tabs.forEach(t=>{
+  tabs.filter(t=>!t.getAttribute('onclick')).forEach(t=>{
     t.onclick = ()=>{
       tabs.forEach(x=>x.classList.remove('on')); t.classList.add('on');
       const lbl = norm(t.childNodes[0].textContent);
@@ -399,7 +399,7 @@ function setupList(card){
   const s2 = card.querySelector('.fsearch input');
   if(s2) s2.addEventListener('input',()=>{ state.q = norm(s2.value); apply(); });
   const tabs = [...card.querySelectorAll('.tabs .tab')];
-  tabs.forEach(t=>t.onclick=()=>{
+  tabs.filter(t=>!t.getAttribute('onclick')).forEach(t=>t.onclick=()=>{
     tabs.forEach(x=>x.classList.remove('on')); t.classList.add('on');
     const lbl = norm(t.childNodes[0].textContent);
     state.tab = lbl==='الكل' ? null : lbl; apply();
@@ -414,7 +414,7 @@ function setupList(card){
 
 /* ---------- non-table controls ---------- */
 function setupControls(root){
-  root.querySelectorAll('.tg').forEach(t=>{ if(t.__w) return; t.__w=1;
+  root.querySelectorAll('.tg').forEach(t=>{ if(t.__w || t.getAttribute('onclick')) return; t.__w=1;
     t.onclick=()=>t.classList.toggle('on'); });
   root.querySelectorAll('.chk').forEach(c=>{ if(c.__w) return; c.__w=1;
     c.onclick=()=>{ if(c.classList.contains('no')) return;

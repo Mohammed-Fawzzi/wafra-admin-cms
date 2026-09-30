@@ -1,0 +1,12 @@
+<script>
+/* يطابق اسم مجموعة المزودين في كل صيغة لضمان ظهور شاشة الأداء في القائمة. */
+(function(){
+  const providers=NAV.find(x=>typeof x.g==='string'&&x.g.includes('المزود'));
+  if(providers){
+    const existing=providers.items.find(x=>x.k==='providerPerformance');
+    if(!existing)providers.items.splice(1,0,{k:'providerPerformance',t:'أداء المزودين',i:'◷'});
+    else existing.t='أداء المزودين';
+  }
+  render();
+})();
+</script>
