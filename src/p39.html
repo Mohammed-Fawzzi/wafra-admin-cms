@@ -1,0 +1,114 @@
+<style id="wafra-imap">
+/* الخريطة التفاعلية — مطابق لنموذج التصميم */
+.im-badge{display:inline-flex;align-items:center;gap:6px;background:#F04438;color:#fff;border-radius:99px;padding:4px 12px;font:800 11.5px Cairo;margin-bottom:8px}
+.im-badge i{width:14px;height:14px;border-radius:99px;background:#fff;color:#F04438;display:grid;place-items:center;font-size:9px;font-style:normal;font-weight:900}
+.im-wrap{padding:14px}
+.im-card{position:relative;background:#fff;border:1px solid #E4E9F3;border-radius:18px;overflow:hidden;box-shadow:0 8px 24px rgba(25,42,84,.06);min-height:520px}
+.im-legend{position:absolute;top:18px;inset-inline-end:18px;z-index:2;background:#fff;border:1px solid #E4E9F3;border-radius:12px;padding:12px 14px;box-shadow:0 6px 16px rgba(25,42,84,.08);min-width:150px}
+.im-legend h4{margin:0 0 10px;font:800 13px Cairo;color:var(--ink)}
+.im-legend .row{display:flex;align-items:center;gap:8px;font:700 12px Cairo;color:#44506A;margin:7px 0}
+.im-legend .dot{width:12px;height:12px;border-radius:99px;flex:0 0 auto;position:relative}
+.im-legend .dot.low{background:#293B85}
+.im-legend .dot.low::after{content:'';position:absolute;inset:3px;border-radius:99px;background:#fff}
+.im-legend .dot.mid{background:#F0A632}
+.im-legend .dot.hi{background:#F06C6C}
+.im-map{width:100%;height:auto;display:block;min-height:520px;background:linear-gradient(180deg,#F7F9FD,#EEF3FB)}
+.im-map .city{cursor:pointer;transition:opacity .15s}
+.im-map .city:hover{opacity:.92;filter:brightness(1.05)}
+.im-map .lbl{font-family:Cairo;font-weight:800;font-size:13px;fill:#23386D;pointer-events:none}
+.im-tip{position:absolute;bottom:18px;inset-inline-start:18px;background:#fff;border:1px solid #E4E9F3;border-radius:12px;padding:10px 14px;font:700 12px Cairo;color:#44506A;box-shadow:0 6px 16px rgba(25,42,84,.08);max-width:280px}
+@media(max-width:700px){
+  .im-card{min-height:420px}
+  .im-map{min-height:420px}
+  .im-legend{position:static;margin:12px;width:auto}
+}
+</style>
+<script>
+/* الخريطة التفاعلية — كثافة الطلب عبر مدن المملكة. */
+(function(){
+  const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['financial','النظرة المالية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
+  const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
+
+  const cities=[
+    {n:'تبوك',x:168,y:168,r:16,lvl:'low',bookings:'216'},
+    {n:'حائل',x:300,y:210,r:15,lvl:'low',bookings:'184'},
+    {n:'بريدة',x:390,y:255,r:16,lvl:'low',bookings:'268'},
+    {n:'المدينة',x:230,y:250,r:28,lvl:'mid',bookings:'486'},
+    {n:'الرياض',x:470,y:300,r:46,lvl:'hi',bookings:'1,620'},
+    {n:'الخبر',x:585,y:255,r:26,lvl:'mid',bookings:'734'},
+    {n:'الدمام',x:620,y:235,r:22,lvl:'mid',bookings:'520'}
+  ];
+  const color={hi:'#F06C6C',mid:'#F0A632',low:'#293B85'};
+
+  const toast=msg=>{
+    const old=document.querySelector('.wafra-demo-toast'); old?.remove();
+    const el=document.createElement('div'); el.className='toast on wafra-demo-toast'; el.textContent=msg;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),2600);
+  };
+  Object.assign(WafraOps,{
+    mapCity:n=>{
+      const c=cities.find(x=>x.n===n);
+      const dens=c?(c.lvl==='hi'?'كثافة عالية':c.lvl==='mid'?'متوسطة':'منخفضة'):'—';
+      toast(`تم عرض تفاصيل ${n}: ${c?c.bookings:'—'} حجزاً · ${dens}`);
+    }
+  });
+
+  const saudiMap=()=>{
+    const marks=cities.map(c=>{
+      const fill=color[c.lvl];
+      const core=c.lvl==='low'
+        ?`<circle cx="${c.x}" cy="${c.y}" r="${c.r}" fill="${fill}" fill-opacity=".9" stroke="#fff" stroke-width="3"/><circle cx="${c.x}" cy="${c.y}" r="4" fill="#fff"/>`
+        :`<circle cx="${c.x}" cy="${c.y}" r="${c.r}" fill="${fill}" fill-opacity=".88" stroke="#fff" stroke-width="3"/>`;
+      const ly=c.y+c.r+16;
+      return `<g class="city" onclick="WafraOps.mapCity('${c.n}')">${core}<text class="lbl" x="${c.x}" y="${ly}" text-anchor="middle">${c.n}</text></g>`;
+    }).join('');
+
+    return `<svg class="im-map" viewBox="0 0 760 520" role="img" aria-label="خريطة كثافة الطلب في المملكة">
+      <defs>
+        <filter id="imShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#23386D" flood-opacity=".08"/>
+        </filter>
+      </defs>
+      <path filter="url(#imShadow)" d="M95 250
+        C110 180 145 120 195 95
+        C250 68 320 78 380 105
+        C430 125 470 155 505 185
+        C545 220 585 240 630 270
+        C675 300 710 345 720 390
+        C728 430 700 465 655 485
+        C600 510 530 505 470 495
+        C400 482 340 490 280 485
+        C210 478 150 450 120 400
+        C95 360 85 300 95 250 Z"
+        fill="#D7E3F8" stroke="#A9BCEB" stroke-width="2.5"/>
+      <path d="M200 220 C240 190 290 195 330 220 C360 240 355 280 320 300 C280 320 230 310 210 275 C195 250 185 235 200 220 Z" fill="#C5D5F2" opacity=".55"/>
+      <path d="M480 250 C520 235 560 250 575 285 C585 310 565 335 530 340 C495 345 470 320 468 290 C466 265 470 255 480 250 Z" fill="#C5D5F2" opacity=".45"/>
+      ${marks}
+    </svg>`;
+  };
+
+  const baseAnalytics=S.analytics;
+  S.analytics=()=>{
+    const active=window.__analyticsTab||'search';
+    if(active!=='map') return baseAnalytics();
+
+    const legend=`<div class="im-legend">
+      <h4>الخريطة : كثافة الطلب</h4>
+      <div class="row"><span class="dot hi"></span> كثافة عالية</div>
+      <div class="row"><span class="dot mid"></span> متوسطة</div>
+      <div class="row"><span class="dot low"></span> منخفضة</div>
+    </div>`;
+
+    const body=`<div class="im-wrap">
+      <div class="im-card">
+        ${legend}
+        ${saudiMap()}
+        <div class="im-tip">اضغط على أي مدينة لعرض تفاصيل الكثافة والحجوزات</div>
+      </div>
+    </div>`;
+
+    return `<div class="phead"><div><div class="im-badge"><i>✓</i> كل البيانات</div><h1>الخريطة التفاعلية</h1><p>توزيع الشركات والفروع والمركبات والوكلاء ونقاط التوصيل والاستلام وكثافة الطلب عبر المملكة</p></div></div>`
+      +card(tabbar(active)+body);
+  };
+})();
+</script>

@@ -1,0 +1,229 @@
+<style id="wafra-providers-v2">
+/* أداء المزودين — بطاقة أداء المزود المقارنة (نموذج Claude) */
+.pp-wrap{display:flex;flex-direction:column;gap:14px}
+.pp-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pp-kpi{background:#fff;border:1px solid #E4E9F3;border-radius:14px;padding:16px 18px;box-shadow:0 6px 18px rgba(25,42,84,.05);position:relative;min-height:88px}
+.pp-kpi .l{font:700 12px Cairo;color:var(--muted);margin-bottom:8px}
+.pp-kpi .v{font:800 16px Cairo;color:var(--ink);line-height:1.45;max-width:85%}
+.pp-kpi .v.big{font-size:28px;line-height:1.1}
+.pp-kpi .ic{position:absolute;top:14px;inset-inline-start:14px;width:28px;height:28px;border-radius:99px;display:grid;place-items:center;font-size:14px}
+.pp-kpi .ic.hi{background:#E8F8F0;color:#148A5A}
+.pp-kpi .ic.lo{background:#FDECEC;color:#C62828}
+.pp-kpi .ic.n{background:#EAF0FF;color:#293B85}
+.pp-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.pp-tools .grow{flex:1;min-width:220px}
+.pp-search{display:flex;align-items:center;gap:8px;border:1px solid #D7DEEE;border-radius:10px;background:#fff;padding:10px 14px}
+.pp-search input{border:0;outline:0;font:600 13px Cairo;width:100%;background:transparent}
+.pp-acts{display:flex;flex-wrap:wrap;gap:8px}
+.pp-panel{background:#fff;border:1px solid #E4E9F3;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.05)}
+.pp-panel-b{padding:0}
+.pp-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid #EEF1F7;font:700 12px Cairo;color:var(--muted)}
+.pp-pages{display:flex;gap:6px}
+.pp-pages button{min-width:34px;height:34px;border-radius:99px;border:1px solid #D7DEEE;background:#fff;font:800 12px Cairo;cursor:pointer;color:var(--navy)}
+.pp-pages button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pp-pill{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:4px 10px;border-radius:99px;font:800 12px Cairo}
+.pp-pill.g{background:#E8F8F0;color:#148A5A}
+.pp-pill.a{background:#FFF4E0;color:#B86A00}
+.pp-pill.r{background:#FDECEC;color:#C62828}
+.pp-score{font:800 15px Cairo;color:var(--ink)}
+.ap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ap-hint{font:600 12px Cairo;color:var(--muted);margin-top:4px;line-height:1.5}
+@media(max-width:900px){
+  .pp-kpis{grid-template-columns:1fr}
+  .ap-grid{grid-template-columns:1fr}
+}
+</style>
+<script>
+/* قائمة المزودين: الإبقاء على التصميم + نموذج إضافة مكتمل. أداء المزودين: بطاقة مقارنة Claude. */
+(function(){
+  const state=window.WAFRA_DATA||(window.WAFRA_DATA={});
+  state.providers=state.providers||[
+    {id:'PV-001',name:'شركة الصحراء لتأجير السيارات',city:'الرياض',address:'طريق الملك فهد، العليا',branches:7,total:214,available:214,bookings:23,services:'استلام · توصيل · بين المدن',status:'نشط',cr:'1010893442',region:'الوسطى',phone:'920000111',email:'info@sahra.example'},
+    {id:'PV-002',name:'كي رنت',city:'جدة',address:'شارع الأمير سلطان، الشاطئ',branches:5,total:168,available:168,bookings:19,services:'استلام · توصيل',status:'نشط',cr:'1012499983',region:'الغربية',phone:'920000222',email:'ops@krent.example'},
+    {id:'PV-003',name:'مسار لتأجير المركبات',city:'الخبر',address:'طريق الكورنيش، الخبر',branches:4,total:96,available:0,bookings:4,services:'توصيل',status:'موقف',cr:'1014003244',region:'الشرقية',phone:'920000333',email:'hello@masar.example'}
+  ];
+  const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const dialog=(t,b,f)=>`<div class="modal"><div class="modal-h"><h3>${t}</h3><span class="x" onclick="closeM()">✕</span></div><div class="modal-b">${b}</div><div class="modal-f">${f||'<button class="btn ghost" onclick="closeM()">إغلاق</button>'}</div></div>`;
+  const persist=()=>{try{localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));}catch(e){}};
+  const toast=msg=>{
+    if(typeof window.__toast==='function'){window.__toast(msg);return;}
+    const old=document.querySelector('.wafra-demo-toast'); old?.remove();
+    const el=document.createElement('div'); el.className='toast on wafra-demo-toast'; el.textContent=msg;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),2600);
+  };
+  const val=id=>document.getElementById(id)?.value?.trim()||'';
+  const level=n=>{
+    const t=n>=80?'g':n>=50?'a':'r';
+    return `<span class="pp-pill ${t}">${n}%</span>`;
+  };
+
+  const perfData=[
+    {n:'شركة المستقبل لتأجير السيارات',r:56,o:86,k:86,c:82,p:96,s:81},
+    {n:'شركة الينبوع لتأجير السيارات',r:72,o:84,k:78,c:80,p:88,s:80},
+    {n:'شركة الصحراء لتأجير السيارات',r:90,o:78,k:84,c:88,p:82,s:84},
+    {n:'شركة الوفرة لتأجير السيارات',r:64,o:70,k:66,c:58,p:74,s:66},
+    {n:'كي رنت لتأجير السيارات',r:78,o:74,k:72,c:76,p:70,s:74},
+    {n:'شركة التميّز لتأجير السيارات',r:42,o:48,k:38,c:44,p:52,s:45},
+    {n:'شركة الوطنية لتأجير السيارات',r:68,o:72,k:70,c:64,p:76,s:70},
+    {n:'شركة السريعة لتأجير السيارات',r:54,o:60,k:58,c:50,p:62,s:57},
+    {n:'شركة النخبة لتأجير السيارات',r:82,o:80,k:76,c:84,p:78,s:80},
+    {n:'شركة الخليج لتأجير السيارات',r:60,o:66,k:62,c:58,p:68,s:63},
+    {n:'شركة اليسر لتأجير السيارات',r:48,o:52,k:46,c:40,p:55,s:48},
+    {n:'شركة الأركان لتأجير السيارات',r:36,o:42,k:34,c:30,p:44,s:37}
+  ].sort((a,b)=>b.s-a.s);
+
+  Object.assign(WafraOps,{
+    providerFilters:()=>{
+      window.__providerFilters={
+        q:document.getElementById('provider-q')?.value||'',
+        city:document.getElementById('provider-city')?.value||'',
+        status:document.getElementById('provider-status')?.value||''
+      };
+      render();
+    },
+    editProvider:id=>{
+      const p=state.providers.find(x=>x.id===id); if(!p) return;
+      openM(dialog(`تعديل بيانات ${safe(p.name)}`,
+        `<div class="ap-grid">
+          ${fld('اسم المزود',`<input id="provider-name" class="native-input" value="${safe(p.name)}">`)}
+          ${fld('السجل التجاري',`<input id="provider-cr" class="native-input" value="${safe(p.cr||'')}">`)}
+          ${fld('المدينة',`<select id="provider-city-edit" class="native-input">${['الرياض','جدة','الخبر','الدمام','مكة','المدينة'].map(x=>`<option ${p.city===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+          ${fld('منطقة التجهيز',`<select id="provider-region" class="native-input">${['الوسطى','الشرقية','الغربية','الشمالية','الجنوبية'].map(x=>`<option ${(p.region||'الوسطى')===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+          ${fld('العنوان',`<input id="provider-address" class="native-input" value="${safe(p.address)}">`)}
+          ${fld('الجوال / التواصل',`<input id="provider-phone" class="native-input" value="${safe(p.phone||'')}">`)}
+          ${fld('البريد الإلكتروني',`<input id="provider-email" class="native-input" value="${safe(p.email||'')}">`)}
+          ${fld('الحالة',`<select id="provider-status-edit" class="native-input">${['نشط','موقف','طلب اعتماد'].map(x=>`<option ${p.status===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+        </div>
+        ${fld('الخدمات',`<div style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 0">${[['pickup','استلام من الفرع'],['delivery','توصيل'],['intercity','بين المدن']].map(([k,l])=>{const on=(p.services||'').includes(l.split(' ')[0])||(p.services||'').includes(l);return `<label style="display:flex;gap:6px;align-items:center;font:700 12px Cairo"><input type="checkbox" id="psvc-${k}" ${on?'checked':''}> ${l}</label>`;}).join('')}</div>`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveProvider('${id}')">حفظ التعديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    saveProvider:id=>{
+      if(!id){ WafraOps.createProvider(); return; }
+      const p=state.providers.find(x=>x.id===id); if(!p) return;
+      p.name=val('provider-name')||p.name;
+      p.cr=val('provider-cr')||p.cr;
+      p.city=val('provider-city-edit')||p.city;
+      p.region=val('provider-region')||p.region;
+      p.address=val('provider-address')||p.address;
+      p.phone=val('provider-phone')||p.phone;
+      p.email=val('provider-email')||p.email;
+      p.status=val('provider-status-edit')||p.status;
+      const sv=[];
+      if(document.getElementById('psvc-pickup')?.checked) sv.push('استلام');
+      if(document.getElementById('psvc-delivery')?.checked) sv.push('توصيل');
+      if(document.getElementById('psvc-intercity')?.checked) sv.push('بين المدن');
+      if(sv.length) p.services=sv.join(' · ');
+      persist(); closeM(); render(); toast('تم حفظ بيانات المزود.');
+    },
+    addProvider:()=>{
+      openM(dialog('إضافة مزود',
+        `<div style="padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,#EEF3FF,#FFF8F7);margin-bottom:14px">
+          <b style="color:var(--navy)">بيانات الاعتماد والتشغيل</b>
+          <div class="ap-hint">أدخل بيانات الشركة للاعتماد. الحالة الافتراضية: طلب اعتماد.</div>
+        </div>
+        <div class="ap-grid">
+          ${fld('اسم الشركة',`<input id="ap-name" class="native-input" placeholder="مثال: شركة التميّز لتأجير السيارات">`)}
+          ${fld('السجل التجاري',`<input id="ap-cr" class="native-input" placeholder="1010xxxxxx">`)}
+          ${fld('المدينة الرئيسية',`<select id="ap-city" class="native-input"><option>الرياض</option><option>جدة</option><option>الخبر</option><option>الدمام</option><option>مكة</option><option>المدينة</option></select>`)}
+          ${fld('منطقة التجهيز',`<select id="ap-region" class="native-input"><option>الوسطى</option><option>الشرقية</option><option>الغربية</option><option>الشمالية</option><option>الجنوبية</option></select>`,'تحدد منطقة تجهيز المزود، ويمكن إضافة مناطق أخرى من ملفه.')}
+          ${fld('العنوان',`<input id="ap-address" class="native-input" placeholder="الحي · الشارع">`)}
+          ${fld('رقم التواصل',`<input id="ap-phone" class="native-input" placeholder="920xxxxxx">`)}
+          ${fld('البريد الإلكتروني',`<input id="ap-email" class="native-input" placeholder="ops@example.com">`)}
+          ${fld('الحالة',`<select id="ap-status" class="native-input"><option>طلب اعتماد</option><option>نشط</option><option>موقف</option></select>`)}
+        </div>
+        ${fld('الخدمات المفعّلة',`<div style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 0">
+          <label style="display:flex;gap:6px;align-items:center;font:700 12px Cairo"><input type="checkbox" id="ap-pickup" checked> استلام من الفرع</label>
+          <label style="display:flex;gap:6px;align-items:center;font:700 12px Cairo"><input type="checkbox" id="ap-delivery" checked> توصيل</label>
+          <label style="display:flex;gap:6px;align-items:center;font:700 12px Cairo"><input type="checkbox" id="ap-intercity"> تسليم بين المدن</label>
+        </div>`)}`,
+        `<button class="btn coral" onclick="WafraOps.createProvider()">حفظ المزود</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    createProvider:()=>{
+      const name=val('ap-name'); if(!name){toast('أدخل اسم الشركة.');return;}
+      const sv=[];
+      if(document.getElementById('ap-pickup')?.checked) sv.push('استلام');
+      if(document.getElementById('ap-delivery')?.checked) sv.push('توصيل');
+      if(document.getElementById('ap-intercity')?.checked) sv.push('بين المدن');
+      const id='PV-'+String(100+state.providers.length+1).padStart(3,'0');
+      state.providers.unshift({
+        id,name,
+        cr:val('ap-cr')||'—',
+        city:val('ap-city')||'الرياض',
+        region:val('ap-region')||'الوسطى',
+        address:val('ap-address')||'—',
+        phone:val('ap-phone')||'—',
+        email:val('ap-email')||'—',
+        status:val('ap-status')||'طلب اعتماد',
+        services:sv.length?sv.join(' · '):'—',
+        branches:0,total:0,available:0,bookings:0
+      });
+      persist(); closeM();
+      location.hash='vendors';
+      render();
+      toast('تم إضافة المزود بنجاح.');
+    },
+    perfFilter:()=>{window.__perfQ=document.getElementById('perf-q')?.value||'';render();}
+  });
+
+  /* قائمة المزودين — نفس تصميم p27 مع دعم طلب اعتماد في الفلتر */
+  S.vendors=()=>{
+    const f=window.__providerFilters||{};
+    const rows=state.providers.filter(p=>(!f.q||`${p.name} ${p.address} ${p.cr||''}`.includes(f.q))&&(!f.city||p.city===f.city)&&(!f.status||p.status===f.status));
+    return phead('إدارة المزودين','بيانات الاعتماد والفروع والسيارات والخدمات لكل مزود',[],`<button class="btn coral" onclick="WafraOps.addProvider()">＋ إضافة مزود</button>`)
+      +card(`<div class="filters">
+        <label class="fsearch">⌕ <input id="provider-q" value="${safe(f.q||'')}" placeholder="ابحث باسم المزود أو عنوانه أو السجل" oninput="WafraOps.providerFilters()"></label>
+        ${fld('المدينة',`<select id="provider-city" class="native-input" onchange="WafraOps.providerFilters()"><option value="">كل المدن</option>${['الرياض','جدة','الخبر','الدمام','مكة','المدينة'].map(x=>`<option ${f.city===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+        ${fld('حالة المزود',`<select id="provider-status" class="native-input" onchange="WafraOps.providerFilters()"><option value="">كل الحالات</option>${['نشط','موقف','طلب اعتماد'].map(x=>`<option ${f.status===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+      </div><div class="card-b">${table(
+        ['المرجع','المزود','المدينة','العنوان','الفروع','إجمالي السيارات','المتاح','الحجوزات النشطة','الخدمات','الحالة','الإجراءات'],
+        rows.map(p=>[p.id,p.name,p.city,p.address,p.branches,p.total,p.available,p.bookings,p.services,pill(p.status),`<a class="btn ghost sm" href="#vendorFile">إطلاع</a> <button class="btn ghost sm" onclick="WafraOps.editProvider('${p.id}')">تعديل</button>`])
+      )}</div>`);
+  };
+
+  /* أداء المزودين — بطاقة أداء المزود المقارنة */
+  S.providerPerformance=()=>{
+    const q=(window.__perfQ||'').trim();
+    const rows=perfData.filter(x=>!q||x.n.includes(q));
+    const best=perfData[0], worst=perfData[perfData.length-1];
+    return phead('بطاقة أداء المزود المقارنة','ترتيب كل مزود مئوياً مقابل أقرانه في الجودة والإشغال والمخاطر والشكاوى والتسعير',[])
+      +`<div class="pp-wrap">
+        <div class="pp-kpis">
+          <div class="pp-kpi"><div class="l">الأعلى أداءً</div><div class="v">${best.n}</div><div class="ic hi">★</div></div>
+          <div class="pp-kpi"><div class="l">الأقل أداءً</div><div class="v">${worst.n}</div><div class="ic lo">⚠</div></div>
+          <div class="pp-kpi"><div class="l">مزودون متابعون</div><div class="v big">28</div><div class="ic n">☰</div></div>
+        </div>
+        <div class="pp-tools">
+          <div class="grow"><label class="pp-search">⌕ <input id="perf-q" value="${safe(q)}" placeholder="بحث بالمزود..." oninput="WafraOps.perfFilter()"></label></div>
+          <div class="pp-acts">
+            <button class="btn ghost sm" onclick="WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+            <button class="btn ghost sm" onclick="WafraOps.exportCurrent('أداء-المزودين','PDF')">PDF ⤓</button>
+            <button class="btn ghost sm" onclick="WafraOps.exportCurrent('أداء-المزودين','Excel')">Excel ⤓</button>
+          </div>
+        </div>
+        <div class="pp-panel"><div class="pp-panel-b">
+          ${table(
+            ['#','المزود','التقييم','الإشغال','المخاطر','الشكاوى','التسعير','المؤشر العام'],
+            rows.map((x,i)=>[String(i+1),x.n,level(x.r),level(x.o),level(x.k),level(x.c),level(x.p),`<span class="pp-score">${x.s}%</span>`])
+          )}
+          <div class="pp-foot">
+            <span>صفحة 1 من 3</span>
+            <span>28 سجل</span>
+            <div class="pp-pages"><button class="on">1</button><button>2</button><button>3</button></div>
+          </div>
+        </div></div>
+      </div>`;
+  };
+
+  const nav=NAV.find(g=>typeof g.g==='string'&&g.g.includes('المزود'));
+  if(nav&&!nav.items.some(i=>i.k==='providerPerformance')){
+    const idx=nav.items.findIndex(i=>i.k==='vendors');
+    nav.items.splice(idx>=0?idx+1:1,0,{k:'providerPerformance',t:'أداء المزودين',i:'◷'});
+  }
+  if(window.TITLES){
+    window.TITLES.vendors='قائمة المزودين';
+    window.TITLES.providerPerformance='أداء المزودين';
+  }
+})();
+</script>

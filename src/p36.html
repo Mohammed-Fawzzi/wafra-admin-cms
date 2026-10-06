@@ -1,0 +1,253 @@
+<style id="wafra-compare">
+/* المقارنات — مطابقة لنموذج الشاشات المرفق */
+.cmp-wrap{display:flex;flex-direction:column;gap:16px}
+.cmp-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;background:#fff;border:1px solid #E4E9F3;border-radius:16px;padding:14px 16px;box-shadow:0 6px 18px rgba(25,42,84,.04)}
+.cmp-field{display:flex;flex-direction:column;gap:6px;min-width:150px}
+.cmp-field label{font:700 11.5px Cairo;color:var(--muted)}
+.cmp-field select,.cmp-field .cmp-add{min-height:42px;border:1px solid #D7DEEE;border-radius:10px;background:#fff;padding:8px 12px;font:700 13px Cairo;color:var(--ink);outline:0;cursor:pointer}
+.cmp-field select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(35,56,109,.1)}
+.cmp-add{display:inline-flex;align-items:center;gap:6px;color:var(--navy);border-style:dashed!important}
+.cmp-add:hover{background:#F5F7FC}
+.cmp-vs{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;background:#fff;border:1px solid #E4E9F3;border-radius:18px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.04)}
+.cmp-side{padding:18px 20px;position:relative}
+.cmp-side.win{background:linear-gradient(180deg,#F3FBF7,#fff);box-shadow:inset 0 0 0 2px #20A16E}
+.cmp-side.a .cmp-name{color:var(--navy)}
+.cmp-side.b .cmp-name{color:#E23D3D}
+.cmp-name{display:flex;align-items:center;gap:8px;font:800 18px Cairo;margin-bottom:14px}
+.cmp-badge{font:800 11px Cairo;padding:3px 9px;border-radius:99px;background:#E8F8F0;color:#148A5A}
+.cmp-badge.cur{background:#E8F8F0;color:#148A5A}
+.cmp-metrics{display:flex;flex-direction:column;justify-content:center;padding:18px 10px;gap:0;text-align:center;border-inline:1px solid #EEF1F7;background:#FAFBFE;min-width:110px}
+.cmp-metrics span{font:700 12.5px Cairo;color:#5A657C;padding:11px 4px;border-bottom:1px solid #EEF1F7}
+.cmp-metrics span:last-child{border-bottom:0}
+.cmp-vals{display:flex;flex-direction:column}
+.cmp-vals b{font:800 15px Cairo;padding:11px 4px;border-bottom:1px solid #EEF1F7;color:var(--ink)}
+.cmp-vals b:last-child{border-bottom:0}
+.cmp-side.win .cmp-vals b{color:#148A5A}
+.cmp-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cmp-card{background:#fff;border:1px solid #E4E9F3;border-radius:18px;padding:18px 20px;box-shadow:0 6px 18px rgba(25,42,84,.04)}
+.cmp-card .cmp-name{margin-bottom:16px}
+.cmp-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #EEF1F7;gap:12px}
+.cmp-row:last-child{border-bottom:0}
+.cmp-row .lbl{font:700 13px Cairo;color:#5A657C}
+.cmp-row .val{font:800 15px Cairo;color:var(--ink)}
+.cmp-card.a .cmp-name{color:var(--navy)}
+.cmp-card.b .cmp-name{color:#E23D3D}
+.cmp-charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cmp-panel{background:#fff;border:1px solid #E4E9F3;border-radius:18px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.04)}
+.cmp-panel-h{padding:14px 16px;border-bottom:1px solid #EEF1F7;font:800 14px Cairo;color:var(--ink);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cmp-legend{display:flex;gap:14px;font:700 11.5px Cairo;color:var(--muted)}
+.cmp-legend i{display:inline-block;width:10px;height:10px;border-radius:99px;margin-inline-end:5px;vertical-align:middle}
+.cmp-panel-b{padding:12px 14px 16px}
+.cmp-panel-b svg{width:100%;height:auto;display:block}
+@media(max-width:900px){
+  .cmp-vs{grid-template-columns:1fr; }
+  .cmp-metrics{flex-direction:row;flex-wrap:wrap;border-inline:0;border-block:1px solid #EEF1F7;justify-content:flex-start}
+  .cmp-metrics span{border-bottom:0;border-inline-end:1px solid #EEF1F7;padding:8px 10px}
+  .cmp-cards,.cmp-charts{grid-template-columns:1fr}
+}
+</style>
+<script>
+/* المقارنات — واجهة مطابقة لنموذج التصميم (كيانات / فترات). */
+(function(){
+  const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['financial','النظرة المالية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
+  const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
+
+  const TYPES=[
+    {k:'company',t:'شركة مقابل شركة',mode:'entity',items:['شركة الصحراء','كي رنت','التميّز','نقليات نجد']},
+    {k:'city',t:'مدينة مقابل مدينة',mode:'entity',items:['الرياض','جدة','الخبر','الدمام']},
+    {k:'region',t:'منطقة مقابل منطقة',mode:'entity',items:['الوسطى','الغربية','الشرقية','الجنوبية']},
+    {k:'branch',t:'فرع مقابل فرع',mode:'entity',items:['مطار الملك خالد','جدة الشمالية','طريق الملك عبدالعزيز','الخبر التشغيلي']},
+    {k:'cartype',t:'نوع سيارة مقابل نوع',mode:'entity',items:['تويوتا','هيونداي','كيا','نيسان']},
+    {k:'month',t:'شهر مقابل شهر',mode:'period',items:['يناير 2026','فبراير 2026','مارس 2026','أغسطس 2026','سبتمبر 2026']},
+    {k:'year',t:'سنة مقابل سنة',mode:'period',items:['2020','2021','2022','2023','2024','2025','2026']}
+  ];
+
+  const METRICS=[
+    {k:'rev',l:'الإيرادات'},
+    {k:'contracts',l:'عدد العقود'},
+    {k:'fleet',l:'الأسطول'},
+    {k:'occupancy',l:'الإشغال'},
+    {k:'avg',l:'متوسط العقد'},
+    {k:'complaints',l:'الشكاوى'},
+    {k:'cancel',l:'معدل الإلغاء'}
+  ];
+
+  const DATA={
+    'تويوتا':{rev:'18.4 ألف ر.س',contracts:'2,140',fleet:'486',occupancy:'78%',avg:'860 ر.س',complaints:'42',cancel:'6.2%',scores:[92,86,78,88,74]},
+    'هيونداي':{rev:'14.9 ألف ر.س',contracts:'1,820',fleet:'412',occupancy:'71%',avg:'790 ر.س',complaints:'58',cancel:'8.1%',scores:[74,70,71,68,62]},
+    'كيا':{rev:'12.1 ألف ر.س',contracts:'1,540',fleet:'368',occupancy:'69%',avg:'740 ر.س',complaints:'51',cancel:'7.4%',scores:[68,66,69,64,60]},
+    'نيسان':{rev:'11.4 ألف ر.س',contracts:'1,390',fleet:'340',occupancy:'66%',avg:'710 ر.س',complaints:'47',cancel:'7.8%',scores:[64,62,66,61,58]},
+    'شركة الصحراء':{rev:'286 ألف ر.س',contracts:'642',fleet:'214',occupancy:'78%',avg:'890 ر.س',complaints:'18',cancel:'5.4%',scores:[90,84,78,86,80]},
+    'كي رنت':{rev:'214 ألف ر.س',contracts:'510',fleet:'176',occupancy:'74%',avg:'820 ر.س',complaints:'24',cancel:'6.8%',scores:[78,76,74,72,70]},
+    'التميّز':{rev:'198 ألف ر.س',contracts:'468',fleet:'158',occupancy:'72%',avg:'800 ر.س',complaints:'21',cancel:'6.1%',scores:[76,74,72,75,71]},
+    'نقليات نجد':{rev:'162 ألف ر.س',contracts:'390',fleet:'132',occupancy:'68%',avg:'760 ر.س',complaints:'29',cancel:'8.4%',scores:[68,66,68,64,58]},
+    'الرياض':{rev:'1.16M ر.س',contracts:'1,620',fleet:'1,742',occupancy:'78%',avg:'920 ر.س',complaints:'64',cancel:'6.8%',scores:[91,88,78,86,76]},
+    'جدة':{rev:'895 ألف ر.س',contracts:'1,105',fleet:'1,101',occupancy:'74%',avg:'860 ر.س',complaints:'52',cancel:'7.4%',scores:[82,80,74,78,70]},
+    'الخبر':{rev:'671 ألف ر.س',contracts:'734',fleet:'684',occupancy:'69%',avg:'810 ر.س',complaints:'41',cancel:'8.2%',scores:[74,70,69,68,62]},
+    'الدمام':{rev:'485 ألف ر.س',contracts:'520',fleet:'498',occupancy:'67%',avg:'790 ر.س',complaints:'36',cancel:'7.9%',scores:[70,68,67,66,60]},
+    'الوسطى':{rev:'1.42M ر.س',contracts:'1,980',fleet:'2,040',occupancy:'76%',avg:'900 ر.س',complaints:'72',cancel:'6.9%',scores:[88,86,76,84,74]},
+    'الغربية':{rev:'1.08M ر.س',contracts:'1,420',fleet:'1,360',occupancy:'73%',avg:'850 ر.س',complaints:'58',cancel:'7.5%',scores:[80,78,73,76,68]},
+    'الشرقية':{rev:'920 ألف ر.س',contracts:'1,120',fleet:'1,080',occupancy:'70%',avg:'820 ر.س',complaints:'49',cancel:'8.0%',scores:[74,72,70,70,64]},
+    'الجنوبية':{rev:'410 ألف ر.س',contracts:'520',fleet:'460',occupancy:'64%',avg:'740 ر.س',complaints:'33',cancel:'8.8%',scores:[62,60,64,58,54]},
+    'مطار الملك خالد':{rev:'86 ألف ر.س',contracts:'186',fleet:'48',occupancy:'82%',avg:'920 ر.س',complaints:'8',cancel:'4.8%',scores:[92,90,82,88,84]},
+    'جدة الشمالية':{rev:'62 ألف ر.س',contracts:'142',fleet:'36',occupancy:'76%',avg:'840 ر.س',complaints:'11',cancel:'6.2%',scores:[80,78,76,74,72]},
+    'طريق الملك عبدالعزيز':{rev:'54 ألف ر.س',contracts:'118',fleet:'31',occupancy:'72%',avg:'810 ر.س',complaints:'9',cancel:'5.9%',scores:[76,74,72,73,70]},
+    'الخبر التشغيلي':{rev:'41 ألف ر.س',contracts:'96',fleet:'28',occupancy:'68%',avg:'780 ر.س',complaints:'14',cancel:'8.6%',scores:[66,64,68,62,56]},
+    'يناير 2026':{rev:'15.2 ألف ر.س',contracts:'1,720',fleet:'4,020',occupancy:'68%',avg:'780 ر.س',complaints:'48',cancel:'8.4%',scores:[70,68,68,66,60]},
+    'فبراير 2026':{rev:'15.8 ألف ر.س',contracts:'1,780',fleet:'4,060',occupancy:'70%',avg:'800 ر.س',complaints:'46',cancel:'8.0%',scores:[72,70,70,68,62]},
+    'مارس 2026':{rev:'16.4 ألف ر.س',contracts:'1,860',fleet:'4,100',occupancy:'71%',avg:'820 ر.س',complaints:'44',cancel:'7.6%',scores:[76,74,71,72,66]},
+    'أغسطس 2026':{rev:'16.9 ألف ر.س',contracts:'1,940',fleet:'4,140',occupancy:'72%',avg:'840 ر.س',complaints:'43',cancel:'7.2%',scores:[80,78,72,76,70]},
+    'سبتمبر 2026':{rev:'17.8 ألف ر.س',contracts:'2,036',fleet:'4,194',occupancy:'74%',avg:'860 ر.س',complaints:'41',cancel:'6.8%',scores:[86,84,74,82,76]},
+    '2020':{rev:'14.2 ألف ر.س',contracts:'1,520',fleet:'3,420',occupancy:'62%',avg:'700 ر.س',complaints:'58',cancel:'9.4%',scores:[60,58,62,56,52]},
+    '2021':{rev:'15.1 ألف ر.س',contracts:'1,680',fleet:'3,680',occupancy:'65%',avg:'730 ر.س',complaints:'52',cancel:'8.8%',scores:[66,64,65,62,58]},
+    '2022':{rev:'16.5 ألف ر.س',contracts:'1,883',fleet:'3,940',occupancy:'69%',avg:'780 ر.س',complaints:'47',cancel:'8.1%',scores:[74,72,69,70,64]},
+    '2023':{rev:'17.8 ألف ر.س',contracts:'2,036',fleet:'4,120',occupancy:'72%',avg:'820 ر.س',complaints:'43',cancel:'7.4%',scores:[82,80,72,78,72]},
+    '2024':{rev:'18.6 ألف ر.س',contracts:'2,180',fleet:'4,160',occupancy:'73%',avg:'840 ر.س',complaints:'42',cancel:'7.1%',scores:[86,84,73,80,74]},
+    '2025':{rev:'19.2 ألف ر.س',contracts:'2,260',fleet:'4,180',occupancy:'74%',avg:'850 ر.س',complaints:'40',cancel:'6.9%',scores:[88,86,74,82,76]},
+    '2026':{rev:'20.1 ألف ر.س',contracts:'2,340',fleet:'4,194',occupancy:'76%',avg:'870 ر.س',complaints:'39',cancel:'6.6%',scores:[92,90,76,86,80]}
+  };
+
+  const defaultState=()=>({type:'cartype',a:'تويوتا',b:'هيونداي'});
+  const state=()=>{
+    if(!window.__cmpState) window.__cmpState=defaultState();
+    return window.__cmpState;
+  };
+  const typeOf=k=>TYPES.find(t=>t.k===k)||TYPES[4];
+  const entity=name=>DATA[name]||DATA['تويوتا'];
+  const scoreSum=e=>e.scores.reduce((a,b)=>a+b,0);
+
+  const radar=(aName,bName,aScores,bScores)=>{
+    const labels=['الإيرادات','العقود','الإشغال','متوسط العقد','الرضا'];
+    const cx=160,cy=150,r=100,n=5;
+    const pt=(scores,i)=>{const ang=-Math.PI/2+i*2*Math.PI/n;const v=scores[i]/100;return [cx+Math.cos(ang)*r*v,cy+Math.sin(ang)*r*v];};
+    const ring=level=>{
+      const pts=[]; for(let i=0;i<n;i++){const ang=-Math.PI/2+i*2*Math.PI/n;pts.push(`${cx+Math.cos(ang)*r*level},${cy+Math.sin(ang)*r*level}`);}
+      return pts.join(' ');
+    };
+    const poly=scores=>scores.map((_,i)=>pt(scores,i).join(',')).join(' ');
+    const axes=labels.map((lb,i)=>{
+      const ang=-Math.PI/2+i*2*Math.PI/n;
+      const x=cx+Math.cos(ang)*r, y=cy+Math.sin(ang)*r;
+      const lx=cx+Math.cos(ang)*(r+22), ly=cy+Math.sin(ang)*(r+18);
+      return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#D7DEEE" stroke-width="1"/><text x="${lx}" y="${ly}" text-anchor="middle" font-family="Cairo" font-size="11" font-weight="700" fill="#5A657C">${lb}</text>`;
+    }).join('');
+    return `<svg viewBox="0 0 320 310" role="img" aria-label="البصمة الأدائية">
+      <polygon points="${ring(1)}" fill="#F5F7FC" stroke="#D7DEEE" stroke-width="1"/>
+      <polygon points="${ring(.75)}" fill="none" stroke="#E4E9F3" stroke-width="1"/>
+      <polygon points="${ring(.5)}" fill="none" stroke="#E4E9F3" stroke-width="1"/>
+      <polygon points="${ring(.25)}" fill="none" stroke="#E4E9F3" stroke-width="1"/>
+      ${axes}
+      <polygon points="${poly(aScores)}" fill="rgba(41,59,133,.28)" stroke="#293B85" stroke-width="2"/>
+      <polygon points="${poly(bScores)}" fill="rgba(226,61,61,.18)" stroke="#E23D3D" stroke-width="2"/>
+      ${aScores.map((_,i)=>{const [x,y]=pt(aScores,i);return `<circle cx="${x}" cy="${y}" r="3.5" fill="#293B85"/>`;}).join('')}
+      ${bScores.map((_,i)=>{const [x,y]=pt(bScores,i);return `<circle cx="${x}" cy="${y}" r="3.5" fill="#E23D3D"/>`;}).join('')}
+    </svg>`;
+  };
+
+  const bars=(aName,bName,aScores,bScores)=>{
+    const labels=['الإيرادات','العقود','الإشغال','متوسط','الرضا'];
+    const W=360,H=260,padL=36,padR=16,padT=18,padB=42;
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    const groupW=plotW/labels.length;
+    const barW=Math.min(18,groupW*0.28);
+    const grid=[0,25,50,75,100].map(v=>{
+      const y=padT+plotH-(v/100)*plotH;
+      return `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#EEF1F7" stroke-width="1"/><text x="${padL-8}" y="${y+4}" text-anchor="end" font-family="Cairo" font-size="10" fill="#9AA3B5">${v}</text>`;
+    }).join('');
+    const groups=labels.map((lb,i)=>{
+      const gx=padL+i*groupW+groupW/2;
+      const ha=(aScores[i]/100)*plotH, hb=(bScores[i]/100)*plotH;
+      return `<g>
+        <rect x="${gx-barW-3}" y="${padT+plotH-ha}" width="${barW}" height="${ha}" rx="4" fill="#293B85"/>
+        <rect x="${gx+3}" y="${padT+plotH-hb}" width="${barW}" height="${hb}" rx="4" fill="#E23D3D"/>
+        <text x="${gx}" y="${H-14}" text-anchor="middle" font-family="Cairo" font-size="11" font-weight="700" fill="#5A657C">${lb}</text>
+      </g>`;
+    }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="مقارنة المؤشرات">${grid}${groups}</svg>`;
+  };
+
+  Object.assign(WafraOps,{
+    cmpSetType:k=>{
+      const t=typeOf(k); const st=state();
+      st.type=k;
+      if(k==='year'){st.a='2022';st.b='2023';}
+      else if(k==='month'){st.a='أغسطس 2026';st.b='سبتمبر 2026';}
+      else if(k==='cartype'){st.a='تويوتا';st.b='هيونداي';}
+      else{st.a=t.items[0];st.b=t.items[1]||t.items[0];}
+      render();
+    },
+    cmpSetA:v=>{state().a=v;render();},
+    cmpSetB:v=>{state().b=v;render();},
+    cmpAddItem:()=>{
+      const t=typeOf(state().type);
+      const msg=t.mode==='period'?'أضف فترة ثالثة للمقارنة':'أضف عنصراً ثالثاً للمقارنة';
+      (WafraOps.demoAction||(m=>alert(m)))(msg);
+    }
+  });
+
+  const baseAnalytics=S.analytics;
+  S.analytics=()=>{
+    const active=window.__analyticsTab||'search';
+    if(active!=='compare') return baseAnalytics();
+
+    const st=state();
+    const t=typeOf(st.type);
+    if(!t.items.includes(st.a)) st.a=t.items[0];
+    if(!t.items.includes(st.b)) st.b=t.items[1]||t.items[0];
+    const A=entity(st.a), B=entity(st.b);
+    const aWins=scoreSum(A)>=scoreSum(B);
+    const isPeriod=t.mode==='period';
+    const labelA=isPeriod?'الفترة 1':'العنصر 1';
+    const labelB=isPeriod?'الفترة 2':'العنصر 2';
+    const addLabel=isPeriod?'＋ فلتر':'＋ عنصر';
+
+    const filters=`<div class="cmp-filters">
+      <div class="cmp-field"><label>نوع المقارنة</label>
+        <select onchange="WafraOps.cmpSetType(this.value)">${TYPES.map(x=>`<option value="${x.k}" ${x.k===st.type?'selected':''}>${x.t}</option>`).join('')}</select>
+      </div>
+      <div class="cmp-field"><label>${labelA}</label>
+        <select onchange="WafraOps.cmpSetA(this.value)">${t.items.map(x=>`<option value="${x}" ${x===st.a?'selected':''}>${x}</option>`).join('')}</select>
+      </div>
+      <div class="cmp-field"><label>${labelB}</label>
+        <select onchange="WafraOps.cmpSetB(this.value)">${t.items.map(x=>`<option value="${x}" ${x===st.b?'selected':''}>${x}</option>`).join('')}</select>
+      </div>
+      <div class="cmp-field"><label>&nbsp;</label>
+        <button type="button" class="cmp-add" onclick="WafraOps.cmpAddItem()">${addLabel}</button>
+      </div>
+    </div>`;
+
+    const metricLabels=METRICS.map(m=>`<span>${m.l}</span>`).join('');
+    const vals=e=>METRICS.map(m=>`<b>${e[m.k]}</b>`).join('');
+
+    let compareBody;
+    if(isPeriod){
+      const current=st.b;
+      compareBody=`<div class="cmp-cards">
+        <div class="cmp-card a"><div class="cmp-name">${st.a}</div>${METRICS.map(m=>`<div class="cmp-row"><span class="lbl">${m.l}</span><span class="val">${A[m.k]}</span></div>`).join('')}</div>
+        <div class="cmp-card b"><div class="cmp-name">${st.b}${current?` <span class="cmp-badge cur">حالي</span>`:''}</div>${METRICS.map(m=>`<div class="cmp-row"><span class="lbl">${m.l}</span><span class="val">${B[m.k]}</span></div>`).join('')}</div>
+      </div>`;
+    }else{
+      compareBody=`<div class="cmp-vs">
+        <div class="cmp-side a ${aWins?'win':''}">
+          <div class="cmp-name">${st.a}${aWins?' <span class="cmp-badge">الأعلى</span>':''}</div>
+          <div class="cmp-vals">${vals(A)}</div>
+        </div>
+        <div class="cmp-metrics">${metricLabels}</div>
+        <div class="cmp-side b ${!aWins?'win':''}">
+          <div class="cmp-name">${st.b}${!aWins?' <span class="cmp-badge">الأعلى</span>':''}</div>
+          <div class="cmp-vals">${vals(B)}</div>
+        </div>
+      </div>`;
+    }
+
+    const legend=`<div class="cmp-legend"><span><i style="background:#293B85"></i>${st.a}</span><span><i style="background:#E23D3D"></i>${st.b}</span></div>`;
+    const charts=`<div class="cmp-charts">
+      <div class="cmp-panel"><div class="cmp-panel-h"><span>البصمة الأدائية</span>${legend}</div><div class="cmp-panel-b">${radar(st.a,st.b,A.scores,B.scores)}</div></div>
+      <div class="cmp-panel"><div class="cmp-panel-h"><span>مقارنة المؤشرات</span>${legend}</div><div class="cmp-panel-b">${bars(st.a,st.b,A.scores,B.scores)}</div></div>
+    </div>`;
+
+    return phead('المقارنات','قارن الأداء جنباً إلى جنب بين أي عدد من الشركات، مدن، مناطق، فروع، أنواع سيارات، أو فترات زمنية',[],`<button class="btn coral" onclick="WafraOps.demoAction('إنشاء تقرير')">＋ إنشاء تقرير</button>`)
+      +card(tabbar(active)+`<div class="cmp-wrap" style="padding:14px">${filters}${compareBody}${charts}</div>`);
+  };
+})();
+</script>

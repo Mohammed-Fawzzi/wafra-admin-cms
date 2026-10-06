@@ -1,0 +1,273 @@
+<script>
+/* الفروع: مناطق/مدن (منطقة تابعة للمدينة) · نموذج إضافة فرع · رسوم بين المدن + تاريخ الإضافة */
+(function(){
+  const state=window.WAFRA_DATA||(window.WAFRA_DATA={});
+  const save=()=>{try{localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));}catch(e){}};
+  const toast=msg=>{
+    if(typeof window.__toast==='function'){window.__toast(msg);return;}
+    const old=document.querySelector('.wafra-demo-toast'); old?.remove();
+    const el=document.createElement('div'); el.className='toast on wafra-demo-toast'; el.textContent=msg;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),2600);
+  };
+  const dlg=(t,b,f)=>`<div class="modal"><div class="modal-h"><h3>${t}</h3><span class="x" onclick="closeM()">✕</span></div><div class="modal-b">${b}</div><div class="modal-f">${f||'<button class="btn ghost" onclick="closeM()">إغلاق</button>'}</div></div>`;
+  const val=id=>document.getElementById(id)?.value?.trim()||'';
+  const today=()=>{
+    const d=new Date();
+    const months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  const DEFAULT_REGIONS=['المنطقة الوسطى','المنطقة الغربية','المنطقة الشرقية','المنطقة الشمالية','المنطقة الجنوبية'];
+  state.areas=state.areas||{regions:[],cities:[]};
+  /* ترحيل المدن القديمة من نص إلى كائن {name,region} */
+  if(Array.isArray(state.areas.cities)){
+    state.areas.cities=state.areas.cities.map(c=>{
+      if(typeof c==='string') return {name:c,region:'المنطقة الوسطى',status:'نشط'};
+      return c;
+    });
+  }
+  state.areas.regions=state.areas.regions||[];
+  state.fees=state.fees||[
+    {provider:'شركة الصحراء',from:'الرياض',to:'جدة',amount:'180',status:'نشطة',added:'12 أغسطس 2026'},
+    {provider:'كي رنت',from:'جدة',to:'مكة المكرمة',amount:'85',status:'نشطة',added:'3 سبتمبر 2026'},
+    {provider:'مسار',from:'الخبر',to:'الرياض',amount:'140',status:'غير نشطة',added:'21 يوليو 2026'}
+  ];
+  state.branches=state.branches||[
+    {id:'BR-014',name:'مطار الملك خالد',provider:'شركة الصحراء',city:'الرياض',contracts:186,utilization:81,commission:12,status:'نشط',type:'مطار',address:'صالة الوصول'},
+    {id:'BR-021',name:'جدة الشمالية',provider:'كي رنت',city:'جدة',contracts:139,utilization:75,commission:10,status:'نشط',type:'داخلي',address:'شارع الأمير سلطان'},
+    {id:'BR-031',name:'الخبر التشغيلي',provider:'مسار',city:'الخبر',contracts:18,utilization:0,commission:10,status:'غير نشط',type:'توصيل',address:'طريق الكورنيش'}
+  ];
+
+  const regionOptions=()=>{
+    const extra=state.areas.regions.map(r=>typeof r==='string'?r:r.name);
+    return [...DEFAULT_REGIONS,...extra.filter(x=>!DEFAULT_REGIONS.includes(x))];
+  };
+
+  Object.assign(WafraOps,{
+    areasTab:t=>{window.__areasTab=t;render();},
+    addArea:t=>{
+      if(t==='regions'){
+        openM(dlg('تعريف منطقة جديدة',
+          `${fld('اسم المنطقة',`<input id="area-name" class="native-input" placeholder="مثال: المنطقة الوسطى">`)}
+           ${fld('الحالة',`<select id="area-status" class="native-input"><option>نشط</option><option>غير نشط</option></select>`)}`,
+          `<button class="btn coral" onclick="WafraOps.saveArea('regions')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+        ));
+        return;
+      }
+      openM(dlg('تعريف مدينة جديدة',
+        `${fld('اسم المدينة',`<input id="area-name" class="native-input" placeholder="مثال: القصيم">`)}
+         ${fld('المنطقة التابعة لها',`<select id="area-region" class="native-input">${regionOptions().map(r=>`<option>${r}</option>`).join('')}</select>`,'حدد المنطقة الإدارية التي تتبعها هذه المدينة.')}
+         ${fld('الحالة',`<select id="area-status" class="native-input"><option>نشط</option><option>غير نشط</option></select>`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveArea('cities')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    saveArea:t=>{
+      const n=val('area-name');
+      if(!n){toast('اكتب الاسم أولاً.');return;}
+      state.areas=state.areas||{regions:[],cities:[]};
+      if(t==='regions'){
+        state.areas.regions.push({name:n,status:val('area-status')||'نشط'});
+      }else{
+        state.areas.cities.push({name:n,region:val('area-region')||'المنطقة الوسطى',status:val('area-status')||'نشط'});
+      }
+      save(); closeM(); render(); toast('تم الحفظ بنجاح.');
+    },
+    openBranchForm:id=>{
+      window.__branchEdit=id||'';
+      location.hash='branchForm';
+    },
+    saveBranchForm:()=>{
+      const edit=window.__branchEdit;
+      const name=val('bf-name');
+      if(!name){toast('أدخل اسم الفرع.');return;}
+      const payload={
+        id:val('bf-id')||('BR-'+String(100+state.branches.length)),
+        name,
+        provider:val('bf-provider')||'شركة الصحراء',
+        city:val('bf-city')||'الرياض',
+        type:val('bf-type')||'داخلي',
+        address:val('bf-address')||'—',
+        status:val('bf-status')||'نشط',
+        contracts:0,utilization:0,commission:12
+      };
+      if(edit){
+        const b=state.branches.find(x=>x.id===edit);
+        if(b) Object.assign(b,payload,{id:edit});
+        else state.branches.unshift(payload);
+      }else{
+        if(state.branches.some(x=>x.id===payload.id)) payload.id='BR-'+String(Date.now()).slice(-4);
+        state.branches.unshift(payload);
+      }
+      save();
+      window.__branchEdit='';
+      location.hash='branches';
+      render();
+      toast(edit?'تم حفظ تعديلات الفرع.':'تم إضافة الفرع بنجاح.');
+    },
+    addFee:()=>{
+      openM(dlg('إضافة رسوم تسليم بين المدن',
+        `<div class="frow">${fld('المزود',`<select id="fee-provider" class="native-input"><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}
+         ${fld('الرسوم (ر.س)',`<input id="op-fee" class="native-input" value="150" type="number">`,'تظهر للعميل قبل الدفع وتضاف إلى إجمالي الحجز.')}</div>
+         <div class="frow">${fld('مدينة الاستلام',`<select id="fee-from" class="native-input"><option>الرياض</option><option>جدة</option><option>الدمام</option><option>الخبر</option><option>مكة المكرمة</option><option>المدينة</option></select>`)}
+         ${fld('مدينة التسليم',`<select id="fee-to" class="native-input"><option>الدمام</option><option>الرياض</option><option>جدة</option><option>الخبر</option><option>مكة المكرمة</option><option>المدينة</option></select>`)}</div>
+         ${fld('الحالة',`<select id="fee-status" class="native-input"><option>نشطة</option><option>غير نشطة</option></select>`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveFee()">إضافة الرسوم</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    saveFee:()=>{
+      const amount=val('op-fee')||'0';
+      state.fees=state.fees||[];
+      state.fees.unshift({
+        provider:val('fee-provider')||'شركة الصحراء',
+        from:val('fee-from')||'الرياض',
+        to:val('fee-to')||'الدمام',
+        amount,
+        status:val('fee-status')||'نشطة',
+        added:today()
+      });
+      save(); closeM(); render(); toast('تم إضافة الرسوم.');
+    }
+  });
+
+  /* —— المناطق والمدن —— */
+  S.branchAreas=()=>{
+    const active=window.__areasTab||'regions';
+    const regionsBase=[
+      ['المنطقة الوسطى','الرياض · الخرج','68'],
+      ['المنطقة الغربية','جدة · مكة','54'],
+      ['المنطقة الشرقية','الدمام · الخبر','38'],
+      ['المنطقة الشمالية','تبوك · حائل','24'],
+      ['المنطقة الجنوبية','أبها · جازان','18']
+    ];
+    const regions=[
+      ...regionsBase,
+      ...state.areas.regions.map(r=>{
+        const name=typeof r==='string'?r:r.name;
+        return [name,'—','0'];
+      })
+    ];
+    const citiesBase=[
+      ['الرياض','المنطقة الوسطى','74'],
+      ['جدة','المنطقة الغربية','45'],
+      ['الخبر','المنطقة الشرقية','19']
+    ];
+    const cities=[
+      ...citiesBase,
+      ...state.areas.cities.map(c=>[c.name,c.region||'—','0'])
+    ];
+    return phead('المناطق والمدن','تعريف المناطق والمدن المتاحة للمزودين والفروع',[],
+      `<button class="btn coral" onclick="WafraOps.addArea('${active}')">＋ تعريف ${active==='regions'?'منطقة':'مدينة'}</button>`)
+      +card(`<div class="tabs">
+        <button class="tab ${active==='regions'?'on':''}" onclick="WafraOps.areasTab('regions')">المناطق</button>
+        <button class="tab ${active==='cities'?'on':''}" onclick="WafraOps.areasTab('cities')">المدن</button>
+      </div><div class="card-b">${
+        active==='regions'
+          ?table(['المنطقة','المدن','الفروع','الحالة','الإجراءات'],regions.map(x=>[x[0],x[1],x[2],pill('نشط'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('استعراض ${x[0]}')">استعراض</button> <button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل ${x[0]}')">تعديل</button>`]))
+          :table(['المدينة','المنطقة','الفروع','الحالة','الإجراءات'],cities.map(x=>[x[0],x[1],x[2],pill('نشط'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('استعراض ${x[0]}')">استعراض</button> <button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل ${x[0]}')">تعديل</button>`]))
+      }</div>`);
+  };
+
+  /* —— قائمة الفروع (نفس تصميم p23) + ربط نموذج الإضافة —— */
+  S.branches=()=>{
+    const f=window.__branchFilter||{};
+    const rows=state.branches.filter(b=>(!f.q||`${b.name} ${b.provider}`.includes(f.q))&&(!f.city||b.city===f.city)&&(!f.provider||b.provider===f.provider)&&(!f.status||b.status===f.status));
+    const badge=s=>bdg(s,s==='نشط'?'g':'r');
+    return phead('إدارة الفروع','بحث وفلترة وتفعيل وصلاحيات لكل فرع',[],
+      `<button class="btn coral" onclick="WafraOps.openBranchForm()">＋ إضافة فرع</button>`)
+      +card(`<div class="filters">
+        <label class="fsearch">⌕ <input id="branch-q" value="${(f.q||'').replace(/"/g,'&quot;')}" placeholder="ابحث باسم الفرع" oninput="WafraOps.branchFilter()"></label>
+        ${fld('المدينة',`<select id="branch-city" class="native-input" onchange="WafraOps.branchFilter()"><option value="">كل المدن</option>${['الرياض','جدة','الخبر'].map(x=>`<option ${f.city===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+        ${fld('المزود',`<select id="branch-provider" class="native-input" onchange="WafraOps.branchFilter()"><option value="">كل المزودين</option>${['شركة الصحراء','كي رنت','مسار'].map(x=>`<option ${f.provider===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+        ${fld('الحالة',`<select id="branch-status" class="native-input" onchange="WafraOps.branchFilter()"><option value="">كل الحالات</option><option ${f.status==='نشط'?'selected':''}>نشط</option><option ${f.status==='غير نشط'?'selected':''}>غير نشط</option></select>`)}
+      </div><div class="card-b">${table(
+        ['المرجع','الفرع','المزود','المدينة','إجمالي العقود','التشغيل','العمولة','الحالة','الإجراءات'],
+        rows.map(b=>[b.id,b.name,b.provider,b.city,b.contracts,`${b.utilization}%`,`${b.commission}%`,badge(b.status),
+          `<button class="btn ghost sm" onclick="WafraOps.viewBranch('${b.id}')">استعراض</button>
+           <button class="btn ghost sm" onclick="WafraOps.openBranchForm('${b.id}')">تعديل</button>
+           <button class="btn ${b.status==='نشط'?'danger':'coral'} sm" onclick="WafraOps.toggleBranch('${b.id}')">${b.status==='نشط'?'إلغاء التنشيط':'تنشيط'}</button>`])
+      )}</div>`);
+  };
+
+  /* —— نموذج إضافة/تعديل فرع مطابق لشاشة المزود (p15) مع حفظ فعلي —— */
+  const dayRow=(name,on=true)=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:12px">${name}</b><span class="badge ${on?'g':'n'}">${on?'مفتوح':'مغلق'}</span></div><div class="frow" style="margin-top:8px"><input class="native-input" value="08:00 صباحاً"><input class="native-input" value="08:00 مساءً"></div></div>`;
+  const branchNote=text=>`<div style="padding:12px 14px;background:#F5F8FF;border-radius:10px;color:var(--navy);font-size:12px">${text}</div>`;
+  S.branchForm=()=>{
+    const editId=window.__branchEdit;
+    const b=editId?state.branches.find(x=>x.id===editId):null;
+    const isEdit=!!b;
+    return phead(isEdit?'تعديل فرع':'إضافة فرع جديد',isEdit?'تعديل بيانات الفرع وموقعه وتشغيله':'أدخل المعلومات الأساسية لإنشاء موقع خدمة جديد — بنفس نموذج إضافة الفرع في شاشة المزود',[],
+      `<a class="btn ghost" href="#branches">إلغاء</a>`)
+      +`<div class="form-page">
+        ${card(cardH('معلومات أساسية')+`<div class="card-b">
+          <div class="frow">${fld('اسم الفرع',`<input id="bf-name" class="native-input" value="${b?b.name:''}" placeholder="أدخل اسم الفرع">`)}${fld('الرقم المرجعي',`<input id="bf-id" class="native-input" value="${b?b.id:('BR-'+String(100+state.branches.length))}">`)}</div>
+          <div class="frow">${fld('المزود',`<select id="bf-provider" class="native-input">${['شركة الصحراء لتأجير السيارات','كي رنت','مسار'].map(x=>{const short=x.includes('الصحراء')?'شركة الصحراء':x;return `<option ${(b?b.provider:'شركة الصحراء')===short||(b&&x.includes(b.provider))?'selected':''}>${x}</option>`;}).join('')}</select>`)}
+          ${fld('نوع الفرع',`<select id="bf-type" class="native-input">${['فرع داخلي','مطار','محطة قطار','فرع سحابي','توصيل'].map(x=>`<option ${(b?.type||'فرع داخلي')===x||(b?.type==='داخلي'&&x==='فرع داخلي')?'selected':''}>${x}</option>`).join('')}</select>`)}</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px"><label><input type="checkbox" checked> موقع ثابت</label><label><input type="checkbox"> نقطة استلام فقط</label><label><input type="checkbox" checked> تسليم للعميل</label><label><input type="checkbox"> خدمات المطار</label></div>
+        </div>`)}
+        ${card(cardH('تفاصيل الموقع')+`<div class="card-b">
+          <div class="frow">${fld('الدولة',`<select class="native-input"><option>المملكة العربية السعودية</option></select>`)}${fld('المنطقة',`<select class="native-input">${regionOptions().map(r=>`<option>${r}</option>`).join('')}</select>`)}</div>
+          <div class="frow">${fld('المدينة',`<select id="bf-city" class="native-input">${['الرياض','جدة','الخبر','الدمام','مكة','المدينة'].map(x=>`<option ${(b?.city||'الرياض')===x?'selected':''}>${x}</option>`).join('')}</select>`)}${fld('الحي',`<input class="native-input" value="العليا">`)}</div>
+          ${fld('العنوان',`<input id="bf-address" class="native-input" value="${b?.address||'123 شارع الملك فهد'}">`)}
+          <div class="branch-map">⌖<br><b>حدد موقع الفرع على الخريطة</b><br><span>المملكة العربية السعودية</span></div>
+        </div>`)}
+        ${card(cardH('ساعات العمل')+`<div class="card-b">${['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'].map((d,i)=>dayRow(d,i!==6)).join('')}</div>`)}
+        ${card(cardH('الحالة والإتاحة')+`<div class="card-b">
+          <div class="frow">${fld('حالة الفرع',`<select id="bf-status" class="native-input"><option ${!b||b.status==='نشط'?'selected':''}>نشط</option><option ${b&&b.status!=='نشط'?'selected':''}>غير نشط</option></select>`)}
+          ${fld('إتاحة السيارات',`<select class="native-input"><option>مرتبطة بإتاحة السيارات</option><option>إتاحة صفر</option></select>`)}</div>
+          ${branchNote('يظهر الفرع في مراقبة الإتاحة إذا كان نشطاً ولا توجد به سيارات متاحة.')}
+        </div>`)}
+        ${card(cardH('ساعات التوصيل وإعداداته')+`<div class="card-b">
+          <div class="frow">${fld('بداية التوصيل',`<input class="native-input" value="09:00 صباحاً">`)}${fld('نهاية التوصيل',`<input class="native-input" value="09:00 مساءً">`)}</div>
+          <div class="frow">${fld('نطاق التوصيل',`<select class="native-input"><option>نصف قطر 40 كم</option><option>حسب المدينة</option></select>`)}${fld('الحد الأدنى للحجز',`<select class="native-input"><option>5 ساعات</option><option>يوم واحد</option></select>`)}</div>
+          ${branchNote('يمكن ربط أسعار التوصيل لكل نطاق من شاشة رسوم التسليم بين المدن.')}
+        </div>`)}
+        ${card(cardH('مواعيد الإجازة الرسمية والإغلاق')+`<div class="card-b">
+          <div class="frow">${fld('من تاريخ',`<input class="native-input" type="date" value="2026-12-20">`)}${fld('إلى تاريخ',`<input class="native-input" type="date" value="2026-12-25">`)}</div>
+          ${fld('سبب الإغلاق',`<textarea class="native-input" rows="2">إجازة نهاية العام</textarea>`)}
+        </div>`)}
+        ${card(cardH('سياسات الفرع')+`<div class="card-b">
+          ${fld('سياسة الاستلام',`<textarea class="native-input" rows="3">يلزم تقديم الهوية ورخصة القيادة الأصلية عند الاستلام.</textarea>`)}
+          ${fld('سياسة التسليم',`<textarea class="native-input" rows="3">يتم فحص المركبة وتسجيل حالة الوقود والعداد عند التسليم.</textarea>`)}
+        </div>`)}
+        <div style="display:flex;gap:10px;justify-content:flex-start;margin:20px 0">
+          <button class="btn coral" onclick="WafraOps.saveBranchForm()">${isEdit?'حفظ التعديلات':'إضافة الفرع'}</button>
+          <a class="btn ghost" href="#branches">إلغاء</a>
+        </div>
+      </div>`;
+  };
+
+  /* —— رسوم بين المدن + تاريخ الإضافة —— */
+  S.intercityFees=()=>{
+    const fees=state.fees||[];
+    return phead('رسوم التسليم بين المدن','إدارة الرسوم لكل مزود مع حالة الرسوم',[],
+      `<button class="btn coral" onclick="WafraOps.addFee()">＋ إضافة رسوم</button>`)
+      +card(`<div class="filters" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${fld('المزودون',`<select class="native-input"><option>كل المزودين</option><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}
+        ${fld('المدن',`<select class="native-input"><option>كل المدن</option><option>الرياض</option><option>جدة</option><option>الدمام</option></select>`)}
+        ${fld('حالة الرسوم',`<select class="native-input"><option>كل الحالات</option><option>نشطة</option><option>غير نشطة</option></select>`)}
+      </div><div class="card-b">${table(
+        ['المزود','الاستلام','التسليم','الرسوم','تاريخ الإضافة','الحالة','الإجراءات'],
+        fees.map(x=>[
+          x.provider,x.from,x.to,
+          {v:`${x.amount} ر.س`,c:'num'},
+          x.added||'—',
+          bdg(x.status,x.status==='نشطة'?'g':'n'),
+          `<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل رسوم ${x.from} → ${x.to}')">✎</button>`
+        ])
+      )}</div>`);
+  };
+
+  if(window.TITLES){
+    window.TITLES.branchAreas='المناطق والمدن';
+    window.TITLES.branches='قائمة الفروع';
+    window.TITLES.intercityFees='رسوم بين المدن';
+    window.TITLES.branchForm='إضافة فرع';
+  }
+})();
+</script>
+<style>
+.form-page{max-width:1020px}
+.branch-map{margin-top:12px;min-height:150px;display:grid;place-items:center;text-align:center;border-radius:12px;background:linear-gradient(125deg,#E2E8E3,#E9EEF2);color:var(--navy);font-size:13px}
+.branch-map span{font-size:11px;color:var(--ink-2)}
+@media(max-width:800px){.form-page .frow{grid-template-columns:1fr}}
+</style>

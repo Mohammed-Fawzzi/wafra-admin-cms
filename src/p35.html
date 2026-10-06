@@ -1,0 +1,313 @@
+<style id="wafra-search-engine">
+/* محرك البحث والتحليل — مطابق لنموذج الشاشات المرفق */
+.sa-wrap{display:flex;flex-direction:column;gap:16px}
+.sa-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 2px}
+.sa-tab{display:inline-flex;align-items:center;gap:8px;border:1px solid #D7DEEE;background:#fff;color:#3A4663;border-radius:12px;padding:10px 14px;font:700 12.5px Cairo;cursor:pointer;transition:background .15s,color .15s,border-color .15s,box-shadow .15s}
+.sa-tab .ic{font-size:14px;opacity:.85}
+.sa-tab:hover{background:#F5F7FC;border-color:#B8C4DF}
+.sa-tab.on{background:var(--navy);color:#fff;border-color:var(--navy);box-shadow:0 8px 18px rgba(35,56,109,.22)}
+.sa-filter-card{background:#fff;border:1px solid #E4E9F3;border-radius:16px;padding:14px 16px;box-shadow:0 6px 18px rgba(25,42,84,.04)}
+.sa-filter-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.sa-filter-row .sa-sel,.sa-filter-row .sa-inp{min-height:40px;border:1px solid #D7DEEE;border-radius:10px;background:#fff;padding:8px 12px;font:600 12.5px Cairo;color:var(--ink);outline:0}
+.sa-filter-row .sa-sel{min-width:150px;cursor:pointer}
+.sa-filter-row .sa-inp{min-width:160px;flex:1}
+.sa-filter-row .sa-sel:focus,.sa-filter-row .sa-inp:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(35,56,109,.1)}
+.sa-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.sa-actions .grow{flex:1}
+.sa-btn{display:inline-flex;align-items:center;gap:6px;border-radius:10px;padding:9px 13px;font:700 12px Cairo;cursor:pointer;border:1px solid #D7DEEE;background:#fff;color:#3A4663}
+.sa-btn:hover{background:#F5F7FC}
+.sa-btn.primary{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 8px 16px rgba(35,56,109,.18)}
+.sa-btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.sa-exports{display:flex;gap:6px;margin-inline-start:auto}
+.sa-exports .sa-btn{padding:8px 10px;min-width:52px;justify-content:center}
+.sa-chips{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.sa-chip{flex:0 0 auto;min-width:210px;max-width:260px;display:flex;gap:10px;align-items:flex-start;background:linear-gradient(135deg,#F3EEFF,#F8F4FF);border:1px solid #E4D9FF;border-radius:14px;padding:12px 14px;color:#3D2B6B;box-shadow:0 6px 14px rgba(88,58,160,.06);cursor:pointer}
+.sa-chip:hover{transform:translateY(-1px);box-shadow:0 10px 18px rgba(88,58,160,.1)}
+.sa-chip .bolt{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#7B4FE0;color:#fff;font-size:14px;flex:0 0 auto}
+.sa-chip b{display:block;font-size:12px;line-height:1.55;font-weight:700}
+.sa-chip span{display:block;font-size:11px;color:#6B5A90;margin-top:2px}
+.sa-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sa-stat{background:#F4F7FF;border:1px solid #E1E8F8;border-radius:12px;padding:14px 16px}
+.sa-stat .k{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:4px}
+.sa-stat .v{font-size:22px;font-weight:800;color:var(--navy);font-family:Cairo}
+.sa-stat .v small{font-size:12px;color:var(--muted);font-weight:600;margin-inline-start:4px}
+.sa-grid{display:grid;grid-template-columns:minmax(260px,.9fr) minmax(0,1.4fr);gap:14px;align-items:start}
+.sa-panel{background:#fff;border:1px solid #E4E9F3;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.04)}
+.sa-panel-h{padding:14px 16px;border-bottom:1px solid #EEF1F7;font-weight:800;font-size:14px;color:var(--ink)}
+.sa-panel-b{padding:14px 16px}
+.sa-hbar{display:grid;gap:10px}
+.sa-hbar .row{display:grid;grid-template-columns:88px 1fr 42px;gap:8px;align-items:center}
+.sa-hbar .nm{font-size:12px;font-weight:700;color:#44506A;text-align:start}
+.sa-hbar .track{height:12px;background:#EEF2FA;border-radius:99px;overflow:hidden}
+.sa-hbar .track i{display:block;height:100%;border-radius:99px}
+.sa-hbar .pc{font-size:11.5px;font-weight:700;color:var(--muted);text-align:end}
+.sa-table-wrap{overflow:auto}
+.sa-table-wrap table{min-width:720px}
+@media(max-width:1100px){
+  .sa-grid{grid-template-columns:1fr}
+  .sa-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .sa-stats{grid-template-columns:1fr}
+  .sa-exports{margin-inline-start:0;width:100%}
+}
+</style>
+<script>
+/* محرك البحث والتحليل — واجهة مطابقة لنموذج التصميم + حفظ التبويب وتثبيت التنقّل. */
+(function(){
+  const money=v=>({v:String(v)+' ر.س',c:'num'});
+  const star=v=>`${v} ★`;
+  const tabs=[
+    {k:'companies',t:'الشركات',i:'🏢'},
+    {k:'branches',t:'الفروع',i:'📍'},
+    {k:'cars',t:'السيارات',i:'🚗'},
+    {k:'customers',t:'العملاء',i:'👤'},
+    {k:'contracts',t:'العقود',i:'📄'},
+    {k:'tickets',t:'التذاكر',i:'🎫'},
+    {k:'complaints',t:'الشكاوى',i:'⚑'},
+    {k:'users',t:'المستخدمين',i:'👥'}
+  ];
+  const fields={
+    companies:['اسم الشركة','رقم الشركة (السجل)','حالة الشركة','المدينة','المنطقة','التصنيف','عدد الفروع','عدد السيارات','نسبة الإشغال','الإيرادات','الأرباح','الشكاوى','التقييم'],
+    branches:['اسم الفرع','المدينة','المنطقة','الحي','حالة الفرع','عدد السيارات'],
+    cars:['نوع السيارة (الماركة)','الموديل','سنة الصنع','اللون','السعر','الحالة','المدينة'],
+    customers:['الاسم','رقم الهوية','رقم الجوال','البريد الإلكتروني','المدينة','مدة العقد','آخر عملية إيجار','إجمالي المديونيات','الحالة'],
+    contracts:['حالة العقد','المدينة','السيارة (الماركة)','قيمة العقد','المدة (أيام)','تاريخ البداية','تاريخ النهاية'],
+    tickets:['نوع المشكلة','حالة التذكرة','الموظف','المدينة','وقت الاستجابة','وقت الإغلاق'],
+    complaints:['نوع الشكوى','الحالة','العميل','المدينة'],
+    users:['الاسم','نوع المستخدم','المدينة','الحالة']
+  };
+  const valueHints={
+    complaints:{
+      'نوع الشكوى':['تأخر الاستلام','حالة السيارة','سلوك الموظف','خطأ فاتورة','إجراءات الحجز','النظافة'],
+      'الحالة':['مفتوحة','مغلقة'],
+      'المدينة':['الرياض','جدة','الدمام','الخبر','أبها']
+    },
+    users:{
+      'نوع المستخدم':['موظف شركة','مسؤول نظام','مدير فرع','مستخدم مزود','مستخدم تطبيق'],
+      'الحالة':['نشط','متوقف'],
+      'المدينة':['الرياض','جدة','الخبر','الدمام','مكة']
+    }
+  };
+  const ops=['يحتوي','يساوي','يبدأ بـ'];
+  const chips=[
+    {t:'شركات الرياض · +200 سيارة · إشغال 60% · شكاوى 2',d:'استعلام محفوظ'},
+    {t:'تويوتا · موديل 2024 · جدة · متاحة · 500 ر.س',d:'أسطول جاهز'},
+    {t:'فروع بلا سيارات',d:'يحتاج إجراء'},
+    {t:'عملاء استأجروا أكثر من 5 مرات',d:'ولاء مرتفع'},
+    {t:'عقود مفتوحة · جدة',d:'متابعة يومية'},
+    {t:'مشاهد متأخرة',d:'يحتاج متابعة'}
+  ];
+  const datasets={
+    companies:{
+      stats:[{k:'إجمالي النتائج',v:'28'},{k:'مجموع السيارات',v:'6,494'},{k:'المتوسط',v:'232'},{k:'أعلى مدينة',v:'الرياض',s:'(8)'}],
+      chart:[['نشطة',86,'#23386D'],['معطّلة',10,'#E45757'],['موقوفة',4,'#E8A23A']],
+      cols:['الشركة','المدينة','الحالة','الفروع','السيارات','الإشغال','الإيرادات','الأرباح','الشكاوى','التقييم'],
+      rows:[
+        ['شركة التميز لتأجير السيارات','الرياض',bdg('نشطة','g'),'12','486','78%',money('1,240,000'),money('186,000'),'4',star('4.8')],
+        ['شركة السرعة لتأجير السيارات','جدة',bdg('نشطة','g'),'9','412','74%',money('980,400'),money('142,200'),'6',star('4.5')],
+        ['شركة المجد لتأجير السيارات','الخبر',bdg('معطّلة','a'),'5','188','41%',money('420,100'),money('48,600'),'11',star('3.6')],
+        ['شركة الصحراء لتأجير السيارات','الرياض',bdg('نشطة','g'),'7','214','81%',money('860,200'),money('112,400'),'2',star('4.7')],
+        ['كي رنت','مكة المكرمة',bdg('نشطة','g'),'5','168','69%',money('610,800'),money('79,300'),'3',star('4.4')],
+        ['مسار لتأجير المركبات','الدمام',bdg('موقوفة','a'),'4','96','22%',money('188,200'),money('22,500'),'8',star('3.9')]
+      ]
+    },
+    branches:{
+      stats:[{k:'إجمالي النتائج',v:'242'},{k:'مجموع السيارات',v:'6,494'},{k:'المتوسط',v:'27'},{k:'أعلى مدينة',v:'الرياض',s:'(54)'}],
+      chart:[['الرياض',54,'#23386D'],['جدة',38,'#E45757'],['مكة',28,'#E8A23A'],['الدمام',24,'#00AD5F'],['الخبر',18,'#428BC1'],['أبها',14,'#8367C7'],['حائل',12,'#2A9D8F']],
+      cols:['الفرع','المدينة','الحي','الحالة','السيارات'],
+      rows:[
+        ['فرع العليا — التميز لتأجير السيارات','الرياض','العليا',bdg('نشط','g'),'42'],
+        ['فرع الحمراء — كي رنت','جدة','الحمراء',bdg('نشط','g'),'36'],
+        ['فرع السلامة — مسار','الخبر','السلامة',bdg('موقوف','r'),'19'],
+        ['مطار الملك خالد — شركة الصحراء','الرياض','المطار',bdg('نشط','g'),'48'],
+        ['جدة الشمالية — شركة الصحراء','جدة','الشاطئ',bdg('نشط','g'),'31'],
+        ['الخبر التشغيلي — مسار','الخبر','الكورنيش',bdg('موقوف','r'),'12']
+      ]
+    },
+    cars:{
+      stats:[{k:'إجمالي النتائج',v:'631'},{k:'مجموع السعر',v:'193,034',s:'ر.س'},{k:'المتوسط',v:'305.9',s:'ر.س'},{k:'أعلى مدينة',v:'جدة',s:'(173)'}],
+      chart:[['تويوتا',72,'#23386D'],['هيونداي',14,'#E45757'],['كيا',9,'#E8A23A'],['نيسان',5,'#00AD5F']],
+      cols:['الماركة','الموديل','السنة','الفئة','اللون','السعر','الحالة','المدينة'],
+      rows:[
+        ['تويوتا','كامري','2023','سيدان','أبيض',money('190'),bdg('متوفرة','b'),'الرياض'],
+        ['تويوتا','هايلوكس','2022','تجارية','أبيض',money('240'),bdg('متوفرة','b'),'جدة'],
+        ['تويوتا','كورولا','2024','سيدان','أسود',money('165'),bdg('محجوزة','a'),'جدة'],
+        ['تويوتا','لاندكروزر','2021','دفع رباعي','رمادي',money('420'),bdg('متوفرة','b'),'الرياض'],
+        ['هيونداي','إلنترا','2023','اقتصادية','أحمر',money('145'),bdg('متوفرة','b'),'الدمام'],
+        ['كيا','K5','2022','سيدان','أزرق',money('170'),bdg('محجوزة','a'),'الخبر']
+      ]
+    },
+    customers:{
+      stats:[{k:'إجمالي النتائج',v:'520'},{k:'مجموع العقود',v:'15,965'},{k:'المتوسط',v:'31'},{k:'أعلى مدينة',v:'الطائف',s:'(53)'}],
+      chart:[['الطائف',53,'#23386D'],['مكة',48,'#E45757'],['حائل',41,'#E8A23A'],['أبها',36,'#00AD5F'],['المدينة',33,'#8367C7'],['نجران',29,'#428BC1'],['جدة',27,'#2A9D8F']],
+      cols:['الاسم','الجوال','المدينة','العقود','إجمالي الإنفاق','آخر إيجار','الحالة'],
+      rows:[
+        ['بندر الشهري','0555 120 884','تبوك','18',money('12,840'),'20 أغسطس',bdg('نشط','g')],
+        ['عمر الثاني','0555 441 220','الطائف','14',money('9,270'),'6 يونيو',bdg('نشط','g')],
+        ['أحمد الشمري','0555 778 113','الرياض','14',money('12,840'),'اليوم',bdg('نشط','g')],
+        ['نورة القحطاني','0555 332 901','جدة','11',money('9,270'),'أمس',bdg('نشط','g')],
+        ['سلمان العنزي','0555 901 441','أبها','9',money('7,120'),'12 أغسطس',bdg('نشط','g')],
+        ['ريم الزهراني','0555 667 220','مكة المكرمة','8',money('6,540'),'3 أغسطس',bdg('نشط','g')]
+      ]
+    },
+    contracts:{
+      stats:[{k:'إجمالي النتائج',v:'2,705'},{k:'مجموع القيمة',v:'34.2',s:'م ر.س'},{k:'المتوسط',v:'9.2',s:'ألف ر.س'},{k:'أعلى مدينة',v:'جدة',s:'(971)'}],
+      chart:[['مفتوح',78,'#23386D'],['مغلق',14,'#00AD5F'],['ملغى',5,'#E45757'],['متأخر',3,'#E8A23A']],
+      cols:['رقم','الحالة','المدينة','السيارة','المدة','القيمة','التاريخ'],
+      rows:[
+        ['CT-20418',bdg('مفتوح','b'),'الرياض','نيسان صني','3 أيام',money('570'),'25 سبتمبر'],
+        ['CT-20405',bdg('مفتوح','b'),'نجران','هيونداي إلنترا','5 أيام',money('820'),'24 سبتمبر'],
+        ['CT-20396',bdg('مفتوح','b'),'مكة','تويوتا كامري','7 أيام',money('1,190'),'22 سبتمبر'],
+        ['CT-20388',bdg('مفتوح','b'),'عسير','لكزس ES','2 أيام',money('980'),'21 سبتمبر'],
+        ['CT-20371',bdg('مفتوح','b'),'جدة','مرسيدس C','4 أيام',money('1,640'),'20 سبتمبر'],
+        ['CT-20360',bdg('مفتوح','b'),'الرياض','تويوتا كورولا','6 أيام',money('910'),'19 سبتمبر']
+      ]
+    },
+    tickets:{
+      stats:[{k:'إجمالي النتائج',v:'55'},{k:'أعلى مدينة',v:'جدة',s:'(15)'},{k:'متوسط الاستجابة',v:'38',s:'د'},{k:'مفتوحة',v:'18'}],
+      chart:[['عطل فني',55,'#23386D']],
+      cols:['رقم','النوع','الموظف','الحالة','الاستجابة','المدينة'],
+      rows:[
+        ['11','عطل فني','سلطان الخالدي',bdg('مفتوحة','r'),'30 د','مكة'],
+        ['19','عطل فني','يوسف الراشدي',bdg('مغلقة','g'),'45 د','جدة'],
+        ['25','عطل فني','فهد العتيبي',bdg('قيد المعالجة','a'),'20 د','المدينة'],
+        ['28','عطل فني','خالد المطيري',bdg('مفتوحة','r'),'35 د','أبها'],
+        ['29','عطل فني','نورة الشهري',bdg('مغلقة','g'),'18 د','الرياض'],
+        ['31','عطل فني','ماجد الحربي',bdg('قيد المعالجة','a'),'42 د','جدة']
+      ]
+    },
+    complaints:{
+      stats:[{k:'إجمالي النتائج',v:'122'},{k:'أعلى مدينة',v:'جدة',s:'(36)'},{k:'مفتوحة',v:'48'},{k:'مغلقة',v:'74'}],
+      chart:[['تأخر الاستلام',122,'#23386D']],
+      cols:['رقم','النوع','العميل','الحالة','المدينة'],
+      rows:[
+        ['1','تأخر الاستلام','يوسف الزهراني',bdg('مغلقة','g'),'الخبر'],
+        ['11','تأخر الاستلام','عبدالعزيز الخالدي',bdg('مفتوحة','r'),'أبها'],
+        ['13','تأخر الاستلام','سلمان العتيبي',bdg('مغلقة','g'),'جدة'],
+        ['14','تأخر الاستلام','ناصر الدوسري',bdg('مفتوحة','r'),'الدمام'],
+        ['22','تأخر الاستلام','فهد القحطاني',bdg('مغلقة','g'),'الرياض'],
+        ['54','تأخر الاستلام','ماجد الحربي',bdg('مفتوحة','r'),'جدة'],
+        ['58','تأخر الاستلام','خالد المطيري',bdg('مغلقة','g'),'أبها'],
+        ['83','تأخر الاستلام','عمر الشهري',bdg('مفتوحة','r'),'الرياض']
+      ]
+    },
+    users:{
+      stats:[{k:'إجمالي النتائج',v:'64'},{k:'أكثر مدينة',v:'الخبر',s:'(13)'},{k:'نشطون',v:'58'},{k:'متوقفون',v:'6'}],
+      chart:[['موظف شركة',22,'#23386D'],['مسؤول نظام',13,'#E45757'],['مدير فرع',13,'#E8A23A'],['مستخدم مزود',11,'#00AD5F'],['مستخدم تطبيق',5,'#428BC1']],
+      cols:['الاسم','النوع','المدينة','الحالة'],
+      rows:[
+        ['ناصر التميمي','موظف شركة','الخبر',bdg('نشط','g')],
+        ['سلمان السوي','مسؤول نظام','الرياض',bdg('نشط','g')],
+        ['خالد المطيري','مدير فرع','جدة',bdg('نشط','g')],
+        ['علي خان','مستخدم مزود','الدمام',bdg('نشط','g')],
+        ['نورة الشهري','مستخدم تطبيق','مكة',bdg('متوقف','n')],
+        ['فهد العتيبي','موظف شركة','الخبر',bdg('نشط','g')],
+        ['مريم خالد','مدير فرع','الرياض',bdg('نشط','g')],
+        ['ماجد الحربي','مستخدم مزود','جدة',bdg('نشط','g')]
+      ]
+    }
+  };
+
+  const SA_KEY='wafra-sa-engine-v1';
+  const loadSaved=()=>{try{return JSON.parse(localStorage.getItem(SA_KEY)||'{}')||{};}catch(e){return{};}};
+  const persist=s=>{try{localStorage.setItem(SA_KEY,JSON.stringify({tab:s.tab,field:s.field,op:s.op,value:s.value}));}catch(e){}};
+  const state=()=>{
+    if(!window.__saEngine){
+      const saved=loadSaved();
+      window.__saEngine={
+        tab:saved.tab&&(saved.tab in datasets)?saved.tab:'companies',
+        field:saved.field||'',
+        op:saved.op||'يحتوي',
+        value:saved.value||''
+      };
+    }
+    return window.__saEngine;
+  };
+  const cellStr=c=>(c&&typeof c==='object'&&'v' in c)?String(c.v):String(c??'');
+  const notice=msg=>(typeof window.__toast==='function'?window.__toast:typeof toast==='function'?toast:console.log)(msg);
+  const hbars=items=>{
+    const max=Math.max(...items.map(x=>x[1]),1);
+    return `<div class="sa-hbar">${items.map(x=>`<div class="row"><span class="nm">${x[0]}</span><span class="track"><i style="width:${Math.round(x[1]/max*100)}%;background:${x[2]||'var(--navy)'}"></i></span><span class="pc">${x[1]}</span></div>`).join('')}</div>`;
+  };
+
+  Object.assign(WafraOps,{
+    saTab:k=>{const s=state();s.tab=k;s.field='';s.value='';persist(s);render();},
+    saFieldChange:()=>{const s=state();s.field=document.getElementById('sa-field')?.value||'';s.value='';persist(s);render();},
+    saRun:()=>{const s=state();s.field=document.getElementById('sa-field')?.value||'';s.op=document.getElementById('sa-op')?.value||'يحتوي';s.value=document.getElementById('sa-value')?.value||'';persist(s);render();notice('تم تشغيل البحث والتحليل على النتائج الحالية.');},
+    saClear:()=>{const s=state();s.field='';s.op='يحتوي';s.value='';persist(s);render();notice('تم مسح الفلاتر.');},
+    saSave:()=>{persist(state());notice('تم حفظ التبويب والاستعلام.');},
+    saChip:t=>{const s=state();s.value=t||'';persist(s);render();notice('تم تطبيق الاستعلام.');},
+    saAddFilter:()=>notice('تمت إضافة صف فلتر جديد للجلسة الحالية.'),
+    goSearchAnalysis:()=>{
+      const key='searchAnalysis';
+      const cur=(location.hash.replace(/^#/,'').split('?')[0])||'dashboard';
+      if(cur===key){render();return;}
+      location.hash=key;
+    }
+  });
+
+  /* إعادة الرسم إذا نُقر نفس الرابط وكانت الهاش لم تتغيّر (بعد فشل سابق) */
+  if(typeof document!=='undefined'){
+    document.addEventListener('click',function(e){
+      const a=e.target.closest('#sidebar a.nav-item[href^="#"]');
+      if(!a) return;
+      const k=(a.getAttribute('href')||'').replace(/^#/,'').split('?')[0];
+      if(!k) return;
+      const cur=(location.hash.replace(/^#/,'').split('?')[0])||'dashboard';
+      if(cur===k){e.preventDefault();render();}
+    },true);
+  }
+
+  S.searchAnalysis=()=>{
+    try{
+      const s=state();
+      const tab=(s.tab in datasets)?s.tab:'companies';
+      s.tab=tab;
+      const data=datasets[tab];
+      const fieldOpts=fields[tab]||fields.companies;
+      const field=fieldOpts.includes(s.field)?s.field:fieldOpts[0];
+      s.field=field;
+      const q=(s.value||'').trim();
+      const filtered=(!q)?data.rows:data.rows.filter(r=>r.map(cellStr).join(' ').includes(q));
+      const tabBar=`<div class="sa-tabs">${tabs.map(t=>`<button type="button" class="sa-tab ${tab===t.k?'on':''}" onclick="WafraOps.saTab('${t.k}')"><span class="ic">${t.i}</span>${t.t}</button>`).join('')}</div>`;
+      const hints=((valueHints[tab]||{})[field])||[];
+      const valueControl=hints.length
+        ? `<select id="sa-value" class="sa-sel" style="min-width:180px;flex:1"><option value="">اختر القيمة</option>${hints.map(v=>`<option ${v===s.value?'selected':''}>${v}</option>`).join('')}</select>`
+        : `<input id="sa-value" class="sa-inp" value="${(s.value||'').replace(/"/g,'&quot;')}" placeholder="القيمة">`;
+      const filterCard=`<div class="sa-filter-card"><div class="sa-filter-row">
+        <select id="sa-field" class="sa-sel" onchange="WafraOps.saFieldChange()">${fieldOpts.map(f=>`<option ${f===field?'selected':''}>${f}</option>`).join('')}</select>
+        <select id="sa-op" class="sa-sel">${ops.map(o=>`<option ${o===(s.op||'يحتوي')?'selected':''}>${o}</option>`).join('')}</select>
+        ${valueControl}
+        <button type="button" class="sa-btn primary" onclick="WafraOps.saRun()">⌕ تحليل البحث</button>
+        <button type="button" class="sa-btn" onclick="WafraOps.saAddFilter()">＋ إضافة فلتر</button>
+      </div><div class="sa-actions">
+        <button type="button" class="sa-btn ghost" onclick="WafraOps.saClear()">مسح الكل</button>
+        <button type="button" class="sa-btn ghost" onclick="WafraOps.saSave()">حفظ الاستعلام</button>
+        <div class="grow"></div>
+        <div class="sa-exports">
+          <button type="button" class="sa-btn" onclick="WafraOps.exportCurrent('محرك-البحث','PDF')">PDF</button>
+          <button type="button" class="sa-btn" onclick="WafraOps.exportCurrent('محرك-البحث','Excel')">Excel</button>
+          <button type="button" class="sa-btn" onclick="WafraOps.exportCurrent('محرك-البحث','CSV')">CSV</button>
+        </div>
+      </div></div>`;
+      const chipRow=`<div class="sa-chips">${chips.map(c=>`<button type="button" class="sa-chip" onclick="WafraOps.saChip(this.querySelector('b').textContent)"><span class="bolt">⚡</span><div><b>${c.t}</b><span>${c.d}</span></div></button>`).join('')}</div>`;
+      const stats=`<div class="sa-stats">${data.stats.map(x=>`<div class="sa-stat"><div class="k">${x.k}</div><div class="v">${x.v}${x.s?`<small>${x.s}</small>`:''}</div></div>`).join('')}</div>`;
+      const body=`<div class="sa-grid">
+        <div class="sa-panel"><div class="sa-panel-h">توزيع النتائج</div><div class="sa-panel-b">${hbars(data.chart)}</div></div>
+        <div class="sa-panel"><div class="sa-panel-h">نتائج ${tabs.find(t=>t.k===tab)?.t||''} · ${filtered.length}</div><div class="sa-panel-b sa-table-wrap">${table(data.cols,filtered)}</div></div>
+      </div>`;
+      return phead('محرك البحث والتحليل','ابحث داخل جميع بيانات المنصّة، اجمع أكثر من فلتر، واحصل على النتائج والرسوم فوراً',[])
+        +`<div class="sa-wrap">${tabBar}${filterCard}${chipRow}${stats}${body}</div>`;
+    }catch(err){
+      console.error(err);
+      return phead('محرك البحث والتحليل','تعذّر عرض الشاشة',[])+note('dngr','خطأ في العرض',String(err&&err.message||err));
+    }
+  };
+
+  const home=NAV.find(g=>g.g===null);
+  if(home&&!home.items.some(i=>i.k==='searchAnalysis'))home.items.splice(1,0,{k:'searchAnalysis',t:'محرك البحث والتحليل',i:'⌕'});
+  if(window.TITLES)window.TITLES.searchAnalysis='محرك البحث والتحليل';
+  if(((location.hash.replace(/^#/,'').split('?')[0])||'')==='searchAnalysis')render();
+})();
+</script>

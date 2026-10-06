@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/wafra-admin-cms.html" }
+  ]
+}

@@ -542,7 +542,7 @@ M.publishTerms = () => modal('نشر نسخة جديدة من الشروط', `
 /* ===================== NAV + ROUTER ===================== */
 const NAV = [
   {g:null, items:[
-    {k:'dashboard',t:'لوحة التحكم',i:'▦'},
+    {k:'dashboard',t:'المؤشرات الرئيسية',i:'▦'},
     {k:'inbox',t:'مركز الإشعارات',i:'🔔',n:4},
     {k:'messages',t:'الرسائل',i:'📨',n:3},
   ]},
@@ -642,7 +642,11 @@ function renderNav(){
   });
   document.getElementById('sidebar').innerHTML = html;
 }
-function go(k){ location.hash = k; }
+function go(k){
+  const now = (location.hash.replace('#','').split('?')[0]) || 'dashboard';
+  if(now === k){ render(); return; }
+  location.hash = k;
+}
 /* topbar bell / chat now resolve to real screens */
 document.addEventListener('click', e=>{
   const b = e.target.closest('.topbar .icon-btn');
@@ -654,7 +658,12 @@ function render(){
   const k = (location.hash.replace('#','').split('?')[0]) || 'dashboard';
   cur = S[k] ? k : 'dashboard';
   window.cur = cur;
-  document.getElementById('view').innerHTML = S[cur]();
+  try{
+    document.getElementById('view').innerHTML = S[cur]();
+  }catch(err){
+    console.error(err);
+    document.getElementById('view').innerHTML = (typeof note==='function'?note('dngr','تعذّر فتح الشاشة',String(err&&err.message||err)):`<div class="note dngr">تعذّر فتح الشاشة</div>`);
+  }
   renderNav();
   if(window.enhance) window.enhance(document.getElementById('view'));
   const idx = (()=>{let n=0;for(const g of NAV){for(const i of g.items){if(i.sub)continue;n++;if(i.k===cur)return n;}}return 0;})();

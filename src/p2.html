@@ -1,8 +1,8 @@
 <script>
 const S = {}; window.S = S;
 
-/* ========== 1. لوحة التحكم ========== */
-S.dashboard = () => phead('لوحة التحكم','صورة لحظية عن حالة المنصّة خلال الفترة المختارة',['FR-ADH-01','FR-ADH-02','FR-ADH-03','FR-ADH-04','FR-ADH-05','FR-ADH-06','FR-ADH-07'],
+/* ========== 1. المؤشرات الرئيسية ========== */
+S.dashboard = () => phead('المؤشرات الرئيسية','صورة لحظية عن حالة المنصّة خلال الفترة المختارة',['FR-ADH-01','FR-ADH-02','FR-ADH-03','FR-ADH-04','FR-ADH-05','FR-ADH-06','FR-ADH-07'],
   `<div class="fd">آخر 30 يوماً<span class="cv">▾</span></div><div class="fd">كل المزوّدين<span class="cv">▾</span></div><div class="fd">كل المدن<span class="cv">▾</span></div><button class="btn ghost">⤓ تصدير</button>`)
 + `<section class="command-hero"><div class="command-copy"><span class="eyebrow">وفرا / مركز القيادة</span><h2>صباح الخير، محمد.</h2><p>الحركة التشغيلية مستقرة اليوم، وهناك <b>14 قرارًا</b> تحتاج اهتمامك لتستمر التجربة بسلاسة.</p><div class="hero-actions"><a class="btn coral" href="#disputes">مراجعة القرارات</a><a class="hero-link" href="#reports">عرض ملخص الأداء ←</a></div></div><div class="hero-orbit"><span class="orb a">4.8★<small>التقييم</small></span><span class="orb b">317<small>حجز نشط</small></span><span class="orb c">94%<small>القبول</small></span><div class="hero-core">و<span>.</span></div></div></section>`
 + kpi([

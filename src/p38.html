@@ -1,0 +1,123 @@
+<style id="wafra-operations">
+/* المؤشرات التشغيلية — مطابق لنموذج التصميم */
+.op-wrap{display:flex;flex-direction:column;gap:16px;padding:14px}
+.op-kpis{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:8px}
+.op-kpis.row2{grid-template-columns:repeat(6,minmax(0,1fr));max-width:72%}
+.op-kpi{background:#fff;border:1px solid #E4E9F3;border-radius:12px;padding:12px 10px;box-shadow:0 4px 12px rgba(25,42,84,.04);display:flex;flex-direction:column;gap:6px;min-width:0}
+.op-kpi .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#EEF2FA;color:var(--navy);font-size:14px}
+.op-kpi .ic.warn{background:#FFF1E8;color:#D97706}
+.op-kpi .ic.danger{background:#FDECEC;color:#E23D3D}
+.op-kpi .l{font:700 11px Cairo;color:var(--muted);line-height:1.35;min-height:28px}
+.op-kpi .v{font:800 18px Cairo;color:var(--ink);letter-spacing:-.02em;line-height:1.1}
+.op-kpi .v small{font-size:12px;font-weight:700;color:var(--muted);margin-inline-start:2px}
+.op-grid{display:grid;grid-template-columns:1.05fr 1.2fr;gap:14px}
+.op-panel{background:#fff;border:1px solid #E4E9F3;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.04)}
+.op-panel-h{padding:14px 16px;border-bottom:1px solid #EEF1F7;font:800 14px Cairo;color:var(--ink)}
+.op-panel-b{padding:12px 14px 16px}
+.op-panel-b svg{width:100%;height:auto;display:block}
+.op-gauges{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:end}
+.op-gauge{text-align:center}
+.op-gauge .nm{font:700 11.5px Cairo;color:var(--muted);margin-top:2px;line-height:1.4;min-height:32px;display:flex;align-items:flex-start;justify-content:center}
+@media(max-width:1200px){
+  .op-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .op-kpis.row2{max-width:100%;grid-template-columns:repeat(6,minmax(0,1fr))}
+  .op-grid{grid-template-columns:1fr}
+  .op-gauges{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:700px){
+  .op-kpis,.op-kpis.row2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .op-gauges{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+<script>
+/* المؤشرات التشغيلية — واجهة مطابقة لنموذج التصميم. */
+(function(){
+  const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['financial','النظرة المالية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
+  const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
+  const C={navy:'#293B85',blue:'#2C68D8',green:'#20A16E',red:'#E23D3D',amber:'#EAA631',ink:'#1E2A44',muted:'#7A869E',line:'#E4E9F3'};
+
+  const kpiCard=(ic,label,value,tone)=>{
+    const cls=tone==='danger'?'danger':tone==='warn'?'warn':'';
+    return `<div class="op-kpi"><div class="ic ${cls}">${ic}</div><div class="l">${label}</div><div class="v">${value}</div></div>`;
+  };
+
+  const contractBars=()=>{
+    const items=[['مفتوح',3705,C.blue],['مغلق',4120,C.green],['ملغي',1707,C.red],['منتهي',4200,C.navy],['متأخر',1300,C.amber]];
+    const W=420,H=250,p={l:42,r:12,t:16,b:40},pw=W-p.l-p.r,ph=H-p.t-p.b,mx=4500;
+    const y=v=>p.t+ph-(v/mx)*ph;
+    const gap=pw/items.length,bw=gap*0.48;
+    const grid=[0,1500,3000,4500].map(v=>`<line x1="${p.l}" y1="${y(v)}" x2="${W-p.r}" y2="${y(v)}" stroke="${C.line}"/><text x="${p.l-6}" y="${y(v)+4}" text-anchor="end" font-family="Cairo" font-size="10" fill="${C.muted}">${v.toLocaleString('en')}</text>`).join('');
+    const bars=items.map(([n,v,c],i)=>{
+      const cx=p.l+i*gap+gap/2;
+      return `<rect x="${cx-bw/2}" y="${y(v)}" width="${bw}" height="${p.t+ph-y(v)}" rx="6" fill="${c}"/><text x="${cx}" y="${H-12}" text-anchor="middle" font-family="Cairo" font-size="11" font-weight="700" fill="${C.muted}">${n}</text>`;
+    }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="حالة العقود">${grid}${bars}</svg>`;
+  };
+
+  const gauge=(pct,color,label)=>{
+    const start=Math.PI, cx=70, cy=68, r=48;
+    const ang=start-(Math.min(100,pct)/100)*Math.PI;
+    const arc=(a0,a1,col,w=12)=>{
+      const x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+      return `<path d="M${x0},${y0} A${r},${r} 0 0 1 ${x1},${y1}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`;
+    };
+    const tipX=cx+r*Math.cos(ang), tipY=cy+r*Math.sin(ang);
+    const txt=Number.isInteger(pct)?`${pct}%`:`${pct}%`;
+    return `<div class="op-gauge"><svg viewBox="0 0 140 100" role="img" aria-label="${label}">
+      ${arc(Math.PI,0,'#E8EDF7',12)}
+      ${arc(Math.PI,ang,color,12)}
+      <circle cx="${tipX}" cy="${tipY}" r="5" fill="${color}" stroke="#fff" stroke-width="2"/>
+      <text x="70" y="78" text-anchor="middle" font-family="Cairo" font-size="18" font-weight="800" fill="${C.ink}">${txt}</text>
+    </svg><div class="nm">${label}</div></div>`;
+  };
+
+  const baseAnalytics=S.analytics;
+  S.analytics=()=>{
+    const active=window.__analyticsTab||'search';
+    if(active!=='operations') return baseAnalytics();
+
+    const row1=[
+      kpiCard('🚗','أسطول المركبات','6,494'),
+      kpiCard('✓','المتاحة','920'),
+      kpiCard('🔑','المؤجرة','3,806'),
+      kpiCard('⚠','المتعطلة','871','warn'),
+      kpiCard('📄','إجمالي العقود','14,926'),
+      kpiCard('◉','العقود المفتوحة','3,705'),
+      kpiCard('▣','العقود المغلقة','8,230'),
+      kpiCard('✕','العقود الملغاة','1,707'),
+      kpiCard('◷','متوسط مدة الإيجار','22.5 <small>يوم</small>'),
+      kpiCard('🚚','متوسط وقت التسليم','31 <small>د</small>'),
+      kpiCard('⏱','متوسط وقت الاستجابة','61 <small>د</small>')
+    ].join('');
+
+    const row2=[
+      kpiCard('👤','عدد العملاء','520'),
+      kpiCard('👥','عدد المستخدمين','64'),
+      kpiCard('🏢','عدد الشركات','28'),
+      kpiCard('📍','عدد الفروع','242'),
+      kpiCard('⚑','عدد الشكاوى','779','danger'),
+      kpiCard('🎫','عدد التذاكر','310','warn')
+    ].join('');
+
+    const gauges=`<div class="op-gauges">
+      ${gauge(73,C.green,'معدل الإشغال')}
+      ${gauge(11.4,C.red,'معدل الإلغاء')}
+      ${gauge(98,C.green,'معدل التحصيل')}
+      ${gauge(99.6,C.green,'معدل الاحتفاظ بالعملاء')}
+      ${gauge(96.5,C.green,'معدل تكرار الاستئجار')}
+    </div>`;
+
+    const body=`<div class="op-wrap">
+      <div class="op-kpis">${row1}</div>
+      <div class="op-kpis row2">${row2}</div>
+      <div class="op-grid">
+        <div class="op-panel"><div class="op-panel-h">حالة العقود</div><div class="op-panel-b">${contractBars()}</div></div>
+        <div class="op-panel"><div class="op-panel-h">المعدلات التشغيلية</div><div class="op-panel-b">${gauges}</div></div>
+      </div>
+    </div>`;
+
+    return phead('المؤشرات التشغيلية','مؤشرات الأداء التشغيلي (Operational KPIs) محسوبة تلقائياً من بيانات المنصة',[],`<button class="btn ghost" onclick="WafraOps.demoAction('تصدير المؤشرات التشغيلية')">⤒ تصدير</button>`)
+      +card(tabbar(active)+body);
+  };
+})();
+</script>

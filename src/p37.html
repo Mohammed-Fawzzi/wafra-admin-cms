@@ -1,0 +1,222 @@
+<style id="wafra-technical">
+/* التحليل الفني — معرض الرسوم مطابق للنموذج */
+.ta-beta{display:inline-flex;align-items:center;margin-inline-start:8px;padding:2px 9px;border-radius:99px;background:#FFE4EC;color:#D12B5B;font:800 11px Cairo;vertical-align:middle;position:relative;top:-4px}
+.ta-wrap{display:flex;flex-direction:column;gap:14px;padding:14px}
+.ta-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ta-grid3{display:grid;grid-template-columns:1fr 1.15fr .85fr;gap:14px}
+.ta-panel{background:#fff;border:1px solid #E4E9F3;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.04);min-height:0}
+.ta-panel-h{padding:13px 16px 8px;font:800 13.5px Cairo;color:var(--ink);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ta-panel-h .kind{color:#7A869E;font-weight:700;margin-inline-end:4px}
+.ta-panel-b{padding:4px 12px 14px}
+.ta-panel-b svg{width:100%;height:auto;display:block}
+.ta-legend{display:flex;gap:12px;flex-wrap:wrap;font:700 11px Cairo;color:var(--muted)}
+.ta-legend i{display:inline-block;width:9px;height:9px;border-radius:99px;margin-inline-end:5px;vertical-align:middle}
+.ta-heat{width:100%;border-collapse:separate;border-spacing:4px;font:700 11.5px Cairo}
+.ta-heat th{color:#7A869E;font-weight:700;padding:4px;text-align:center}
+.ta-heat td{text-align:center;border-radius:8px;padding:10px 6px;color:#fff;min-width:36px}
+.ta-heat .rl{text-align:start;background:transparent!important;color:#44506A;padding-inline:6px 10px;white-space:nowrap}
+.ta-funnel{display:flex;flex-direction:column;gap:8px;padding:8px 4px 4px;align-items:center}
+.ta-funnel .row{display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.ta-funnel .bar{height:38px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:#fff;font:800 12px Cairo;box-shadow:0 4px 10px rgba(25,42,84,.08)}
+.ta-funnel .bar span{opacity:.92;font-weight:700}
+.ta-tree{display:grid;grid-template-columns:1.4fr 1.1fr 1fr .9fr 1.6fr;grid-template-rows:1.2fr .85fr .7fr;gap:6px;min-height:260px;padding:4px}
+.ta-tree .c{border-radius:10px;padding:12px 12px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;min-height:64px;overflow:hidden}
+.ta-tree .c b{font:800 13px Cairo;line-height:1.35}
+.ta-tree .c span{font:700 11.5px Cairo;opacity:.95}
+.ta-tree .c.s{grid-row:span 1}
+.ta-tree .big{grid-row:1 / span 2;grid-column:5}
+@media(max-width:1100px){
+  .ta-grid2,.ta-grid3{grid-template-columns:1fr}
+  .ta-tree{grid-template-columns:1fr 1fr;grid-template-rows:auto}
+  .ta-tree .big{grid-row:auto;grid-column:auto}
+}
+</style>
+<script>
+/* التحليل الفني — معرض الرسوم مطابق لنموذج التصميم. */
+(function(){
+  const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['financial','النظرة المالية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
+  const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
+  const C={navy:'#293B85',red:'#E23D3D',amber:'#EAA631',green:'#20A16E',blue:'#2C68D8',purple:'#8367C7',teal:'#1AA6A6',pink:'#E85D8E',ink:'#1E2A44',muted:'#7A869E',line:'#E4E9F3'};
+
+  const panel=(kind,title,body,legend)=>`<div class="ta-panel"><div class="ta-panel-h"><span><span class="kind">${kind} ·</span> ${title}</span>${legend||''}</div><div class="ta-panel-b">${body}</div></div>`;
+  const leg=items=>`<div class="ta-legend">${items.map(([c,t])=>`<span><i style="background:${c}"></i>${t}</span>`).join('')}</div>`;
+
+  const lineChart=()=>{
+    const months=['فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر'];
+    const a=[86,92,84,90,95,88,93,89], b=[48,52,44,56,50,58,46,54];
+    const W=420,H=220,p={l:36,r:14,t:18,b:36}, pw=W-p.l-p.r, ph=H-p.t-p.b;
+    const x=i=>p.l+(i/(months.length-1))*pw, y=v=>p.t+ph-(v/100)*ph;
+    const path=vals=>vals.map((v,i)=>`${i?'L':'M'}${x(i)},${y(v)}`).join(' ');
+    const grid=[0,25,50,75,100].map(v=>`<line x1="${p.l}" y1="${y(v)}" x2="${W-p.r}" y2="${y(v)}" stroke="${C.line}"/><text x="${p.l-8}" y="${y(v)+4}" text-anchor="end" font-family="Cairo" font-size="10" fill="${C.muted}">${v}</text>`).join('');
+    const labels=months.map((m,i)=>`<text x="${x(i)}" y="${H-10}" text-anchor="middle" font-family="Cairo" font-size="10" font-weight="700" fill="${C.muted}">${m}</text>`).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="الاتجاه الشهري">${grid}
+      <path d="${path(a)}" fill="none" stroke="${C.navy}" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="${path(b)}" fill="none" stroke="${C.red}" stroke-width="2.5" stroke-linejoin="round"/>
+      ${a.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="${C.navy}"/>`).join('')}
+      ${b.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="${C.red}"/>`).join('')}
+      ${labels}</svg>`;
+  };
+
+  const barChart=()=>{
+    const cities=[['جدة',32,'#293B85'],['الرياض',28,'#E23D3D'],['مكة',18,'#EAA631'],['أبها',14,'#20A16E'],['الدمام',12,'#2C68D8'],['الخبر',10,'#8367C7'],['بريدة',8,'#1AA6A6']];
+    const W=420,H=220,p={l:44,r:12,t:16,b:40}, pw=W-p.l-p.r, ph=H-p.t-p.b, mx=35;
+    const bw=pw/cities.length*0.55, gap=pw/cities.length;
+    const y=v=>p.t+ph-(v/mx)*ph;
+    const grid=[0,10,20,30].map(v=>`<line x1="${p.l}" y1="${y(v)}" x2="${W-p.r}" y2="${y(v)}" stroke="${C.line}"/><text x="${p.l-6}" y="${y(v)+4}" text-anchor="end" font-family="Cairo" font-size="9" fill="${C.muted}">${v}M</text>`).join('');
+    const bars=cities.map(([n,v,c],i)=>{
+      const cx=p.l+i*gap+gap/2;
+      return `<rect x="${cx-bw/2}" y="${y(v)}" width="${bw}" height="${p.t+ph-y(v)}" rx="5" fill="${c}"/><text x="${cx}" y="${H-12}" text-anchor="middle" font-family="Cairo" font-size="10" font-weight="700" fill="${C.muted}">${n}</text>`;
+    }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="الإيرادات حسب المدينة">${grid}${bars}</svg>`;
+  };
+
+  const heatMap=()=>{
+    const days=['سبت','أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة'];
+    const rows=[['الرياض',[72,98,86,90,78,64,40]],['جدة',[68,84,76,80,70,58,36]],['مكة',[54,62,58,66,60,48,28]],['الدمام',[48,55,52,58,50,42,25]]];
+    const color=v=>{
+      const t=Math.min(1,Math.max(0,(v-20)/90));
+      const r=Math.round(220-t*180), g=Math.round(230-t*150), b=Math.round(255-t*70);
+      return `rgb(${r},${g},${b})`;
+    };
+    const ink=v=>v>=70?'#fff':'#2A3550';
+    return `<table class="ta-heat"><thead><tr><th></th>${days.map(d=>`<th>${d}</th>`).join('')}</tr></thead><tbody>
+      ${rows.map(([c,vals])=>`<tr><td class="rl">${c}</td>${vals.map(v=>`<td style="background:${color(v)};color:${ink(v)}">${v}</td>`).join('')}</tr>`).join('')}
+    </tbody></table>`;
+  };
+
+  const pieChart=()=>{
+    const segs=[['عالمية',14,C.navy],['فاخرة',28,C.red],['عائلية',22,C.amber],['اقتصادية',20,C.green],['تجارية',16,C.blue]];
+    const total=segs.reduce((s,x)=>s+x[1],0);
+    let a=-90;
+    const paths=segs.map(([n,v,c])=>{
+      const sweep=v/total*360, a1=a*Math.PI/180, a2=(a+sweep)*Math.PI/180; a+=sweep;
+      const x1=110+88*Math.cos(a1), y1=110+88*Math.sin(a1);
+      const x2=110+88*Math.cos(a2), y2=110+88*Math.sin(a2);
+      const large=sweep>180?1:0;
+      return `<path d="M110,110 L${x1},${y1} A88,88 0 ${large} 1 ${x2},${y2} Z" fill="${c}"/>`;
+    }).join('');
+    return `<svg viewBox="0 0 220 220" role="img" aria-label="توزيع الأسطول">${paths}<circle cx="110" cy="110" r="48" fill="#fff"/></svg>`;
+  };
+
+  const funnel=()=>{
+    const steps=[['زيارات المنصة','4,879 · 100%',C.navy,100],['عمليات بحث','3,989 · 81.7%',C.red,82],['حجوزات','2,674 · 54.8%',C.amber,58],['عقود مبرمة','1,674 · 34.3%',C.green,40],['عملاء متكررون','836 · 17.1%',C.blue,24]];
+    return `<div class="ta-funnel">${steps.map(([t,v,c,w])=>`<div class="row"><div class="bar" style="width:${w}%;background:${c}"><b>${t}</b><span>${v}</span></div></div>`).join('')}</div>`;
+  };
+
+  const treemap=()=>{
+    const cells=[
+      {t:'التميّز',v:'8,946 ر.س',c:C.navy,cls:''},{t:'النخبة',v:'6,568 ر.س',c:C.amber,cls:''},{t:'الوفرة',v:'5,432 ر.س',c:C.blue,cls:''},{t:'إتقان',v:'4,321 ر.س',c:C.teal,cls:''},
+      {t:'جوار',v:'2,110 ر.س',c:C.red,cls:''},{t:'السعة',v:'1,988 ر.س',c:C.green,cls:''},{t:'المستقبل',v:'1,877 ر.س',c:C.purple,cls:''},{t:'الخليج',v:'1,765 ر.س',c:C.pink,cls:''},
+      {t:'الينبوع',v:'1,654 ر.س',c:'#3A4F8C',cls:''},{t:'الطموح',v:'3,420 ر.س',c:'#5B4DB0',cls:'big'}
+    ];
+    return `<div class="ta-tree">${cells.map(x=>`<div class="c ${x.cls}" style="background:${x.c}"><b>${x.t}</b><span>${x.v}</span></div>`).join('')}</div>`;
+  };
+
+  const radarCities=()=>{
+    const labels=['الرياض','جدة','مكة','الدمام','الخبر','المدينة'];
+    const scores=[92,78,70,64,60,68];
+    const cx=150,cy=140,r=95,n=6;
+    const pt=(sc,i)=>{const ang=-Math.PI/2+i*2*Math.PI/n;const v=sc/100;return [cx+Math.cos(ang)*r*v,cy+Math.sin(ang)*r*v];};
+    const ring=lv=>{const pts=[];for(let i=0;i<n;i++){const ang=-Math.PI/2+i*2*Math.PI/n;pts.push(`${cx+Math.cos(ang)*r*lv},${cy+Math.sin(ang)*r*lv}`);}return pts.join(' ');};
+    const poly=scores.map((s,i)=>pt(s,i).join(',')).join(' ');
+    const axes=labels.map((lb,i)=>{
+      const ang=-Math.PI/2+i*2*Math.PI/n;
+      const x=cx+Math.cos(ang)*r,y=cy+Math.sin(ang)*r;
+      const lx=cx+Math.cos(ang)*(r+22),ly=cy+Math.sin(ang)*(r+18);
+      return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="${C.line}"/><text x="${lx}" y="${ly}" text-anchor="middle" font-family="Cairo" font-size="11" font-weight="700" fill="${C.muted}">${lb}</text>`;
+    }).join('');
+    return `<svg viewBox="0 0 300 300" role="img" aria-label="مؤشرات المدن">
+      <polygon points="${ring(1)}" fill="#F5F7FC" stroke="${C.line}"/><polygon points="${ring(.66)}" fill="none" stroke="${C.line}"/><polygon points="${ring(.33)}" fill="none" stroke="${C.line}"/>
+      ${axes}<polygon points="${poly}" fill="rgba(44,104,216,.25)" stroke="${C.blue}" stroke-width="2"/>
+      ${scores.map((s,i)=>{const [x,y]=pt(s,i);return `<circle cx="${x}" cy="${y}" r="3.5" fill="${C.navy}"/>`;}).join('')}
+    </svg>`;
+  };
+
+  const geoMap=()=>{
+    const bubbles=[[210,250,28],[160,210,18],[190,270,14],[280,230,16],[300,210,12],[120,160,10],[240,300,11],[100,250,8]];
+    return `<svg viewBox="0 0 420 360" role="img" aria-label="التوزيع الجغرافي">
+      <path d="M90 200 L150 90 L230 70 L300 110 L360 180 L390 260 L350 320 L280 340 L200 330 L120 290 Z" fill="#DCE6F8" stroke="#A9BCEB" stroke-width="2"/>
+      <path d="M150 180 L190 140 L240 155 L270 200 L240 240 L180 235 Z" fill="#C9D7F2" opacity=".7"/>
+      ${bubbles.map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${C.red}" fill-opacity=".78" stroke="#fff" stroke-width="2"/>`).join('')}
+    </svg>`;
+  };
+
+  const gauge=()=>{
+    const pct=72, start=Math.PI, end=0, cx=120, cy=120, r=78;
+    const ang=start-(pct/100)*Math.PI;
+    const x=cx+r*Math.cos(ang), y=cy+r*Math.sin(ang);
+    const arc=(a0,a1,color,w=16)=>{
+      const x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+      return `<path d="M${x0},${y0} A${r},${r} 0 0 1 ${x1},${y1}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`;
+    };
+    return `<svg viewBox="0 0 240 160" role="img" aria-label="الإشغال">
+      ${arc(Math.PI,0,'#E8EDF7',16)}
+      ${arc(Math.PI,ang,C.green,16)}
+      <circle cx="${x}" cy="${y}" r="7" fill="${C.green}" stroke="#fff" stroke-width="3"/>
+      <text x="120" y="118" text-anchor="middle" font-family="Cairo" font-size="34" font-weight="800" fill="${C.ink}">72%</text>
+      <text x="120" y="142" text-anchor="middle" font-family="Cairo" font-size="12" font-weight="700" fill="${C.muted}">نسبة الإشغال</text>
+    </svg>`;
+  };
+
+  const bubbleChart=()=>{
+    const cities=[
+      {n:'الرياض',x:1180,y:32000,r:38,c:C.navy},{n:'جدة',x:980,y:24000,r:32,c:C.red},
+      {n:'مكة',x:720,y:16000,r:26,c:C.amber},{n:'الدمام',x:560,y:12000,r:22,c:C.green},
+      {n:'الخبر',x:480,y:9000,r:18,c:C.purple},{n:'المدينة',x:400,y:7000,r:16,c:C.teal}
+    ];
+    const W=420,H=240,p={l:48,r:16,t:16,b:40}, pw=W-p.l-p.r, ph=H-p.t-p.b;
+    const X=v=>p.l+(v/1600)*pw, Y=v=>p.t+ph-(v/40000)*ph;
+    const grid=[0,10000,20000,30000,40000].map(v=>`<line x1="${p.l}" y1="${Y(v)}" x2="${W-p.r}" y2="${Y(v)}" stroke="${C.line}"/><text x="${p.l-6}" y="${Y(v)+4}" text-anchor="end" font-family="Cairo" font-size="9" fill="${C.muted}">${v/1000}k</text>`).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="فقاعات المدن">${grid}
+      <text x="${W/2}" y="${H-8}" text-anchor="middle" font-family="Cairo" font-size="11" font-weight="700" fill="${C.muted}">الأسطول</text>
+      <text x="14" y="${H/2}" text-anchor="middle" font-family="Cairo" font-size="11" font-weight="700" fill="${C.muted}" transform="rotate(-90 14 ${H/2})">إيراد (ألف)</text>
+      ${cities.map(c=>`<circle cx="${X(c.x)}" cy="${Y(c.y)}" r="${c.r}" fill="${c.c}" fill-opacity=".55" stroke="${c.c}" stroke-width="1.5"/>`).join('')}
+    </svg>`;
+  };
+
+  const scatterChart=()=>{
+    const pts=[[120,18],[180,22],[220,28],[260,35],[300,30],[340,42],[380,38],[420,48],[460,55],[500,44],[540,36],[580,28],[620,22],[680,18],[740,14],[800,12],[200,12],[350,20],[450,32],[520,50],[560,40],[600,25]];
+    const W=420,H=240,p={l:40,r:14,t:16,b:40}, pw=W-p.l-p.r, ph=H-p.t-p.b;
+    const X=v=>p.l+(v/900)*pw, Y=v=>p.t+ph-(v/60)*ph;
+    const grid=[0,15,30,45,60].map(v=>`<line x1="${p.l}" y1="${Y(v)}" x2="${W-p.r}" y2="${Y(v)}" stroke="${C.line}"/><text x="${p.l-6}" y="${Y(v)+4}" text-anchor="end" font-family="Cairo" font-size="9" fill="${C.muted}">${v}</text>`).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="السعر مقابل التأجير">${grid}
+      <text x="${W/2}" y="${H-8}" text-anchor="middle" font-family="Cairo" font-size="11" font-weight="700" fill="${C.muted}">السعر اليومي</text>
+      <text x="12" y="${H/2}" text-anchor="middle" font-family="Cairo" font-size="11" font-weight="700" fill="${C.muted}" transform="rotate(-90 12 ${H/2})">عدد المرات</text>
+      ${pts.map(([x,y])=>`<circle cx="${X(x)}" cy="${Y(y)}" r="4.5" fill="${C.navy}" fill-opacity=".75"/>`).join('')}
+      <circle cx="${X(460)}" cy="${Y(55)}" r="10" fill="${C.blue}" fill-opacity=".85" stroke="#fff" stroke-width="2"/>
+      <text x="${X(460)+14}" y="${Y(55)+4}" font-family="Cairo" font-size="11" font-weight="800" fill="${C.ink}">سيارات</text>
+    </svg>`;
+  };
+
+  const baseAnalytics=S.analytics;
+  S.analytics=()=>{
+    const active=window.__analyticsTab||'search';
+    if(active!=='technical') return baseAnalytics();
+
+    const body=`<div class="ta-wrap">
+      <div class="ta-grid2">
+        ${panel('Line','الاتجاه الشهري',lineChart(),leg([[C.navy,'عوائد'],[C.red,'مصاريف']]))}
+        ${panel('Bar','الإيرادات حسب المدينة',barChart())}
+        ${panel('Heat Map','كثافة الطلب (مدينة × يوم)',heatMap())}
+        ${panel('Pie','توزيع الأسطول حسب الفئة',pieChart(),leg([[C.navy,'عالمية'],[C.red,'فاخرة'],[C.amber,'عائلية'],[C.green,'اقتصادية'],[C.blue,'تجارية']]))}
+      </div>
+      <div class="ta-grid2">
+        ${panel('Funnel','قمع التحويل',funnel())}
+        ${panel('Treemap','حصة الإيرادات بالشركات',treemap())}
+      </div>
+      <div class="ta-grid3">
+        ${panel('Radar','مؤشرات المدن',radarCities(),leg([[C.blue,'إجمالي']]))}
+        ${panel('Geo','التوزيع الجغرافي',geoMap())}
+        ${panel('Gauge','الإشغال',gauge())}
+      </div>
+      <div class="ta-grid2">
+        ${panel('Bubble','المدن (أسطول × إيراد × حجم)',bubbleChart(),leg([[C.navy,'الرياض'],[C.red,'جدة'],[C.amber,'مكة'],[C.green,'الدمام'],[C.purple,'الخبر'],[C.teal,'المدينة']]))}
+        ${panel('Scatter','السعر مقابل مرات التأجير',scatterChart())}
+      </div>
+    </div>`;
+
+    return phead(`التحليل الفني <span class="ta-beta">بيتا</span>`,'لوحات تحليلية متقدمة لأداء المنصة: اتجاهات، كثافة طلب، قمع تحويل، وتوزيع جغرافي',[],`<button class="btn ghost" onclick="WafraOps.demoAction('تصدير Excel')">Excel ⤓</button><button class="btn ghost" onclick="WafraOps.demoAction('تصدير PDF')">PDF ⤓</button>`)
+      +card(tabbar(active)+body);
+  };
+})();
+</script>
