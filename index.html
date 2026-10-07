@@ -1037,17 +1037,50 @@ ${note('warn','لا يُصرف قبل اعتماد المسؤول الأعلى',
   [{v:'BK-20366',c:'num'},'هند الشهري','22 – 27 أغسطس',{v:'1,140.00',c:'num'},{v:'136.80',c:'num'},{v:'1,003.20',c:'num'},bdg('محتسب','g')],
 ]));
 
-/* ========== 24. الاستردادات ========== */
-S.refunds = () => phead('الاستردادات','طلبات الاسترداد الكامل والجزئي واعتمادها',['FR-ADP-06'])
-+ card(tabs([{t:'بانتظار الاعتماد',n:9,on:1},{t:'قيد التنفيذ',n:5},{t:'مكتملة',n:312},{t:'مرفوضة',n:14}])
-+ filters(['النوع','السبب','المزوّد','التاريخ'],'ابحث برقم الحجز…')
-+ table(['الحجز','العميل','المبلغ الأصلي','قيمة الاسترداد','النوع','السبب','مقدّم الطلب','الإجراءات'],[
-  [{v:'BK-20402',c:'strong num'},'تركي العنزي',{v:'110.00',c:'num'},{v:'110.00',c:'num'},bdg('كامل','b'),'رفض المزوّد للطلب','النظام (آلي)',`<button class="btn sm">اعتماد</button>`],
-  [{v:'BK-20371',c:'strong num'},'عبير التميمي',{v:'860.00',c:'num'},{v:'602.00',c:'num'},bdg('جزئي','a'),'إلغاء بعد التأكيد (خصم 30%)','العميل',`<button class="btn sm">اعتماد</button>`],
-  [{v:'BK-20355',c:'strong num'},'تركي العنزي',{v:'110.00',c:'num'},{v:'1,850.00',c:'num'},bdg('قرار تظلّم','r'),'DS-3092 — لصالح العميل','إدارة',`<button class="btn sm">اعتماد</button>`],
-  [{v:'BK-20340',c:'strong num'},'وليد الحربي',{v:'480.00',c:'num'},{v:'0.00',c:'num'},bdg('مرفوض','n'),'عدم حضور — لا استرداد','النظام (آلي)',`<button class="btn sm ghost">عرض</button>`],
-])
-+ pager(9,1));
+/* ========== 24. استردادات العملاء ========== */
+S.refunds = () => {
+  const chk = id => `<input type="checkbox" class="wafra-check" aria-label="تحديد ${id}">`;
+  const amt = v => `<span class="rf-amt">${v}</span>`;
+  const status = `<span class="badge a">بانتظار المراجعة</span>`;
+  const acts = (rf, bk) => `<div class="st-actions rf-acts">
+    <a class="btn ghost sm" href="#booking" onclick="WafraOps.openBooking&&WafraOps.openBooking('${bk}')" title="اطلاع على تفاصيل الحجز">تفاصيل الحجز</a>
+    <button class="btn sm st-approve" onclick="WafraOps.approveRefund&&WafraOps.approveRefund('${rf}')">موافقة</button>
+    <button class="btn danger sm" onclick="WafraOps.rejectRefund&&WafraOps.rejectRefund('${rf}')">رفض</button>
+  </div>`;
+  const rows = [
+    ['RF-7000','BK-28076','سلطان القحطاني','3 ألف ر.س','عدم توفر السيارة'],
+    ['RF-7001','BK-31864','شهد الشهري','1.5 ألف ر.س','خصم مضاعف'],
+    ['RF-7002','BK-29110','فهد العتيبي','99 ر.س','إلغاء الحجز'],
+    ['RF-7003','BK-30542','نورة الدوسري','2.2 ألف ر.س','عطل السيارة'],
+    ['RF-7004','BK-27481','ماجد السبيعي','450 ر.س','عدم توفر السيارة'],
+    ['RF-7005','BK-31209','ريم الزهراني','1.1 ألف ر.س','خصم مضاعف'],
+    ['RF-7006','BK-29833','خالد المطيري','780 ر.س','إلغاء الحجز'],
+    ['RF-7007','BK-32155','سارة العتيبي','1.8 ألف ر.س','عطل السيارة'],
+    ['RF-7008','BK-26740','وليد الحربي','320 ر.س','إلغاء الحجز'],
+  ];
+  return phead('استردادات العملاء','طلبات استرداد المبالغ للعملاء',['FR-ADP-06'])
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث..." oninput="WafraOps.searchHint&&WafraOps.searchHint(this.value)"></div>
+      <div class="rf-tools">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('استردادات العملاء','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('استردادات العملاء','Excel')">Excel ⤓</button>
+      </div>
+    </div>`
+  + table([`<input type="checkbox" class="wafra-check" aria-label="تحديد الكل">`,'الطلب','الحجز','العميل','المبلغ','السبب','الحالة','إجراءات'],
+    rows.map(([rf,bk,cust,money,reason])=>[
+      chk(rf),
+      {v:rf,c:'strong num'},
+      {v:`<a class="st-link" href="#booking" onclick="WafraOps.openBooking&&WafraOps.openBooking('${bk}')">${bk}</a>`,c:'num'},
+      cust,
+      amt(money),
+      reason,
+      status,
+      acts(rf,bk)
+    ])
+  )
+  + `<div class="rf-foot"><span>9 سجل</span></div>`);
+};
 
 /* ========== 25. الفواتير ========== */
 S.invoices = () => phead('الفواتير','كل الفواتير الصادرة وإشعارات التعديل',['FR-ADP-08'],`<button class="btn ghost">⤓ تصدير</button>`)
@@ -1062,45 +1095,137 @@ S.invoices = () => phead('الفواتير','كل الفواتير الصادر�
 + pager('3,540',20));
 
 /* ========== 26. مطابقة بوابة الدفع ========== */
-S.recon = () => phead('مطابقة بوابة الدفع','مطابقة يومية بين سجل المنصّة وكشف البوابة',['FR-ADP-10'],
-  `<div class="fd">28 أغسطس 2026<span class="cv">▾</span></div><button class="btn ghost">⤓ تصدير الفروقات</button>`)
-+ kpi([
-  {i:'✓',l:'معاملات مطابقة',v:'1,284',d:'99.1% من الإجمالي',t:'up'},
-  {i:'⚠',l:'في البوابة فقط',v:'7',d:'تحتاج تسجيلاً في النظام',t:'dn'},
-  {i:'⚠',l:'في النظام فقط',v:'4',d:'لم تصل البوابة',t:'dn'},
-  {i:'≠',l:'فروقات مبالغ',v:'2',d:'فرق إجمالي 84.50 ر.س',t:'dn'},
-])
-+ card(cardH('الفروقات','يجب إغلاق كل فرق قبل ترحيل اليوم محاسبياً')
-+ tabs([{t:'الكل',n:13,on:1},{t:'في البوابة فقط',n:7},{t:'في النظام فقط',n:4},{t:'فروقات مبالغ',n:2}])
-+ table(['نوع الفرق','مرجع البوابة','مرجع النظام','مبلغ البوابة','مبلغ النظام','الفرق','التوقيت','الإجراءات'],[
-  [bdg('في البوابة فقط','a'),{v:'pay_9L22XKQR',c:'num'},'—',{v:'340.00',c:'num'},'—',{v:'340.00',c:'num'},{v:'2026/08/28 11:22',c:'num'},`<button class="btn sm">ربط بحجز</button>`],
-  [bdg('في النظام فقط','a'),'—',{v:'TX-88204',c:'num'},'—',{v:'450.00',c:'num'},{v:'450.00',c:'num'},{v:'2026/08/28 06:12',c:'num'},`<button class="btn sm ghost">تعليم كفاشلة</button>`],
-  [bdg('فرق مبلغ','r'),{v:'pay_4T81MMZQ',c:'num'},{v:'TX-88190',c:'num'},{v:'610.00',c:'num'},{v:'568.75',c:'num'},{v:'41.25',c:'num'},{v:'2026/08/28 03:40',c:'num'},`<button class="btn sm">فتح تحقيق</button>`],
-  [bdg('فرق مبلغ','r'),{v:'pay_1K09PPWT',c:'num'},{v:'TX-88176',c:'num'},{v:'880.00',c:'num'},{v:'836.75',c:'num'},{v:'43.25',c:'num'},{v:'2026/08/27 21:15',c:'num'},`<button class="btn sm">فتح تحقيق</button>`],
-])
-+ pager(13,2));
+S.recon = () => {
+  const amt = v => `<span class="rc-amt">${v}</span>`;
+  const diff = (v, tone) => v === '-' || v === '—' || v === 0
+    ? `<span class="rc-dash">—</span>`
+    : `<span class="rc-diff ${tone||''}">${v}</span>`;
+  const st = (t, tone) => `<span class="rc-status ${tone}">${t}</span>`;
+  const act = id => `<button class="btn sm st-approve" onclick="WafraOps.settleRecon&&WafraOps.settleRecon('${id}')">تسوية الفرق</button>`;
+  const rows = [
+    ['PAY216350','2.9 ألف ر.س','2.95 ألف ر.س','-50 ر.س','neg','اختلاف','diff'],
+    ['PAY120247','2.5 ألف ر.س','2.5 ألف ر.س','—','','مطابقة','ok'],
+    ['PAY198841','344 ر.س','344 ر.س','—','','مطابقة','ok'],
+    ['PAY175502','1.2 ألف ر.س','1.2 ألف ر.س','—','','مطابقة','ok'],
+    ['PAY203918','890 ر.س','880 ر.س','+10 ر.س','pos','اختلاف','diff'],
+    ['PAY211044','1.8 ألف ر.س','1.85 ألف ر.س','-50 ر.س','neg','اختلاف','diff'],
+    ['PAY187663','560 ر.س','560 ر.س','—','','مطابقة','ok'],
+    ['PAY224771','3.1 ألف ر.س','3.1 ألف ر.س','—','','مطابقة','ok'],
+    ['PAY156902','720 ر.س','690 ر.س','+30 ر.س','warn','اختلاف','diff'],
+    ['PAY209331','1.05 ألف ر.س','1.05 ألف ر.س','—','','مطابقة','ok'],
+    ['PAY192580','415 ر.س','440 ر.س','-25 ر.س','neg','اختلاف','diff'],
+    ['PAY218006','2.2 ألف ر.س','2.2 ألف ر.س','—','','مطابقة','ok'],
+  ];
+  return phead('مطابقة بوابة الدفع','مطابقة مبالغ المنصة مع بوابة الدفع',['FR-ADP-10'])
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث..." oninput="WafraOps.searchHint&&WafraOps.searchHint(this.value)"></div>
+      <div class="rf-tools">
+        <div class="fd">الكل<span class="cv">▾</span></div>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('مطابقة بوابة الدفع','Excel')">Excel ⤓</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('مطابقة بوابة الدفع','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+      </div>
+    </div>`
+  + table(['المرجع','مبالغ المنصة','مبالغ البوابة','الفرق','الحالة','إجراءات'],
+    rows.map(([id,plat,gate,d,dtone,status,stone])=>[
+      {v:id,c:'strong num'},
+      amt(plat),
+      amt(gate),
+      diff(d, dtone),
+      st(status, stone),
+      stone==='diff' ? act(id) : `<span class="rc-dash">—</span>`
+    ])
+  )
+  + `<div class="rc-foot">
+      <span>صفحة 1 من 2</span>
+      <span>12 سجل</span>
+      <div class="pages"><span class="pg on">1</span><span class="pg">2</span></div>
+    </div>`);
+};
+
+/* ========== 26b. صحة بوابة الدفع ========== */
+S.gatewayHealth = () => {
+  const reasons = [
+    ['رصيد غير كافي', 4, '#20A16E'],
+    ['خطأ اتصال البوابة', 3, '#2C68D8'],
+    ['رفض من البنك', 1, '#E8A23A'],
+  ];
+  const maxR = Math.max(...reasons.map(r => r[1]));
+  const kpiCard = (ic, tone, label, value) => `<div class="kpi gh-kpi">
+    <div class="lb"><span class="ic gh-ic ${tone}">${ic}</span>${label}</div>
+    <div class="vl">${value}</div>
+  </div>`;
+  return phead('صحة بوابة الدفع','مراقبة نجاح المدفوعات وأسباب الفشل والفروقات',['FR-ADP-11'])
+  + `<div class="kpis gh-kpis">
+      ${kpiCard('⌀','red','نسبة نجاح المدفوعات','82.2%')}
+      ${kpiCard('✓','green','معاملات ناجحة','148')}
+      ${kpiCard('⚠','red','فاشلة','12')}
+      ${kpiCard('◷','amber','معلقة','20')}
+      ${kpiCard('⇄','blue','فروقات مطلقة','9')}
+      ${kpiCard('⚡','purple','متوسط زمن الاستجابة','594 م.ث')}
+    </div>`
+  + `<div class="g-2-1">`
+  + card(cardH('أسباب الفشل')+`<div class="card-b">
+      <div class="gh-chart">
+        <div class="gh-y">4.0</div>
+        <div class="gh-bars">
+          ${reasons.map(([name,n,color])=>`<div class="gh-col">
+            <div class="gh-bar-wrap"><div class="gh-bar" style="height:${Math.round(n/maxR*100)}%;background:${color}"></div></div>
+            <div class="gh-label">${name}</div>
+            <div class="gh-val">${n}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`)
+  + card(cardH('توزيع الأسباب')+`<div class="card-b gh-dist">
+      ${reasons.map(([name,n])=>`<div class="gh-dist-row"><span class="n">${n}</span><span class="t">${name}</span></div>`).join('')}
+    </div>`)
+  + `</div>`;
+};
 
 /* ========== 27. العمولات ========== */
-S.commissions = () => phead('نسب العمولة','النسبة العامة واستثناءاتها — لا تُطبَّق بأثر رجعي',['FR-ADP-07'],
-  `<button class="btn" onclick="openM(M.commission())">إضافة استثناء</button>`)
-+ note('warn','تغيير نسبة العمولة يتطلّب اعتماد المسؤول الأعلى','لكل تغيير تاريخ سريان، ولا يمسّ الحجوزات القائمة قبله. كل تعديل يُسجَّل في سجل التدقيق.')
-+ `<div class="grid2">`
-+ card(cardH('النسبة العامة')+`<div class="card-b">
-  <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:6px">
-    <span style="font-family:Cairo;font-size:38px;font-weight:700;color:var(--navy)">15%</span>
-    <span style="color:var(--muted);font-size:12.5px">من إجمالي قيمة الحجز</span></div>
-  <div style="font-size:12px;color:var(--muted)">سارية منذ 1 يناير 2026 · آخر تعديل بواسطة محمد الصغير</div>
-  <div style="margin-top:14px"><button class="btn ghost sm" onclick="openM(M.commission())">تعديل النسبة العامة</button></div></div>`)
-+ card(cardH('أثر النسبة','تقدير على إيراد آخر 30 يوماً')+`<div class="card-b">
-  ${dl([['إجمالي الإيراد','1,842,600 ر.س'],['عمولة محتسبة','221,112 ر.س'],['متوسّط النسبة الفعلية','12.0%'],['عدد الاستثناءات','6 مزوّدين']])}</div>`)
-+ `</div>`
-+ card(cardH('الاستثناءات','نسب خاصة تتجاوز النسبة العامة')
-+ table(['المزوّد / الفئة','النسبة','السبب','تاريخ السريان','تاريخ الانتهاء','أنشأها','الإجراءات'],[
-  ['شركة الصحراء','12%','اتفاقية شراكة موسمية','2026/09/01','2026/12/31','محمد الصغير',acts([{i:'✎'},{i:'🗑',d:1}])],
-  ['كي رنت','14%','حجم حجوزات مرتفع','2026/06/01','—','سعد الشمري',acts([{i:'✎'},{i:'🗑',d:1}])],
-  ['فئة: فاخرة','18%','هامش أعلى للفئة','2026/03/01','—','محمد الصغير',acts([{i:'✎'},{i:'🗑',d:1}])],
-  ['أسطول الشمال','10%','عرض انضمام — أول 3 أشهر','2026/09/01','2026/11/30','محمد الصغير',acts([{i:'✎'},{i:'🗑',d:1}])],
-]));
+S.commissions = () => {
+  const actsRow = (name) => `<div class="st-actions">
+    <a class="btn ghost sm" href="#vendorFile" onclick="WafraOps.demoAction&&WafraOps.demoAction('اطلاع على عمولة ${name}')">اطلاع</a>
+    <button class="btn sm" onclick="openM(M.commission())">تعديل</button>
+  </div>`;
+  const rows = [
+    ['شركة التميز لتأجير السيارات','الرياض','11.6%','4.98 م ر.س','575.7 ألف ر.س'],
+    ['شركة الصحراء لتأجير السيارات','الرياض','12.0%','3.42 م ر.س','410.4 ألف ر.س'],
+    ['كي رنت','جدة','8.7%','2.15 م ر.س','187.1 ألف ر.س'],
+    ['مسار لتأجير السيارات','الدمام','10.5%','1.88 م ر.س','197.4 ألف ر.س'],
+    ['الوسام كار','الرياض','14.0%','980 ألف ر.س','137.2 ألف ر.س'],
+    ['أسطول الشمال','تبوك','10.0%','640 ألف ر.س','64 ألف ر.س'],
+    ['درب الخليج','الرياض','13.2%','1.24 م ر.س','163.7 ألف ر.س'],
+    ['رُكن المركبات','جدة','9.5%','720 ألف ر.س','68.4 ألف ر.س'],
+    ['الخليج رنت','الدمام','11.0%','1.05 م ر.س','115.5 ألف ر.س'],
+    ['الرحال','الرياض','12.5%','860 ألف ر.س','107.5 ألف ر.س'],
+  ];
+  return phead('نسب العمولة','نسبة عمولة المنصة على كل مزود',['FR-ADP-07'])
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث باسم الشركة..." oninput="WafraOps.searchHint&&WafraOps.searchHint(this.value)"></div>
+      <div class="rf-tools">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('نسب العمولة','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('نسب العمولة','Excel')">Excel ⤓</button>
+      </div>
+    </div>`
+  + table(['المزود','المدينة','النسبة','الإيرادات','العمولة','إجراءات'],
+    rows.map(([vendor,city,rate,rev,comm])=>[
+      {v:vendor,c:'strong'},
+      city,
+      {v:rate,c:'num'},
+      {v:rev,c:'num'},
+      {v:comm,c:'num'},
+      actsRow(vendor)
+    ])
+  )
+  + `<div class="rc-foot">
+      <span>صفحة 1 من 3</span>
+      <span>28 سجل</span>
+      <div class="pages"><span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span></div>
+    </div>`);
+};
 </script>
 
 <style>
@@ -2065,26 +2190,43 @@ PANELS.models = [
 <script>
 /* ========== 28. الكوبونات ========== */
 S.coupons = () => phead('الكوبونات','كوبونات المنصّة وقواعد تطبيقها',['FR-CPN-01','FR-CPN-02','FR-CPN-03','FR-CPN-06'],
-  `<button class="btn" onclick="openM(M.newCoupon())">＋ كوبون جديد</button>`)
+  `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('الكوبونات','Excel')">⤓ تصدير</button>
+   <button class="btn" onclick="openM(M.newCoupon())">＋ كوبون جديد</button>`)
 + card(tabs([{t:'نشطة',n:12,on:1},{t:'مجدولة',n:4},{t:'منتهية',n:38},{t:'موقوفة',n:3}])
-+ filters(['النوع','الشريحة','المتحمّل للتكلفة','الصلاحية'],'ابحث بكود الكوبون…')
-+ table(['الكود','النوع','القيمة','الشريحة','الاستخدام','المتحمّل','الصلاحية','الحالة','الإجراءات'],[
-  [{v:'WELCOME10',c:'strong num'},'ترحيبي تلقائي','10% حتى 50 ر.س','مستخدمون جدد','1,204 / ∞','المنصّة','دائم',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
-  [{v:'SUMMER25',c:'strong num'},'نسبة مئوية','25% حتى 150 ر.س','كل العملاء','842 / 2,000','المنصّة','حتى 30/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
-  [{v:'SAHRA50',c:'strong num'},'مبلغ ثابت','50 ر.س','عملاء شركة الصحراء','311 / 500','المزوّد','حتى 15/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
-  [{v:'FREEDEL',c:'strong num'},'إعفاء رسوم توصيل','رسوم التوصيل','الرياض وجدة','96 / 300','المنصّة','يبدأ 01/09/2026',bdg('مجدول','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])],
-  [{v:'BACK15',c:'strong num'},'نسبة مئوية','15% حتى 80 ر.س','عملاء لم يحجزوا منذ 90 يوماً','—','المنصّة','أُوقف في 22/08',bdg('موقوف','r'),acts([{i:'👁'},{i:'▶'}])],
++ `<div class="filters mkt-filters">
+    <div class="fd">المزود<span class="cv">▾</span></div>
+    <label class="fd mkt-date">من<input type="date" value="2026-08-01"></label>
+    <label class="fd mkt-date">إلى<input type="date" value="2026-09-30"></label>
+    <div class="fd">الحالة<span class="cv">▾</span></div>
+    <div class="fsearch">⌕<input placeholder="ابحث بكود الكوبون…"></div>
+  </div>`
++ table(['الكود','النوع','القيمة','الشريحة','الاستخدام','المتحمّل','بداية الكوبون','الصلاحية','الحالة','الإجراءات'],[
+  [{v:'WELCOME10',c:'strong num'},'ترحيبي تلقائي','10% حتى 50 ر.س','مستخدمون جدد','1,204 / ∞','المنصّة',{v:'2026/01/01 00:00',c:'num'},'دائم',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'SUMMER25',c:'strong num'},'نسبة مئوية','25% حتى 150 ر.س','كل العملاء','842 / 2,000','المنصّة',{v:'2026/08/01 09:00',c:'num'},'حتى 30/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'SAHRA50',c:'strong num'},'مبلغ ثابت','50 ر.س','عملاء شركة الصحراء','311 / 500','المزوّد',{v:'2026/08/15 10:00',c:'num'},'حتى 15/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'FREEDEL',c:'strong num'},'إعفاء رسوم توصيل','رسوم التوصيل','الرياض وجدة','96 / 300','المنصّة',{v:'2026/09/01 00:00',c:'num'},'يبدأ 01/09/2026',bdg('مجدول','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])],
+  [{v:'BACK15',c:'strong num'},'نسبة مئوية','15% حتى 80 ر.س','عملاء لم يحجزوا منذ 90 يوماً','—','المنصّة',{v:'2026/07/01 08:00',c:'num'},'أُوقف في 22/08',bdg('موقوف','r'),acts([{i:'👁'},{i:'▶'}])],
 ])
 + pager(12,2));
 
 /* ========== 29. الحملات الترويجية ========== */
 S.campaigns = () => phead('الحملات الترويجية','خصومات تظهر في واجهة العميل خلال فترة محدّدة',['FR-CPN-05','FR-CPN-07'],
-  `<button class="btn">＋ حملة جديدة</button>`)
+  `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('الحملات','Excel')">⤓ تصدير</button>
+   <button class="btn" onclick="openM(M.newCampaign())">＋ حملة جديدة</button>`)
 + card(tabs([{t:'نشطة',n:3,on:1},{t:'مجدولة',n:2},{t:'منتهية',n:19}])
-+ table(['الحملة','الخصم','النطاق','الفترة','الظهور','الحجوزات الناتجة','الإيراد','الحالة','الإجراءات'],[
-  [{v:'عروض نهاية الصيف<span class="sub">بانر الرئيسية + إشعار</span>',c:'strong'},'25%','كل المدن','20/08 – 30/09',{v:'184,200',c:'num'},'842',{v:'318,400 ر.س',c:'num'},bdg('نشطة','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
-  [{v:'خصم الفئة الاقتصادية<span class="sub">صفحة البحث</span>',c:'strong'},'15%','الرياض · جدة','15/08 – 15/09',{v:'96,800',c:'num'},'411',{v:'112,900 ر.س',c:'num'},bdg('نشطة','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
-  [{v:'أسبوع التوصيل المجاني<span class="sub">بانر + كوبون FREEDEL</span>',c:'strong'},'رسوم التوصيل','الرياض · جدة','01/09 – 08/09','—','—','—',bdg('مجدولة','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])],
++ `<div class="filters mkt-filters">
+    <div class="fd">المزود<span class="cv">▾</span></div>
+    <label class="fd mkt-date">من<input type="date" value="2026-08-01"></label>
+    <label class="fd mkt-date">إلى<input type="date" value="2026-09-30"></label>
+    <div class="fd">نوع الحملة<span class="cv">▾</span></div>
+    <div class="fd">الحالة<span class="cv">▾</span></div>
+    <div class="fd">القناة<span class="cv">▾</span></div>
+    <div class="fsearch">⌕<input placeholder="ابحث باسم الحملة…"></div>
+  </div>`
++ table(['الحملة','النوع','القناة','الخصم','النطاق','الفترة','الميزانية','المصروف','الظهور','الحجوزات الناتجة','الإيراد','الحالة','الإجراءات'],[
+  [{v:'عروض نهاية الصيف<span class="sub">بانر الرئيسية + إشعار</span>',c:'strong'},'حملة خصم','إشعارات · بانر','25%','كل المدن','20/08 – 30/09',{v:'45,000 ر.س',c:'num'},{v:'28,400 ر.س',c:'num'},{v:'184,200',c:'num'},'842',{v:'318,400 ر.س',c:'num'},bdg('نشطة','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'خصم الفئة الاقتصادية<span class="sub">صفحة البحث</span>',c:'strong'},'حملة فئة','بريد · بانر','15%','الرياض · جدة','15/08 – 15/09',{v:'22,000 ر.س',c:'num'},{v:'14,800 ر.س',c:'num'},{v:'96,800',c:'num'},'411',{v:'112,900 ر.س',c:'num'},bdg('نشطة','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
+  [{v:'أسبوع التوصيل المجاني<span class="sub">بانر + كوبون FREEDEL</span>',c:'strong'},'حملة توصيل','بانر · كوبون','رسوم التوصيل','الرياض · جدة','01/09 – 08/09',{v:'12,000 ر.س',c:'num'},{v:'0 ر.س',c:'num'},'—','—','—',bdg('مجدولة','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])],
 ]))
 + card(cardH('أثر الحملات النشطة','مقارنة بفترة مماثلة بلا حملة')+`<div class="card-b">
   ${bars([['ارتفاع معدّل التحويل',34,'var(--green)'],['ارتفاع عدد الحجوزات',28,'var(--green)'],['انخفاض متوسّط قيمة الحجز',9,'var(--amber)']])}</div>`);
@@ -2104,14 +2246,21 @@ S.banners = () => phead('البانرات','المحتوى الترويجي في
 + pager(9,1));
 
 /* ========== 31. مراجعة إعلانات المزوّدين ========== */
-S.vendorAds = () => phead('إعلانات المزوّدين','طلبات الإعلان الواردة من المزوّدين والموافقة عليها',['FR-BAN-04','FR-BAN-05','FR-BAN-06'])
+S.vendorAds = () => phead('إعلانات المزوّدين','طلبات الإعلان الواردة من المزوّدين والموافقة عليها',['FR-BAN-04','FR-BAN-05','FR-BAN-06'],
+  `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('إعلانات المزودين','Excel')">⤓ تصدير</button>`)
 + card(tabs([{t:'بانتظار الموافقة',n:5,on:1},{t:'نشطة',n:14},{t:'مرفوضة',n:7},{t:'مكتملة',n:63}])
-+ filters(['المزوّد','نوع الإعلان','الميزانية'],'ابحث باسم الحملة أو المزوّد…')
-+ table(['الحملة','المزوّد','نوع الإعلان','نطاق التغطية','الفترة','الميزانية','الأداء','الحالة','الإجراءات'],[
-  [{v:'عروض بداية الأسبوع — خصم 20%',c:'strong'},'شركة الصحراء','إشعار موجّه (Push)','مطار الملك عبدالعزيز — جدة','01/09 – 15/09',{v:'4,000 ر.س',c:'num'},'—',bdg('قيد المراجعة','a'),`<button class="btn sm" onclick="openM(M.approveAd())">مراجعة</button>`],
-  [{v:'أسطولنا الجديد 2026',c:'strong'},'كي رنت','بانر صفحة البحث','جدة','05/09 – 05/10',{v:'6,500 ر.س',c:'num'},'—',bdg('قيد المراجعة','a'),`<button class="btn sm" onclick="openM(M.approveAd())">مراجعة</button>`],
-  [{v:'خصم الفئة الفاخرة',c:'strong'},'مسار','بانر الرئيسية','الدمام · الخبر','20/08 – 20/09',{v:'9,000 ر.س',c:'num'},'الظهور 42,100<span class="sub">النقرات 1,840 · CTR 4.4%</span>',bdg('نشط','g'),acts([{i:'👁'},{i:'⏸'},{i:'📊'}])],
-  [{v:'ليموزين المطار',c:'strong'},'رحال ليموزين','إشعار موجّه (Push)','الرياض','—','—','—',bdg('مرفوض — المزوّد موقوف','r'),acts([{i:'👁'}])],
++ `<div class="filters mkt-filters">
+    <div class="fd">المزوّد<span class="cv">▾</span></div>
+    <div class="fd">الحالة<span class="cv">▾</span></div>
+    <label class="fd mkt-date">من<input type="date" value="2026-08-01"></label>
+    <label class="fd mkt-date">إلى<input type="date" value="2026-09-30"></label>
+    <div class="fsearch">⌕<input placeholder="ابحث باسم الحملة أو المزوّد…"></div>
+  </div>`
++ table(['الحملة','المزوّد','القناة','نطاق التغطية','الفترة','الميزانية','المصروف','الظهور','الحجوزات','الإيرادات','الحالة','الإجراءات'],[
+  [{v:'عروض بداية الأسبوع — خصم 20%',c:'strong'},'شركة الصحراء','إشعارات','مطار الملك عبدالعزيز — جدة','01/09 – 15/09',{v:'4,000 ر.س',c:'num'},{v:'0 ر.س',c:'num'},'—','—','—',bdg('قيد المراجعة','a'),`<button class="btn sm" onclick="openM(M.approveAd())">مراجعة</button>`],
+  [{v:'أسطولنا الجديد 2026',c:'strong'},'كي رنت','بانر','جدة','05/09 – 05/10',{v:'6,500 ر.س',c:'num'},{v:'0 ر.س',c:'num'},'—','—','—',bdg('قيد المراجعة','a'),`<button class="btn sm" onclick="openM(M.approveAd())">مراجعة</button>`],
+  [{v:'خصم الفئة الفاخرة',c:'strong'},'مسار','بانر','الدمام · الخبر','20/08 – 20/09',{v:'9,000 ر.س',c:'num'},{v:'6,240 ر.س',c:'num'},{v:'42,100',c:'num'},{v:'186',c:'num'},{v:'214,800 ر.س',c:'num'},bdg('نشط','g'),acts([{i:'👁'},{i:'⏸'},{i:'📊'}])],
+  [{v:'ليموزين المطار',c:'strong'},'رحال ليموزين','إشعارات','الرياض','—','—','—','—','—','—',bdg('مرفوض — المزوّد موقوف','r'),acts([{i:'👁'}])],
 ])
 + pager(5,1));
 
@@ -2158,14 +2307,20 @@ S.notifySend = () => phead('إرسال إشعار','محرّر الإشعارا�
 
 /* ========== 33. سجل الإشعارات ========== */
 S.notifyLog = () => phead('سجل الإشعارات','كل إشعار مُرسَل وحالة تسليمه',['FR-ADN-04','FR-ADN-05'],
-  `<button class="btn ghost">⤓ تصدير</button><a class="btn" href="#notifySend">＋ إشعار جديد</a>`)
+  `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('سجل الإشعارات','Excel')">⤓ تصدير</button><a class="btn" href="#notifySend">＋ إشعار جديد</a>`)
 + card(tabs([{t:'الكل',n:284,on:1},{t:'مجدولة',n:3},{t:'قيد الإرسال',n:1},{t:'مكتملة',n:276},{t:'ملغاة',n:4}])
-+ filters(['القناة','الشريحة','المُرسِل','التاريخ'],'ابحث بعنوان الإشعار…')
-+ table(['الإشعار','المُرسِل','الشريحة','القنوات','المستلمون','تم التسليم','الفتح','الفاشل','التاريخ','الحالة'],[
-  [{v:'عروض نهاية الصيف<span class="sub">تسويقي</span>',c:'strong'},'محمد الصغير','عملاء · 3 مدن','Push · بريد',{v:'18,420',c:'num'},{v:'17,981',c:'num'},'42.1%',{v:'439',c:'num'},'2026/08/20',bdg('مكتمل','g')],
-  [{v:'تحديث الشروط والأحكام<span class="sub">إلزامي</span>',c:'strong'},'سعد الشمري','كل المستخدمين','Push · بريد · SMS',{v:'48,210',c:'num'},{v:'47,602',c:'num'},'68.4%',{v:'608',c:'num'},'2026/08/12',bdg('مكتمل','g')],
-  [{v:'صيانة مجدولة للمنصّة<span class="sub">تشغيلي</span>',c:'strong'},'النظام','المزوّدون','Push · بريد',{v:'58',c:'num'},{v:'58',c:'num'},'91.4%',{v:'0',c:'num'},'2026/08/08',bdg('مكتمل','g')],
-  [{v:'أسبوع التوصيل المجاني<span class="sub">تسويقي</span>',c:'strong'},'محمد الصغير','الرياض · جدة','Push',{v:'—',c:'num'},'—','—','—','01/09/2026',bdg('مجدول','b')],
++ `<div class="filters mkt-filters">
+    <div class="fd">القناة<span class="cv">▾</span></div>
+    <div class="fd">المزود<span class="cv">▾</span></div>
+    <label class="fd mkt-date">من<input type="date" value="2026-08-01"></label>
+    <label class="fd mkt-date">إلى<input type="date" value="2026-09-30"></label>
+    <div class="fsearch">⌕<input placeholder="ابحث بعنوان الإشعار…"></div>
+  </div>`
++ table(['الإشعار','المُرسِل','الشريحة','القنوات','المستلمون','تم التسليم','الفتح','الفاشل','الحجوزات الناتجة','الإيراد','الميزانية','المصروف','التاريخ','الحالة'],[
+  [{v:'عروض نهاية الصيف<span class="sub">تسويقي</span>',c:'strong'},'محمد الصغير','عملاء · 3 مدن','Push · بريد',{v:'18,420',c:'num'},{v:'17,981',c:'num'},'42.1%',{v:'439',c:'num'},{v:'842',c:'num'},{v:'318,400 ر.س',c:'num'},{v:'12,000 ر.س',c:'num'},{v:'8,640 ر.س',c:'num'},'2026/08/20',bdg('مكتمل','g')],
+  [{v:'تحديث الشروط والأحكام<span class="sub">إلزامي</span>',c:'strong'},'سعد الشمري','كل المستخدمين','Push · بريد · SMS',{v:'48,210',c:'num'},{v:'47,602',c:'num'},'68.4%',{v:'608',c:'num'},{v:'—',c:'num'},'—',{v:'0 ر.س',c:'num'},{v:'1,120 ر.س',c:'num'},'2026/08/12',bdg('مكتمل','g')],
+  [{v:'صيانة مجدولة للمنصّة<span class="sub">تشغيلي</span>',c:'strong'},'النظام','المزوّدون','Push · بريد',{v:'58',c:'num'},{v:'58',c:'num'},'91.4%',{v:'0',c:'num'},{v:'—',c:'num'},'—',{v:'0 ر.س',c:'num'},{v:'0 ر.س',c:'num'},'2026/08/08',bdg('مكتمل','g')],
+  [{v:'أسبوع التوصيل المجاني<span class="sub">تسويقي</span>',c:'strong'},'محمد الصغير','الرياض · جدة','Push',{v:'—',c:'num'},'—','—','—','—','—',{v:'5,000 ر.س',c:'num'},{v:'0 ر.س',c:'num'},'01/09/2026',bdg('مجدول','b')],
 ])
 + pager(284,20));
 
@@ -2173,25 +2328,541 @@ S.notifyLog = () => phead('سجل الإشعارات','كل إشعار مُرس�
 S.templates = () => phead('قوالب الإشعارات','نص كل نوع إشعار بالعربية والإنجليزية مع متغيّراته',['FR-ADN-06'])
 + card(filters(['الفئة','اللغة'],'ابحث باسم القالب…')
 + table(['القالب','الفئة','القنوات','المتغيّرات','آخر تعديل','الحالة','الإجراءات'],[
-  [{v:'تأكيد الحجز',c:'strong'},'معاملاتي','Push · بريد · SMS','{اسم_العميل} {رقم_الحجز} {التاريخ}','2026/07/14',bdg('مفعّل','g'),acts([{i:'✎'},{i:'✉'}])],
-  [{v:'قبول المزوّد للطلب',c:'strong'},'معاملاتي','Push · بريد','{رقم_الحجز} {اسم_الفرع}','2026/06/30',bdg('مفعّل','g'),acts([{i:'✎'},{i:'✉'}])],
-  [{v:'تذكير قبل موعد الاستلام',c:'strong'},'معاملاتي','Push','{اسم_العميل} {الوقت} {اسم_الفرع}','2026/06/30',bdg('مفعّل','g'),acts([{i:'✎'},{i:'✉'}])],
-  [{v:'رمز التحقّق OTP',c:'strong'},'أمني','SMS','{الرمز}','2026/03/02',bdg('مفعّل — إلزامي','n'),acts([{i:'✎'}])],
-  [{v:'قرار التظلّم',c:'strong'},'معاملاتي','Push · بريد','{رقم_التظلّم} {القرار} {المبلغ}','2026/08/05',bdg('مفعّل','g'),acts([{i:'✎'},{i:'✉'}])],
+  [{v:'تأكيد الحجز',c:'strong'},'معاملاتي','Push · بريد · SMS','{اسم_العميل} {رقم_الحجز} {التاريخ}','2026/07/14',bdg('مفعّل','g'),`<div class="st-actions">${acts([{i:'✎'},{i:'✉'}])}<button class="btn danger sm" onclick="WafraOps.toggleTemplate&&WafraOps.toggleTemplate('تأكيد الحجز','إيقاف')">إيقاف تفعيل</button></div>`],
+  [{v:'قبول المزوّد للطلب',c:'strong'},'معاملاتي','Push · بريد','{رقم_الحجز} {اسم_الفرع}','2026/06/30',bdg('مفعّل','g'),`<div class="st-actions">${acts([{i:'✎'},{i:'✉'}])}<button class="btn danger sm" onclick="WafraOps.toggleTemplate&&WafraOps.toggleTemplate('قبول المزوّد للطلب','إيقاف')">إيقاف تفعيل</button></div>`],
+  [{v:'تذكير قبل موعد الاستلام',c:'strong'},'معاملاتي','Push','{اسم_العميل} {الوقت} {اسم_الفرع}','2026/06/30',bdg('مفعّل','g'),`<div class="st-actions">${acts([{i:'✎'},{i:'✉'}])}<button class="btn danger sm" onclick="WafraOps.toggleTemplate&&WafraOps.toggleTemplate('تذكير قبل موعد الاستلام','إيقاف')">إيقاف تفعيل</button></div>`],
+  [{v:'رمز التحقّق OTP',c:'strong'},'أمني','SMS','{الرمز}','2026/03/02',bdg('مفعّل — إلزامي','n'),`<div class="st-actions">${acts([{i:'✎'}])}<span class="sub">إلزامي</span></div>`],
+  [{v:'قرار التظلّم',c:'strong'},'معاملاتي','Push · بريد','{رقم_التظلّم} {القرار} {المبلغ}','2026/08/05',bdg('موقوف','r'),`<div class="st-actions">${acts([{i:'✎'},{i:'✉'}])}<button class="btn sm st-approve" onclick="WafraOps.toggleTemplate&&WafraOps.toggleTemplate('قرار التظلّم','تفعيل')">تفعيل</button></div>`],
 ])
 + pager(24,3));
 
+/* ========== 34b. إسناد التحويلات (ROAS) ========== */
+S.roas = () => {
+  const roasPill = v => v === 'متفوق' ? `<span class="roas-pill top">متفوق</span>` : `<span class="roas-pill">${v}</span>`;
+  const stPill = (t, tone) => `<span class="rc-status ${tone}">${t}</span>`;
+  const rows = [
+    ['Direct / Organic','عضوي','—','6,888','61.3 م ر.س','متفوق','نشطة','ok'],
+    ['عروض نهاية الصيف','حملة','17 ألف ر.س','1,240','28.4 م ر.س','x167.06','نشطة','ok'],
+    ['اطلب من عطار','حملة','12.5 ألف ر.س','860','14.2 م ر.س','x113.60','منتهية','done'],
+    ['AIRPORT25','كوبون','8.2 ألف ر.س','420','6.1 م ر.س','x74.39','نشطة','ok'],
+    ['WELCOME15','كوبون','3.4 ألف ر.س','980','4.8 م ر.س','x141.18','نشطة','ok'],
+    ['بانر الرئيسية — الصيف','بانر','9.1 ألف ر.س','310','2.9 م ر.س','x31.87','متوقفة','diff'],
+    ['إشعار عودة العملاء','إشعارات','5.6 ألف ر.س','190','1.7 م ر.س','x30.36','مجمدة','ok'],
+    ['بريد نهاية الأسبوع','بريد','4.8 ألف ر.س','156','1.2 م ر.س','x25.00','منتهية','done'],
+  ];
+  return phead('إسناد التحويلات (ROAS)','قياس عائد الإنفاق التسويقي لكل قناة وحملة وكوبون',['FR-MKT-ROAS-01'],
+    `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('إسناد التحويلات','Excel')">Excel ⤓</button>
+     <button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('إسناد التحويلات','PDF')">PDF</button>`)
+  + `<div class="kpis roas-kpis">
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">👛</span>إجمالي الإنفاق</div><div class="vl">411.3 ألف ر.س</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">📊</span>إيراد مسند فعلي</div><div class="vl">119.34 م ر.س</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">↗</span>ROAS الكلي</div><div class="vl">x290.14</div></div>
+      <div class="kpi roas-loss"><div class="lb"><span class="ic gh-ic amber">⚠</span>قنوات خاسرة</div><div class="vl">0</div></div>
+    </div>`
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث..."></div>
+      <div class="rf-tools">
+        <div class="fd">كل القنوات<span class="cv">▾</span></div>
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('إسناد التحويلات','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('إسناد التحويلات','Excel')">Excel ⤓</button>
+      </div>
+    </div>`
+  + table(['القناة','النوع','الإنفاق','حجوزات مسندة','إيراد مسند','ROAS','الحالة','إجراءات'],
+    rows.map(([ch,type,spend,book,rev,roas,status,tone])=>[
+      {v:ch,c:'strong'}, type, {v:spend,c:'num'}, {v:book,c:'num'}, {v:rev,c:'num'},
+      roasPill(roas), stPill(status, tone==='done'?'ok':tone==='diff'?'diff':'ok'),
+      `<span class="rc-dash">—</span>`
+    ])
+  )
+  + `<div class="rc-foot">
+      <span>صفحة 1 من 2</span>
+      <span>21 سجل</span>
+      <div class="pages"><span class="pg on">1</span><span class="pg">2</span></div>
+    </div>`)
+  + card(cardH('ROAS حسب القناة المدفوعة (أعلى 10)')+`<div class="card-b">
+      ${bars([
+        ['عروض نهاية الصيف',92,'#20A16E'],
+        ['WELCOME15',78,'#20A16E'],
+        ['اطلب من عطار',71,'#2C68D8'],
+        ['AIRPORT25',54,'#2C68D8'],
+        ['بانر الرئيسية',38,'#E8A23A'],
+        ['إشعار عودة العملاء',36,'#E8A23A'],
+        ['بريد نهاية الأسبوع',30,'#6B5CE7'],
+      ])}
+    </div>`);
+};
+
+/* ========== 34c. حوكمة الكوبونات ========== */
+S.couponGov = () => {
+  const st = (t, tone) => `<span class="cg-status ${tone}">${t}</span>`;
+  const acts = (code, kind) => {
+    if(kind==='stopped') return `<button class="btn sm st-approve" onclick="WafraOps.toggleCouponGov&&WafraOps.toggleCouponGov('${code}','تفعيل')">تفعيل</button>`;
+    if(kind==='suspect') return `<div class="st-actions">
+      <button class="btn danger sm" onclick="WafraOps.toggleCouponGov&&WafraOps.toggleCouponGov('${code}','إيقاف')">إيقاف</button>
+      <button class="btn sm" onclick="WafraOps.investigateCoupon&&WafraOps.investigateCoupon('${code}')">تحقيق</button>
+    </div>`;
+    return `<button class="btn danger sm" onclick="WafraOps.toggleCouponGov&&WafraOps.toggleCouponGov('${code}','إيقاف')">إيقاف</button>`;
+  };
+  const rows = [
+    ['WELCOME15','15%','523','57.5 ألف ر.س','23%','+9.56','متوقف','stopped'],
+    ['VIP20','20%','610','64 ألف ر.س','22%','+6.88','نشط','active'],
+    ['WEEKEND10','10%','497','33.8 ألف ر.س','13%','+12.74','اشتباه سوء استخدام','suspect'],
+    ['AIRPORT25','25 ر.س','851','21 ألف ر.س','8%','+39.16','اشتباه سوء استخدام','suspect'],
+    ['SUMMER50','50 ر.س','412','20.6 ألف ر.س','8%','+21','نشط','active'],
+  ];
+  return phead('حوكمة الكوبونات','سقف شهري لميزانية الخصومات مع رصد سوء الاستخدام',['FR-CPN-GOV-01'])
+  + `<div class="kpis cg-kpis">
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">👛</span>السقف الشهري</div><div class="vl">260 ألف ر.س</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">⊞</span>المصروف</div><div class="vl">191.3 ألف ر.س</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">↻</span>المتبقي</div><div class="vl">68.7 ألف ر.س</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">📊</span>نسبة الاستهلاك</div><div class="vl">74%</div></div>
+      <div class="kpi cg-alert"><div class="lb"><span class="ic gh-ic red">🛡</span>كوبونات مشبوهة</div><div class="vl">2</div></div>
+    </div>`
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث..."></div>
+      <div class="rf-tools">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('حوكمة الكوبونات','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('حوكمة الكوبونات','Excel')">Excel ⤓</button>
+      </div>
+    </div>`
+  + table(['الكود','الخصم','الاستخدامات','تكلفة الخصم','% من الميزانية','العائد','الحالة','إجراءات'],
+    rows.map(([code,disc,uses,cost,pct,ret,status,kind])=>[
+      {v:code,c:'strong num'},
+      disc,
+      {v:uses,c:'num'},
+      {v:cost,c:'num'},
+      {v:pct,c:'num'},
+      {v:`<span class="cg-ret">${ret}</span>`,c:'num'},
+      st(status, kind),
+      acts(code, kind)
+    ])
+  )
+  + `<div class="rf-foot"><span>5 سجل</span></div>`);
+};
+
+/* ========== 34d. اختبار A/B للبانرات ========== */
+S.abTest = () => {
+  const imp = (v, pos) => `<span class="ab-imp ${pos?'up':'dn'}">${v}</span>`;
+  const st = (t, tone) => `<span class="ab-status ${tone}">${t}</span>`;
+  const rows = [
+    ['بانر الصفحة الرئيسية','1.92%','3.04%','7.8%','5.6%','+7.1%',1,'النسخة B','نشط','active','B'],
+    ['عرض نهاية الأسبوع','4.10%','3.20%','9.1%','6.4%','-28.2%',0,'النسخة A','نشط','active','A'],
+    ['زر CTA الحجز','2.45%','2.80%','5.2%','8.9%','+11.5%',1,'النسخة B','نشط','active','B'],
+    ['بانر البحث — الصيف','3.10%','2.40%','6.0%','4.1%','-41.7%',0,'النسخة A','فائز A','done',null],
+    ['بانر التوصيل المجاني','1.80%','2.55%','4.3%','6.8%','+8.4%',1,'النسخة B','فائز B','done',null],
+  ];
+  return phead('اختبار A/B للبانرات','تفعيل نسختين وقياس النقر والتحويل واعتماد الأفضل — قرار مبني على البيانات',['FR-BAN-AB-01'])
+  + `<div class="kpis ab-kpis">
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">📊</span>اختبارات نشطة</div><div class="vl">3</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">✓</span>مكتملة</div><div class="vl">2</div></div>
+    </div>`
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث..."></div>
+      <div class="rf-tools">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('اختبار AB','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('اختبار AB','Excel')">Excel ⤓</button>
+      </div>
+    </div>`
+  + table(['الاختبار','CTR — A','CTR — B','تحويل A','تحويل B','التحسن','المتفوّق','الحالة','إجراءات'],
+    rows.map(([name,cta,ctb,cva,cvb,impr,pos,winner,status,tone,adopt])=>[
+      {v:name,c:'strong'},
+      {v:cta,c:'num'},{v:ctb,c:'num'},{v:cva,c:'num'},{v:cvb,c:'num'},
+      imp(impr, !!pos),
+      {v:winner,c:'strong'},
+      st(status, tone),
+      adopt
+        ? `<button class="btn sm st-approve" onclick="WafraOps.adoptAbWinner&&WafraOps.adoptAbWinner('${name}','${adopt}')">اعتماد الفائز (${adopt})</button>`
+        : `<span class="rc-dash">—</span>`
+    ])
+  )
+  + `<div class="rf-foot"><span>5 سجل</span></div>`);
+};
+
+/* ========== 34e. تجزئة الجمهور ========== */
+S.segments = () => {
+  const segs = [
+    ['عملاء VIP','إنفاق مرتفع أو حجوزات كثيرة'],
+    ['غير نشطين','لم يستأجروا منذ أكثر من 30 يوماً'],
+    ['عملاء جدد','حجز واحد أو لا حجوزات'],
+    ['مستأجرو الفاخرة','استأجروا فئة فاخرة'],
+    ['عملاء الرياض','مقيمون في الرياض'],
+    ['متعثرو الدفع / المخاطر','مفعّلون كمتعثرين أو موقوفون'],
+  ];
+  return phead('تجزئة الجمهور','شرائح ديناميكية لاستهداف الإشعارات والعروض بدقة',['FR-MKT-SEG-01'],
+    `<a class="btn ghost" href="#segmentBuilder">＋ إضافة شريحة مخصصة</a>`)
+  + `<div class="seg-grid">`
+  + segs.map(([t,d])=>`<div class="seg-card">
+      <b>${t}</b>
+      <p>${d}</p>
+      <button class="btn ghost sm" onclick="location.hash='campaigns';WafraOps.demoAction&&WafraOps.demoAction('إنشاء حملة لـ ${t}')">إنشاء حملة</button>
+    </div>`).join('')
+  + `</div>`;
+};
+
+/* ========== 34e2. منشئ الشرائح المخصص ========== */
+S.segmentBuilder = () => {
+  const preview = [
+    ['تركي الحربي','تبوك','14','موثوق'],
+    ['نورة الغامدي','الطائف','9','مراقب'],
+    ['أحمد الشهري','الخبر','22','موثوق'],
+    ['سارة العتيبي','جدة','3','عادي'],
+    ['وليد المطيري','الرياض','11','موثوق'],
+    ['ريم الدوسري','الدمام','7','مراقب'],
+  ];
+  const karma = t => `<span class="sb-karma ${t==='موثوق'?'ok':t==='مراقب'?'watch':'n'}">${t}</span>`;
+  return phead('منشئ الشرائح المخصص','ابنِ شريحة جمهور بمعايير مرنة مع معاينة حيّة للحجم',['FR-MKT-SEG-02'],
+    `<a class="btn ghost" href="#segments">‹ رجوع للشرائح</a>`)
+  + `<div class="g-1-2 sb-layout">`
+  + card(cardH('المعايير')+`<div class="card-b">
+      <div class="grid2 sb-fields">
+        ${fld('المدينة', `<select class="native-input"><option>الكل</option><option>الرياض</option><option>جدة</option><option>الدمام</option><option>الخبر</option><option>تبوك</option><option>الطائف</option></select>`)}
+        ${fld('حالة الحساب', `<select class="native-input"><option>الكل</option><option>نشط</option><option>موقوف</option><option>متعثر دفع</option></select>`)}
+        ${fld('شريحة الولاء', `<select class="native-input"><option>الكل</option><option>موثوق</option><option>عادي</option><option>مراقب</option><option>عالي المخاطر</option></select>`)}
+        ${fld('أدنى عدد حجوزات', `<input class="native-input" type="number" value="0" min="0">`)}
+        ${fld('أقل إنفاق (ر.س)', `<input class="native-input" type="number" value="0" min="0">`)}
+        <div class="sb-toggle">${swRow('غير نشط (+30 يوم)','لم يحجزوا خلال آخر 30 يوماً',0)}</div>
+      </div>
+      <div class="sb-actions">
+        ${fld('اسم الشريحة', `<input class="native-input" placeholder="مثال: عملاء جدة النشطون" id="sb-name">`)}
+        <div class="sb-btns">
+          <button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('نتائج الشريحة','Excel')">⤓ تصدير النتائج</button>
+          <button class="btn" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ الشريحة')">💾 حفظ الشريحة</button>
+        </div>
+      </div>
+    </div>`)
+  + card(cardH('المعاينة', 'حجم الشريحة الحيّ')+`<div class="card-b">
+      ${table(['العميل','المدينة','الحجوزات','الولاء'],
+        preview.map(([n,c,b,k])=>[{v:n,c:'strong'},c,{v:b,c:'num'},karma(k)])
+      )}
+      <div class="sb-more">و 529 آخرين… · الإجمالي التقديري: <b>535</b> عميلاً</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('نتائج الشريحة','Excel')">تصدير Excel</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('نتائج الشريحة','PDF')">تصدير PDF</button>
+      </div>
+    </div>`)
+  + `</div>`;
+};
+
+/* ========== 34f. أداء الشراكات المميزة ========== */
+S.featuredPartners = () => {
+  const slots = [
+    {n:1,tier:'بلاتيني',cls:'plat',co:'شركة التميز لتأجير السيارات',views:'36,596',clicks:'1,224',book:'144',rev:'90.7 ألف ر.س',fee:'15 ألف ر.س',ret:'x6.05',revN:90.7,feeN:15},
+    {n:2,tier:'ذهبي',cls:'gold',co:'شركة الوفرة لتأجير السيارات',views:'81,029',clicks:'4,738',book:'660',rev:'545.8 ألف ر.س',fee:'9 ألف ر.س',ret:'x60.65',revN:545.8,feeN:9},
+    {n:3,tier:'ذهبي',cls:'gold',co:'شركة النخبة لتأجير السيارات',views:'43,446',clicks:'1,631',book:'174',rev:'173.2 ألف ر.س',fee:'9 ألف ر.س',ret:'x19.24',revN:173.2,feeN:9},
+    {n:4,tier:'فضي',cls:'silv',co:'شركة السرعة لتأجير السيارات',views:'42,681',clicks:'2,802',book:'260',rev:'169 ألف ر.س',fee:'5 ألف ر.س',ret:'x33.8',revN:169,feeN:5},
+    {n:5,tier:'فضي',cls:'silv',co:'شركة الوفرة لتأجير السيارات',views:'87,107',clicks:'6,554',book:'479',rev:'391.8 ألف ر.س',fee:'5 ألف ر.س',ret:'x78.36',revN:391.8,feeN:5},
+  ];
+  const maxRev = Math.max(...slots.map(s=>s.revN));
+  return phead('أداء الشراكات المميزة','القيمة الفعلية لكل خانة ظهور (مشاهدات · حجوزات · إيراد) لتسعير الشراكة بعدالة',['FR-MKT-FP-01'])
+  + `<div class="kpis fp-kpis">
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">★</span>خانات مشغولة</div><div class="vl">5 / 5</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">💵</span>إيراد مُسند</div><div class="vl">1.37 م ر.س</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">🎟</span>رسوم الشراكات</div><div class="vl">43 ألف ر.س</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">↗</span>العائد الكلي</div><div class="vl">x31.9</div></div>
+    </div>`
+  + `<div class="fp-slots">`
+  + slots.map(s=>`<div class="fp-card ${s.cls}">
+      <div class="fp-tier">خانة ${s.n} — ${s.tier}</div>
+      <b class="fp-co">${s.co}</b>
+      <div class="fp-metrics">
+        <div><span>مشاهدات</span><strong>${s.views}</strong></div>
+        <div><span>نقرات</span><strong>${s.clicks}</strong></div>
+        <div><span>حجوزات</span><strong>${s.book}</strong></div>
+        <div><span>إيراد</span><strong>${s.rev}</strong></div>
+        <div><span>الرسوم</span><strong>${s.fee}</strong></div>
+      </div>
+      <div class="fp-ret">عائد ${s.ret}</div>
+    </div>`).join('')
+  + `</div>`
+  + card(cardH('الإيراد المُسند لكل خانة')+`<div class="card-b">
+      <div class="legend"><i><span style="width:10px;height:10px;border-radius:99px;background:var(--navy);display:inline-block"></span> إيراد</i>
+        <i><span style="width:10px;height:10px;border-radius:99px;background:#20A16E;display:inline-block"></span> رسوم</i></div>
+      <div class="fp-chart">
+        ${slots.map(s=>`<div class="fp-col">
+          <div class="fp-bars">
+            <div class="fp-bar rev" style="height:${Math.round(s.revN/maxRev*100)}%" title="${s.rev}"></div>
+            <div class="fp-bar fee" style="height:${Math.max(8,Math.round(s.feeN/maxRev*100*6))}%" title="${s.fee}"></div>
+          </div>
+          <div class="fp-x">خانة ${s.n}</div>
+        </div>`).join('')}
+      </div>
+    </div>`);
+};
+
+/* ========== 34g. رحلة العميل والاحتفاظ ========== */
+S.journey = () => {
+  const daysPill = d => `<span class="jr-idle">${d} يوم</span>`;
+  const rows = [
+    ['يوسف الحربي','الخبر','27','21 مايو 2026','237','12.4 ألف ر.س'],
+    ['تركي الغامدي','نجران','26','18 مايو 2026','240','11.8 ألف ر.س'],
+    ['نوف الشمري','جدة','11','02 يونيو 2026','216','4.9 ألف ر.س'],
+    ['أحمد القحطاني','أبها','24','14 مايو 2026','244','10.2 ألف ر.س'],
+    ['سارة العتيبي','الرياض','42','28 أغسطس 2026','38','22.6 ألف ر.س'],
+    ['وليد الحربي','الدمام','19','09 يوليو 2026','88','8.1 ألف ر.س'],
+    ['ريم الزهراني','المدينة المنورة','8','22 مارس 2026','197','3.4 ألف ر.س'],
+    ['ماجد السبيعي','مكة المكرمة','15','11 أغسطس 2026','55','6.7 ألف ر.س'],
+  ];
+  return phead('رحلة العميل والاحتفاظ','تتبع التحويل (زيارة ← بحث ← حجز) ومعدل التحويل مع ميزات تسويقية ذكية',['FR-MKT-JR-01'])
+  + `<div class="kpis jr-kpis">
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">⌕</span>زيارة ← بحث</div><div class="vl">62%</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">📆</span>بحث ← حجز</div><div class="vl">19%</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic red">⚠</span>معدل التسرب</div><div class="vl">13.7%</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">📈</span>معدل الاحتفاظ</div><div class="vl">86.3%</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">👤</span>عملاء متكررون</div><div class="vl">71</div></div>
+    </div>`
+  + card(cardH('قمع التحويل')+`<div class="card-b jr-funnel">
+      <div class="jr-row"><span class="jr-lab">زيارات</span><div class="jr-track"><i class="jr-fill navy" style="width:100%"></i></div><span class="jr-val">(100%) 155,723</span></div>
+      <div class="jr-row"><span class="jr-lab">عمليات بحث</span><div class="jr-track"><i class="jr-fill coral" style="width:62%"></i></div><span class="jr-val">(62%) 96,152</span></div>
+      <div class="jr-row"><span class="jr-lab">حجوزات</span><div class="jr-track"><i class="jr-fill amber" style="width:12%"></i></div><span class="jr-val">(12%) 18,550</span></div>
+    </div>`)
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث بالاسم..."></div>
+      <div class="rf-tools">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('رحلة العميل','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('رحلة العميل','Excel')">Excel ⤓</button>
+      </div>
+    </div>`
+  + table(['العميل','المدينة','حجوزات','آخر حجز','أيام العميل','إيرادات','إجراءات'],
+    rows.map(([name,city,book,last,days,rev])=>[
+      {v:name,c:'strong'},
+      `<a class="st-link" href="#customer">${city}</a>`,
+      {v:book,c:'num'},
+      last,
+      daysPill(days),
+      {v:rev,c:'num'},
+      `<a class="btn ghost sm" href="#customer">اطلاع</a>`
+    ])
+  )
+  + `<div class="rc-foot">
+      <span>صفحة 1 من 5</span>
+      <span>71 سجل</span>
+      <div class="pages"><span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">4</span><span class="pg">5</span></div>
+    </div>`);
+};
+
+/* ========== 34h. رادار مخاطر المزودين ========== */
+S.riskRadar = () => {
+  const lvl = (t, tone) => `<span class="rr-lvl ${tone}">${t}</span>`;
+  const rows = [
+    ['شركة السرعة لتأجير السيارات','الرياض','100/100','عالية','hi','4','2','16%'],
+    ['شركة النخبة لتأجير السيارات','جدة','100/100','عالية','hi','2','1','17%'],
+    ['شركة الوفرة لتأجير السيارات','الدمام','88/100','عالية','hi','3','3','15%'],
+    ['شركة التميز لتأجير السيارات','أبها','100/100','عالية','hi','1','2','21%'],
+    ['شركة الصحراء لتأجير السيارات','مكة','87/100','متوسطة','mid','2','0','19%'],
+    ['كي رنت','الخبر','100/100','عالية','hi','4','1','16%'],
+    ['مسار لتأجير السيارات','الرياض','92/100','متوسطة','mid','1','1','12%'],
+    ['الوسام كار','جدة','78/100','عالية','hi','5','4','24%'],
+  ];
+  return phead('رادار مخاطر المزودين','درجة مخاطرة مركّبة لكل مزود من الجودة والتظلّمات والتحصيل والتقييم',['FR-RSK-01'],
+    `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('نتائج شرائح المخاطر','Excel')">⤓ تصدير نتائج الشرائح</button>`)
+  + `<div class="kpis rr-kpis">
+      <div class="kpi rr-hi"><div class="lb"><span class="ic gh-ic red">⚠</span>مخاطر عالية</div><div class="vl">18</div></div>
+      <div class="kpi rr-mid"><div class="lb"><span class="ic gh-ic amber">⚠</span>مخاطر متوسطة</div><div class="vl">10</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">📋</span>مزودون ملتزمون</div><div class="vl">28</div></div>
+    </div>`
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث..."></div>
+      <div class="rf-tools">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('رادار المخاطر','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('رادار المخاطر','Excel')">Excel ⤓</button>
+        <button class="btn sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('نتائج شرائح المخاطر','Excel')">تصدير نتائج الشرائح</button>
+      </div>
+    </div>`
+  + table(['المزود','المدينة','الدرجة','المستوى','جودة متدنية','تظلمات','تحصيل متأخر','إجراءات'],
+    rows.map(([co,city,score,level,tone,q,disp,late])=>[
+      {v:co,c:'strong'},
+      city,
+      {v:score,c:'num'},
+      lvl(level, tone),
+      {v:q,c:'num'},
+      {v:disp,c:'num'},
+      {v:late,c:'num'},
+      `<div class="st-actions">
+        <a class="btn ghost sm" href="#vendorFile">المزود</a>
+        <button class="btn danger sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('إيقاف ${co}')">إيقاف</button>
+      </div>`
+    ])
+  )
+  + `<div class="rf-foot"><span>56 سجل</span></div>`);
+};
+
+/* ========== 34i. مراقبة مستوى الخدمة (SLA) ========== */
+S.slaMonitor = () => {
+  const pill = (n, tone) => `<span class="sla-pill ${tone}">${n}</span>`;
+  const rows = [
+    ['طابور الاعتماد','48 ساعة','9','2','0','7','22%','#kyc'],
+    ['التظلّمات','72 ساعة','14','2','0','12','14%','#disputes'],
+    ['التسويات','96 ساعة','11','3','1','7','27%','#settlements'],
+    ['الاستردادات','96 ساعة','9','2','0','7','22%','#refunds'],
+    ['طلبات التمديد','48 ساعة','12','4','0','8','33%','#extensions'],
+    ['العمولات المتغيّرة','72 ساعة','7','2','0','5','29%','#commissions'],
+  ];
+  return phead('مراقبة مستوى الخدمة (SLA)','هيكل معالجة الطوابير الإدارية وحالة الالتزام بها',['FR-RSK-SLA-01'])
+  + `<div class="kpis sla-kpis">
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">◷</span>بنود مفتوحة</div><div class="vl">70</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic red">⚠</span>متجاوزة المهلة</div><div class="vl">59</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">⚠</span>تقترب من التجاوز</div><div class="vl">1</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">↗</span>نسبة الالتزام</div><div class="vl">16%</div></div>
+    </div>`
+  + card(cardH('الطوابير حسب مستوى الخدمة')
+  + table(['الطابور','المهلة','الإجمالي','ضمن المهلة','تقترب','متجاوز','الالتزام','الإجراء'],
+    rows.map(([q,sla,tot,ok,near,late,comp,href])=>[
+      {v:q,c:'strong'},
+      sla,
+      {v:tot,c:'num'},
+      pill(ok,'ok'),
+      pill(near,'near'),
+      pill(late,'late'),
+      {v:comp,c:'num'},
+      `<a class="btn ghost sm" href="${href}">فتح الطابور</a>`
+    ])
+  ));
+};
+
+/* ========== 34j. محرك الأتمتة ========== */
+S.automation = () => {
+  const pill = (n, tone) => `<span class="sla-pill ${tone}">${n}</span>`;
+  const st = (t, tone) => `<span class="ab-status ${tone}">${t}</span>`;
+  const rows = [
+    ['تصعيد تذاكر SLA','عند تجاوز المهلة','كل 15 د','128','3','2','98%','مفعّل','active'],
+    ['إيقاف مزود عالي المخاطر','درجة مخاطر ≥ 90','فوري','42','1','0','98%','مفعّل','active'],
+    ['تنبيه تسوية معلّقة','بعد 48 ساعة','يومي','36','0','1','97%','مفعّل','active'],
+    ['إغلاق تظلّم آلي','انتهاء مهلة الرد','كل ساعة','19','2','0','90%','موقوف','done'],
+    ['تذكير استرداد معلّق','بعد 24 ساعة','كل ساعة','54','0','3','95%','مفعّل','active'],
+    ['تجميد كوبون مشبوه','اشتباه سوء استخدام','فوري','11','0','0','100%','مفعّل','active'],
+  ];
+  return phead('محرك الأتمتة','قواعد تشغيل تلقائية للطوابير والمخاطر والتنبيهات الإدارية',['FR-RSK-AUTO-01'],
+    `<button class="btn" onclick="WafraOps.demoAction&&WafraOps.demoAction('إضافة قاعدة أتمتة')">＋ قاعدة جديدة</button>`)
+  + `<div class="kpis sla-kpis">
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">⚙</span>قواعد مفعّلة</div><div class="vl">12</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">✓</span>تشغيلات ناجحة اليوم</div><div class="vl">290</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">◷</span>معلّقة / قيد التنفيذ</div><div class="vl">6</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic red">⚠</span>فشل اليوم</div><div class="vl">6</div></div>
+    </div>`
+  + card(cardH('قواعد الأتمتة','المحفّز · التكرار · نتائج التشغيل')
+  + table(['القاعدة','المحفّز','التكرار','الإجمالي','نجحت','فشلت','النجاح','الحالة','الإجراء'],
+    rows.map(([name,trig,freq,tot,ok,fail,rate,status,tone])=>[
+      {v:name,c:'strong'},
+      trig,
+      freq,
+      {v:tot,c:'num'},
+      pill(ok,'ok'),
+      pill(fail, fail==='0'?'ok':'late'),
+      {v:rate,c:'num'},
+      st(status, tone),
+      `<div class="st-actions">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('تعديل ${name}')">تعديل</button>
+        <button class="btn ${status==='مفعّل'?'danger':'st-approve'} sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('${status==='مفعّل'?'إيقاف':'تفعيل'} ${name}')">${status==='مفعّل'?'إيقاف':'تفعيل'}</button>
+      </div>`
+    ])
+  ));
+};
+
+/* ========== 34k. كشف الاحتيال ========== */
+S.fraudDetect = () => {
+  const score = n => {
+    const tone = n >= 70 ? 'hi' : n >= 50 ? 'mid' : 'lo';
+    return `<span class="fd-score ${tone}">${n}</span>`;
+  };
+  const rows = [
+    ['FR-A2','نواف المطيري','مبلغ غير معتاد (6.6 ألف ر.س)','1',85],
+    ['FR-A5','سلطان القحطاني','كثافة حجوزات غير اعتيادية','41',78],
+    ['FR-A7','شهد الشهري','بطاقات متعددة خلال ساعة','18',73],
+    ['FR-B1','فهد العتيبي','مبلغ غير معتاد (4.2 ألف ر.س)','1',69],
+    ['FR-B3','نورة الدوسري','إلغاءات متكررة بعد الدفع','12',63],
+    ['FR-B8','ماجد السبيعي','تغيير جهاز متكرر','7',56],
+    ['FR-C2','ريم الزهراني','كثافة حجوزات غير اعتيادية','9',53],
+    ['FR-C4','خالد المطيري','محاولات دفع فاشلة متتالية','22',48],
+    ['FR-C9','سارة العتيبي','مبلغ غير معتاد (2.1 ألف ر.س)','1',47],
+  ];
+  return phead('كشف الاحتيال','أنماط سلوك مشبوهة في المدفوعات والحجوزات',['FR-RSK-FRD-01'])
+  + `<div class="kpis fd-kpis">
+      <div class="kpi"><div class="lb"><span class="ic gh-ic red">🛡</span>حالات مفتوحة</div><div class="vl">11</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">⚠</span>خطورة عالية</div><div class="vl">3</div></div>
+    </div>`
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث..."></div>
+      <div class="rf-tools">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('كشف الاحتيال','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('كشف الاحتيال','Excel')">Excel ⤓</button>
+      </div>
+    </div>`
+  + table(['الحالة','الحساب','النمط','التكرار','الدرجة','الحالة','إجراءات'],
+    rows.map(([id,acc,pat,freq,sc])=>[
+      {v:id,c:'strong num'},
+      acc,
+      pat,
+      {v:freq,c:'num'},
+      score(sc),
+      `<span class="fd-open">مفتوح</span>`,
+      `<div class="st-actions">
+        <button class="btn danger sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('علم مشبوهاً ${id}')">علم مشبوهاً</button>
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('تجاهل ${id}')">تجاهل</button>
+      </div>`
+    ])
+  )
+  + `<div class="rf-foot"><span>11 سجل</span></div>`);
+};
+
+/* ========== 34l. مجدول التقارير ========== */
+S.reportScheduler = () => {
+  const st = (t, on) => `<span class="rs-st ${on?'on':'off'}">${t}</span>`;
+  const rows = [
+    ['ملخص الفواتير المفتوحة','كل المنصة','يومي','بريد','ops@wafra.sa','6 أكتوبر 2026',1],
+    ['تقرير التحصيل الأسبوعي','المالية','أسبوعي','بريد','finance@wafra.sa','9 أكتوبر 2026',1],
+    ['أداء المزودين','الموردون','أسبوعي','لوحة','ops@wafra.sa','10 أكتوبر 2026',0],
+    ['جودة الأسطول اليومية','التشغيل','يومي','بريد','fleet@wafra.sa','7 أكتوبر 2026',1],
+  ];
+  return phead('مجدول التقارير','تقارير دورية تُرسل تلقائياً دون فتح المنصة',['FR-RPT-SCH-01'],
+    `<button class="btn" onclick="WafraOps.demoAction&&WafraOps.demoAction('جدول تقرير جديد')">＋ جدول تقرير جديد</button>`)
+  + card(`<div class="rf-toolbar">
+      <div class="fsearch">⌕ <input placeholder="بحث..."></div>
+      <div class="rf-tools">
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('مجدول التقارير','PDF')">PDF</button>
+        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('مجدول التقارير','Excel')">Excel ⤓</button>
+      </div>
+    </div>`
+  + table(['التقرير','النطاق','التكرار','القناة','المستلمون','التشغيل القادم','الحالة','إجراءات'],
+    rows.map(([name,scope,freq,ch,to,next,on])=>[
+      {v:name,c:'strong'},
+      scope, freq, ch,
+      {v:to,c:'num'},
+      next,
+      st(on?'نشط':'موقوف', !!on),
+      `<div class="st-actions">
+        <button class="btn sm st-approve" onclick="WafraOps.demoAction&&WafraOps.demoAction('تشغيل الآن: ${name}')">تشغيل الآن</button>
+        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('${on?'إيقاف':'تفعيل'} ${name}')">${on?'إيقاف':'تفعيل'}</button>
+      </div>`
+    ])
+  )
+  + `<div class="rf-foot"><span>4 سجل</span></div>`);
+};
+
 /* ========== 35. التذاكر ========== */
 S.tickets = () => phead('تذاكر الدعم','متابعة الطلبات الواردة من العملاء والمزوّدين',['FR-ADS-01','FR-ADS-02','FR-ADS-03'],
-  `<button class="btn ghost">⤓ تصدير</button>`)
+  `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('التذاكر','Excel')">⤓ تصدير</button>`)
 + note('dngr','ستّ تذاكر تجاوزت الـ SLA','أعلاها أولوية: مشكلة دفع لعميل منذ 9 ساعات. التذاكر المتأخّرة تُصعَّد تلقائياً.')
 + card(tabs([{t:'الكل',n:142,on:1},{t:'مفتوحة',n:38},{t:'قيد المعالجة',n:24},{t:'بانتظار الردّ',n:11},{t:'محلولة',n:63},{t:'مغلقة',n:6}])
-+ filters(['الحالة','الأولوية','الموضوع','المُسنَدة إلى','نوع مقدّم الطلب'],'ابحث برقم التذكرة أو الاسم…')
-+ table(['رقم التذكرة','الموضوع','مقدّم الطلب','النوع','الأولوية','المُسنَدة إلى','SLA','الحالة','الإجراءات'],[
-  [{v:'SUP-1042',c:'strong num'},{v:'تأخّر في صرف المستحقّات المالية<span class="sub">لم تصلني تسوية الأسبوع الماضي</span>',c:'strong'},'شركة الصحراء',bdg('مزوّد','flat n'),bdg('عالية','r'),'—',bdg('متأخّرة 9 ساعات','r'),bdg('مفتوحة','a'),`<a class="btn sm" href="#ticket">فتح</a>`],
-  [{v:'SUP-1041',c:'strong num'},{v:'خطأ في ظهور سيارة بنتائج البحث<span class="sub">سيارة نشطة لا تظهر رغم توفّرها</span>',c:'strong'},'كي رنت',bdg('مزوّد','flat n'),bdg('متوسطة','a'),'محمد العنزي',bdg('متبقٍ 3 ساعات','a'),bdg('قيد المعالجة','b'),`<a class="btn sm" href="#ticket">فتح</a>`],
-  [{v:'SUP-1038',c:'strong num'},{v:'خُصم المبلغ مرتين<span class="sub">ظهر خصمان لنفس الحجز</span>',c:'strong'},'أحمد الشمري',bdg('عميل','flat b'),bdg('عاجلة','r'),'ليلى الدوسري',bdg('متأخّرة 2 ساعة','r'),bdg('قيد المعالجة','b'),`<a class="btn sm" href="#ticket">فتح</a>`],
-  [{v:'SUP-1035',c:'strong num'},{v:'استفسار عن سياسة الإلغاء',c:'strong'},'هند الشهري',bdg('عميل','flat b'),bdg('منخفضة','n'),'محمد العنزي',bdg('متبقٍ يومان','g'),bdg('بانتظار الردّ','n'),`<a class="btn sm" href="#ticket">فتح</a>`],
++ `<div class="filters mkt-filters">
+    <div class="fd">الحالة<span class="cv">▾</span></div>
+    <div class="fd">الأولوية<span class="cv">▾</span></div>
+    <div class="fd">المزود<span class="cv">▾</span></div>
+    <div class="fd">الموضوع<span class="cv">▾</span></div>
+    <div class="fd">المُسنَدة إلى<span class="cv">▾</span></div>
+    <div class="fsearch">⌕<input placeholder="ابحث برقم التذكرة أو الاسم…"></div>
+  </div>`
++ table(['رقم التذكرة','الموضوع','مقدّم الطلب','النوع','الأولوية','المُسنَدة إلى','تاريخ التذكرة','تاريخ المعالجة','SLA','الحالة','الإجراءات'],[
+  [{v:'SUP-1042',c:'strong num'},{v:'تأخّر في صرف المستحقّات المالية<span class="sub">لم تصلني تسوية الأسبوع الماضي</span>',c:'strong'},'شركة الصحراء',bdg('مزوّد','flat n'),bdg('عالية','r'),'—',{v:'2026/08/27 14:22',c:'num'},'—',bdg('متأخّرة 9 ساعات','r'),bdg('مفتوحة','a'),`<a class="btn sm" href="#ticket">فتح</a>`],
+  [{v:'SUP-1041',c:'strong num'},{v:'خطأ في ظهور سيارة بنتائج البحث<span class="sub">سيارة نشطة لا تظهر رغم توفّرها</span>',c:'strong'},'كي رنت',bdg('مزوّد','flat n'),bdg('متوسطة','a'),'محمد العنزي',{v:'2026/08/27 11:05',c:'num'},{v:'2026/08/27 12:40',c:'num'},bdg('متبقٍ 3 ساعات','a'),bdg('قيد المعالجة','b'),`<a class="btn sm" href="#ticket">فتح</a>`],
+  [{v:'SUP-1038',c:'strong num'},{v:'خُصم المبلغ مرتين<span class="sub">ظهر خصمان لنفس الحجز</span>',c:'strong'},'أحمد الشمري',bdg('عميل','flat b'),bdg('عاجلة','r'),'ليلى الدوسري',{v:'2026/08/26 19:18',c:'num'},{v:'2026/08/26 20:02',c:'num'},bdg('متأخّرة 2 ساعة','r'),bdg('قيد المعالجة','b'),`<a class="btn sm" href="#ticket">فتح</a>`],
+  [{v:'SUP-1035',c:'strong num'},{v:'استفسار عن سياسة الإلغاء',c:'strong'},'هند الشهري',bdg('عميل','flat b'),bdg('منخفضة','n'),'محمد العنزي',{v:'2026/08/25 09:40',c:'num'},{v:'2026/08/25 10:15',c:'num'},bdg('متبقٍ يومان','g'),bdg('بانتظار الردّ','n'),`<a class="btn sm" href="#ticket">فتح</a>`],
 ])
 + pager(142,15));
 
@@ -2234,6 +2905,7 @@ S.ticket = () => phead('التذكرة SUP-1042','تأخّر في صرف الم�
 /* ========== 37. الشات بوت ========== */
 S.chatbot = () => phead('قاعدة معرفة الشات بوت','الأسئلة والأجوبة التي يعتمد عليها البوت، والأسئلة التي عجز عنها',['FR-ADS-06'],
   `<button class="btn">＋ سؤال جديد</button>`)
++ note('info','القسم محفوظ حتى تفعيل الشات بوت','يُبقى القسم جاهزاً لإدارة قاعدة المعرفة؛ الربط التشغيلي يُفعَّل لاحقاً.')
 + `<div class="grid2">`
 + card(cardH('أسئلة لم يستطع البوت الإجابة عليها','مرتّبة بالأكثر تكراراً — تغذية القاعدة تبدأ من هنا')
 + table(['السؤال','التكرار','آخر مرة','الإجراء'],[
@@ -2254,7 +2926,8 @@ S.chatbot = () => phead('قاعدة معرفة الشات بوت','الأسئل�
 
 /* ========== 38. مركز المساعدة ========== */
 S.help = () => phead('مركز المساعدة','الأسئلة الشائعة ومقالات المساعدة الظاهرة في التطبيق',['FR-ADS-07'],
-  `<button class="btn">＋ مقال جديد</button>`)
+  `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('مركز المساعدة','Excel')">⤓ تصدير</button>
+   <button class="btn">＋ مقال جديد</button>`)
 + card(tabs([{t:'منشور',n:42,on:1},{t:'مسودّة',n:6},{t:'مخفي',n:3}])
 + filters(['التصنيف','اللغة'],'ابحث بعنوان المقال…')
 + table(['المقال','التصنيف','اللغات','المشاهدات','التقييم','آخر تحديث','الحالة','الإجراءات'],[
@@ -2297,6 +2970,7 @@ S.settings = () => phead('الإعدادات التشغيلية','القيم ا�
 + card(cardH('الحجز والردّ')+`<div class="card-b">
   <div class="frow">${fld('مهلة ردّ المزوّد', inp('','30 دقيقة'))}${fld('نافذة تسجيل عدم الحضور', inp('','60 دقيقة'))}</div>
   <div class="frow">${fld('أقل مدة حجز', inp('','يوم واحد'))}${fld('أقصى مدة حجز', inp('','90 يوماً'))}</div>
+  <div class="frow">${fld('عدد الساعات المسموحة للتعديل', inp('','24 ساعة'))}${fld('عدد الساعات المسموحة للإلغاء', inp('','12 ساعة'))}</div>
   ${fld('مدة السماح قبل احتساب التأخير', inp('','59 دقيقة'))}
 </div>`)
 + card(cardH('المالية')+`<div class="card-b">
@@ -2316,15 +2990,16 @@ S.settings = () => phead('الإعدادات التشغيلية','القيم ا�
 + `</div>`;
 
 /* ========== 41. البيانات المرجعية ========== */
-S.refdata = () => phead('البيانات المرجعية','القوائم التي تعتمد عليها كل الشاشات',['FR-ADX-02'],`<button class="btn">＋ إضافة عنصر</button>`)
+S.refdata = () => phead('البيانات المرجعية','القوائم التي تعتمد عليها كل الشاشات — للاطلاع فقط',['FR-ADX-02'])
++ note('info','للاطلاع فقط','لا يمكن التعديل أو الإضافة على أي بيانات في هذا القسم؛ يُعرض للمراجعة فقط.')
 + card(tabs([{t:'المدن والأحياء',n:38,on:1},{t:'فئات السيارات',n:9},{t:'الماركات والموديلات',n:412},{t:'أنواع الخدمات',n:6},{t:'أسباب الإلغاء',n:11},{t:'أسباب الرفض',n:8},{t:'أنواع التظلّم',n:5}])
 + filters(['المنطقة','الحالة'],'ابحث باسم المدينة…')
-+ table(['المدينة','المنطقة','الأحياء','المزوّدون','الفروع','الحجوزات','الحالة','الإجراءات'],[
-  ['الرياض','منطقة الرياض','142','21','58','1,842',bdg('مفعّلة','g'),acts([{i:'✎'},{i:'⏸'}])],
-  ['جدة','منطقة مكة المكرمة','96','14','41','1,204',bdg('مفعّلة','g'),acts([{i:'✎'},{i:'⏸'}])],
-  ['الدمام','المنطقة الشرقية','64','9','24','612',bdg('مفعّلة','g'),acts([{i:'✎'},{i:'⏸'}])],
-  ['أبها','منطقة عسير','38','2','4','86',bdg('مفعّلة','g'),acts([{i:'✎'},{i:'⏸'}])],
-  ['حائل','منطقة حائل','22','0','0','0',bdg('غير مفعّلة — لا مزوّدين','n'),acts([{i:'✎'},{i:'▶'}])],
++ table(['المدينة','المنطقة','الأحياء','المزوّدون','الفروع','الحجوزات','الحالة'],[
+  ['الرياض','منطقة الرياض','142','21','58','1,842',bdg('مفعّلة','g')],
+  ['جدة','منطقة مكة المكرمة','96','14','41','1,204',bdg('مفعّلة','g')],
+  ['الدمام','المنطقة الشرقية','64','9','24','612',bdg('مفعّلة','g')],
+  ['أبها','منطقة عسير','38','2','4','86',bdg('مفعّلة','g')],
+  ['حائل','منطقة حائل','22','0','0','0',bdg('غير مفعّلة — لا مزوّدين','n')],
 ])
 + pager(38,4));
 
@@ -2339,6 +3014,10 @@ S.content = () => phead('المحتوى والشروط','الصفحات القا
   [{v:'سياسة الخصوصية',c:'strong'},'2.1','2026/05/03','100%',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
   [{v:'سياسة الإلغاء والاسترداد',c:'strong'},'1.8','2026/07/22','—',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
   [{v:'شروط المزوّدين',c:'strong'},'2.0','2026/06/14','96.5%',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
+  [{v:'سياسة ملفات تعريف الارتباط',c:'strong'},'1.2','2026/03/10','—',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
+  [{v:'اتفاقية مستوى الخدمة',c:'strong'},'1.0','2026/02/01','—',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
+  [{v:'سياسة الاستخدام المقبول',c:'strong'},'1.4','2026/04/18','—',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
+  [{v:'إخلاء المسؤولية',c:'strong'},'1.1','2026/01/20','—',bdg('نافذة','g'),acts([{i:'✎'},{i:'👁'},{i:'🕘'}])],
   [{v:'الشروط والأحكام',c:'strong'},'3.3','—','—',bdg('مسودّة','n'),acts([{i:'✎'},{i:'👁'}])],
 ]))
 + card(cardH('أرشيف نسخ الشروط','كل نسخة محفوظة بتاريخ سريانها ومن وافق عليها')
@@ -2381,7 +3060,9 @@ S.admins = () => phead('الإداريون والصلاحيات','حسابات �
 
 /* ========== 44. سجل التدقيق ========== */
 S.audit = () => phead('سجل التدقيق','كل إجراء إداري موثّق — غير قابل للتعديل أو الحذف',['FR-ADL-01','FR-ADL-02','FR-ADL-03','FR-ADL-05','FR-ADL-06'],
-  `<button class="btn ghost">⤓ تصدير للامتثال</button>`)
+  `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('سجل التدقيق','Excel')">⤓ تصدير Excel</button>
+   <button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('سجل التدقيق','PDF')">⤓ تصدير PDF</button>
+   <button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('سجل-التدقيق','Excel')">⤓ تصدير للامتثال</button>`)
 + note('info','السجل للقراءة فقط','لا يملك أي دور — بما فيه المسؤول الأعلى — صلاحية تعديل السجل أو حذف أي قيد منه.')
 + card(tabs([{t:'الكل',n:'24,180',on:1},{t:'إجراءات حسّاسة',n:142},{t:'مالية',n:'1,204'},{t:'حسابات',n:'3,882'},{t:'إعدادات',n:96}])
 + filters(['المستخدم','نوع الإجراء','الكيان','التاريخ'],'ابحث في السجل…')
@@ -2562,18 +3243,34 @@ M.rejectSettlement = () => modal('رفض كشف التسوية', `
   `<button class="btn danger" onclick="closeM()">رفض الكشف</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
 
 M.newCoupon = () => modal('كوبون جديد', `
-  <div class="frow">${fld('الكود', inp('SUMMER25'))}${fld('نوع الخصم', sel('نسبة مئوية'))}</div>
+  <div class="frow">${fld('الكود', inp('SUMMER25'))}${fld('نوع الكوبون', `<select class="native-input"><option>نسبة مئوية</option><option>مبلغ ثابت</option><option>إعفاء رسوم توصيل</option><option>ترحيبي تلقائي</option></select>`)}</div>
   <div class="frow">${fld('القيمة', inp('25%'))}${fld('سقف قيمة الخصم', inp('150 ر.س'))}</div>
   <div class="frow">${fld('الحد الأدنى للحجز', inp('200 ر.س'))}${fld('المتحمّل للتكلفة', sel('المنصّة'))}</div>
   <div class="frow">${fld('سقف الاستخدام الكلي', inp('2000'))}${fld('سقف الاستخدام لكل عميل', inp('1'))}</div>
-  <div class="frow">${fld('من تاريخ', inp('01/09/2026'))}${fld('إلى تاريخ', inp('30/09/2026'))}</div>
-  ${fld('الشريحة المستهدفة', sel('كل العملاء'))}
+  <div class="frow">${fld('تاريخ ووقت البداية', `<input class="native-input" type="datetime-local" value="2026-09-01T09:00">`)}${fld('إلى تاريخ', inp('30/09/2026'))}</div>
+  <div class="frow">${fld('المزود (اختياري)', `<select class="native-input"><option>كل المزودين / المنصّة</option><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}${fld('الشريحة المستهدفة', sel('كل العملاء'))}</div>
   ${fld('قواعد التطبيق', `<div style="display:flex;flex-direction:column;gap:8px">
     <div style="display:flex;gap:9px;align-items:center"><span class="chk on">✓</span><span style="font-size:12.5px">لا يُجمع مع عروض أخرى</span></div>
     <div style="display:flex;gap:9px;align-items:center"><span class="chk"></span><span style="font-size:12.5px">استثناء فئة السيارات الفاخرة</span></div>
     <div style="display:flex;gap:9px;align-items:center"><span class="chk"></span><span style="font-size:12.5px">لا يسري في أوقات الذروة</span></div>
   </div>`)}`,
   `<button class="btn" onclick="closeM()">حفظ الكوبون</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.newSegment = () => modal('إضافة شريحة مخصصة', `
+  <div class="frow">${fld('اسم الشريحة', inp('عملاء جدة النشطون'))}${fld('المدينة', `<select class="native-input"><option>كل المدن</option><option>الرياض</option><option>جدة</option><option>الدمام</option></select>`)}</div>
+  <div class="frow">${fld('آخر حجز', `<select class="native-input"><option>أي وقت</option><option>خلال 30 يوماً</option><option>أكثر من 30 يوماً</option><option>أكثر من 90 يوماً</option></select>`)}${fld('عدد الحجوزات', `<select class="native-input"><option>الكل</option><option>بدون حجوزات</option><option>حجز واحد</option><option>أكثر من 3</option><option>أكثر من 10</option></select>`)}</div>
+  <div class="frow">${fld('فئة السيارة', `<select class="native-input"><option>الكل</option><option>اقتصادية</option><option>متوسطة</option><option>فاخرة</option></select>`)}${fld('حالة الحساب', `<select class="native-input"><option>نشط</option><option>موقوف</option><option>متعثر دفع</option></select>`)}</div>
+  ${fld('وصف الشريحة', `<div class="inp" style="min-height:60px">شريحة ديناميكية تُحدَّث تلقائياً حسب قواعد الاستهداف.</div>`)}`,
+  `<button class="btn" onclick="closeM();WafraOps.demoAction&&WafraOps.demoAction('حفظ الشريحة')">حفظ الشريحة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.newCampaign = () => modal('حملة جديدة', `
+  <div class="frow">${fld('اسم الحملة', inp('عروض نهاية الأسبوع'))}${fld('نوع الحملة', `<select class="native-input"><option>حملة خصم</option><option>حملة فئة</option><option>حملة توصيل</option><option>حملة كوبون</option><option>حملة إشعارات</option></select>`)}</div>
+  <div class="frow">${fld('القناة', `<select class="native-input"><option>إشعارات</option><option>بريد</option><option>SMS</option><option>بانر</option><option>كوبون</option><option>متعددة</option></select>`)}${fld('نسبة / قيمة الخصم', inp('20%'))}</div>
+  <div class="frow">${fld('الميزانية', inp('25,000 ر.س'))}${fld('المزود (اختياري)', `<select class="native-input"><option>كل المزودين / المنصّة</option><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}</div>
+  <div class="frow">${fld('من تاريخ', inp('01/09/2026'))}${fld('إلى تاريخ', inp('15/09/2026'))}</div>
+  ${fld('النطاق الجغرافي', sel('كل المدن'))}
+  ${fld('الوصف', `<div class="inp" style="min-height:66px">حملة ترويجية تظهر في واجهة العميل خلال الفترة المحددة.</div>`)}`,
+  `<button class="btn" onclick="closeM()">حفظ الحملة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
 
 M.approveAd = () => modal('مراجعة طلب إعلان — شركة الصحراء', `
   <div class="grid2" style="margin-bottom:14px">
@@ -2602,6 +3299,69 @@ M.publishTerms = () => modal('نشر نسخة جديدة من الشروط', `
   ${swRow('إشعار كل المستخدمين','Push وبريد قبل تاريخ السريان بأسبوع',1)}
   ${note('warn','48,210 مستخدماً سيُطالَبون بالموافقة','لن يتمكّنوا من إنشاء حجز جديد قبل الموافقة على النسخة 3.3.')}`,
   `<button class="btn coral" onclick="closeM()">نشر النسخة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.versionUpdates = () => modal('تحديثات الإصدارات', `
+  ${fld('رقم الإصدار', inp('','2.4.1'))}
+  ${fld('القنوات', sel('لوحة الإدارة · تطبيق العميل · تطبيق المزوّد'))}
+  ${fld('ملخّص التحديث', `<div class="inp" style="min-height:90px">إصلاحات أداء في مطابقة بوابة الدفع، وتحسينات على شاشة الحجوزات المتعثّرة.</div>`)}
+  ${swRow('إظهار شارة «جديد» في القائمة','لمدة 7 أيام بعد النشر',1)}
+  ${swRow('إشعار الفريق الإداري','تنبيه داخل اللوحة وبريد',1)}`,
+  `<button class="btn" onclick="closeM()">نشر التحديث</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.qualityReport = () => modal('بلاغ جودة', `
+  ${fld('نوع البلاغ', sel('صور غير مطابقة · بيانات ناقصة · مخالفة تشغيل'))}
+  ${fld('الكيان المرتبط', inp('','فرع مكة المركزي — شركة الصحراء'))}
+  ${fld('الوصف', `<div class="inp" style="min-height:90px;color:#AAB3C7">صف المخالفة والمطلوب من المزوّد…</div>`)}
+  ${fld('الأولوية', sel('عالية'))}
+  ${swRow('إيقاف الظهور حتى المعالجة','إخفاء الفرع/السيارة من البحث فوراً',0)}`,
+  `<button class="btn coral" onclick="closeM()">تسجيل البلاغ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.createRefund = () => modal('إنشاء استرداد', `
+  <div class="frow">${fld('رقم الحجز', inp('','BK-20418'))}${fld('العميل', inp('','أحمد الشمري'))}</div>
+  <div class="frow">${fld('المبلغ', inp('','185.00 ر.س'))}${fld('السبب', sel('إلغاء إداري · خطأ تحصيل · تعويض'))}</div>
+  ${fld('ملاحظة داخلية', `<div class="inp" style="min-height:70px;color:#AAB3C7">تُسجَّل في سجل التدقيق…</div>`)}
+  ${note('warn','الاسترداد يخصم من مستحقّات المزوّد','يُنفَّذ عبر بوابة الدفع ويصل إشعار للعميل والمزوّد.')}`,
+  `<button class="btn coral" onclick="closeM()">إنشاء الاسترداد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+
+M.confirmDeleteAccount = () => modal('تأكيد حذف الحساب', `
+  ${note('dngr','الحذف نهائي بعد انتهاء فترة الاحتفاظ','لن يظهر الحساب في البحث، وتُؤرشف بياناته وفق سياسة الخصوصية.')}
+  ${fld('الحساب', inp('','فهد الحربي — 0501234567'))}
+  ${fld('سبب الحذف', sel('طلب العميل · احتيال · مخالفة شروط'))}
+  ${fld('تأكيد بكتابة «حذف»', inp('','اكتب: حذف'))}`,
+  `<button class="btn danger" onclick="closeM()">تأكيد الحذف</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`, 1);
+
+/* ========== معرض النوافذ المنبثقة ========== */
+S.popups = () => {
+  const tiles=[
+    {t:'موديل جديد',fn:'M.newModel()'},
+    {t:'إضافة موديل من طلب',fn:'M.addFromRequest()'},
+    {t:'تحديثات الإصدارات',fn:'M.versionUpdates()'},
+    {t:'رسالة جديدة',fn:'M.newMsg()'},
+    {t:'اعتماد المزود',fn:'M.approveVendor()'},
+    {t:'رفض طلب التسجيل',fn:'M.rejectVendor()'},
+    {t:'طلب وثائق إضافية',fn:'M.reqDocs()'},
+    {t:'إيقاف المزود',fn:'M.suspendVendor()'},
+    {t:'تعديل نسبة العمولة',fn:'M.commission()'},
+    {t:'مراسلة المزود',fn:'M.vendorMsg()'},
+    {t:'معالجة تكرار رقم اللوحة',fn:'M.dupPlate()'},
+    {t:'تعطيل الحساب',fn:'M.disableUser()'},
+    {t:'تغيير استثنائي على الحجز',fn:'M.override()'},
+    {t:'إلغاء إداري للحجز',fn:'M.adminCancel()'},
+    {t:'طلب رد من طرف',fn:'M.askParty()'},
+    {t:'إصدار قرار في التظلم',fn:'M.disputeDecision()'},
+    {t:'اعتماد التسوية وتنفيذ التحويل',fn:'M.approveSettlement()'},
+    {t:'رفض كشف التسوية',fn:'M.rejectSettlement()'},
+    {t:'كوبون جديد',fn:'M.newCoupon()'},
+    {t:'مراجعة طلب إعلان',fn:'M.approveAd()'},
+    {t:'تأكيد جدولة الإرسال',fn:'M.confirmSend()'},
+    {t:'نشر نسخة جديدة من الشروط',fn:'M.publishTerms()'},
+    {t:'بلاغ جودة',fn:'M.qualityReport()'},
+    {t:'إنشاء استرداد',fn:'M.createRefund()'},
+    {t:'تأكيد حذف الحساب',fn:'M.confirmDeleteAccount()'}
+  ];
+  return phead('النوافذ المنبثقة',`معاينة جميع نوافذ الإجراءات الإدارية (${tiles.length} نافذة)`,['FR-ADX-MODALS'])
+    + `<div class="popups-grid">${tiles.map(x=>`<button type="button" class="popup-tile" onclick="openM(${x.fn})"><span class="popup-tile-t">${x.t}</span><span class="popup-tile-ic" aria-hidden="true">▦</span></button>`).join('')}</div>`;
+};
 
 /* ===================== NAV + ROUTER ===================== */
 const NAV = [
@@ -2649,16 +3409,31 @@ const NAV = [
     {k:'compDisputes',t:'المنازعات والتعويضات',i:'⚖',n:2},
     {k:'settlements',t:'تسويات المزوّدين',i:'🏦',n:11},
     {k:'settlement',t:'كشف تسوية',i:'🧾',sub:'settlements'},
-    {k:'refunds',t:'الاستردادات',i:'↩',n:9},
+    {k:'refunds',t:'استردادات العملاء',i:'↩',n:9},
     {k:'invoices',t:'متابعة الفواتير',i:'📃'},
-    {k:'recon',t:'مطابقة بوابة الدفع',i:'⇄',n:13},
+    {k:'recon',t:'مطابقة بوابة الدفع',i:'⇄',n:5},
+    {k:'gatewayHealth',t:'صحة بوابة الدفع',i:'♥'},
     {k:'commissions',t:'نسب العمولة',i:'%'},
   ]},
   {g:'التسويق', items:[
     {k:'coupons',t:'الكوبونات',i:'🎟'},
+    {k:'welcomeCoupon',t:'كوبون الترحيب',i:'🎁'},
+    {k:'couponGov',t:'حوكمة الكوبونات',i:'🛡',n:2},
     {k:'campaigns',t:'الحملات',i:'📣'},
     {k:'banners',t:'البانرات',i:'🖼'},
+    {k:'abTest',t:'اختبار A/B',i:'🆎',n:3},
+    {k:'segments',t:'تجزئة الجمهور',i:'👥'},
+    {k:'segmentBuilder',t:'منشئ الشرائح',i:'🧩'},
+    {k:'featuredPartners',t:'أداء الشراكات المميزة',i:'★'},
+    {k:'journey',t:'رحلة العميل والاحتفاظ',i:'🔄',n:71},
     {k:'vendorAds',t:'إعلانات المزوّدين',i:'📢',n:5},
+    {k:'roas',t:'إسناد التحويلات (ROAS)',i:'📈'},
+  ]},
+  {g:'المخاطر والأتمتة', items:[
+    {k:'riskRadar',t:'رادار المخاطر',i:'📡',n:18},
+    {k:'slaMonitor',t:'مراقبة مستوى الخدمة',i:'⏱',n:59},
+    {k:'automation',t:'محرك الأتمتة',i:'⚙',n:6},
+    {k:'fraudDetect',t:'كشف الاحتيال',i:'🛡',n:11},
   ]},
   {g:'الإشعارات', items:[
     {k:'notifySend',t:'إرسال إشعار',i:'✉'},
@@ -2674,6 +3449,7 @@ const NAV = [
   ]},
   {g:'التقارير', items:[
     {k:'reports',t:'مركز التقارير',i:'📈'},
+    {k:'reportScheduler',t:'مجدول التقارير',i:'🗓'},
     {k:'analytics',t:'التحليلات ومركز التقارير',i:'◫'},
     {k:'supplyDemand',t:'خريطة العرض والطلب',i:'▣'},
     {k:'fleetReadiness',t:'جاهزية الأسطول',i:'◎'},
@@ -2690,8 +3466,9 @@ const NAV = [
     {k:'content',t:'المحتوى والشروط',i:'📜'},
     {k:'admins',t:'الإداريون والصلاحيات',i:'🔑'},
     {k:'audit',t:'سجل التدقيق',i:'🕘'},
-    {k:'integrationStatus',t:'حالة التكاملات',i:'🔌'},
-    {k:'welcomeCoupon',t:'كوبون الترحيب',i:'🎁'},
+    {k:'popups',t:'النوافذ المنبثقة',i:'▦'},
+    {k:'integrationStatus',t:'مركز التكاملات',i:'🔌'},
+    {k:'fieldPermissions',t:'صلاحيات الحقول',i:'👁'},
     {k:'resetPassword',t:'إعادة تعيين كلمة المرور',i:'🔁'},
     {k:'confirmPasswordReset',t:'تأكيد كلمة المرور',i:'🔐',sub:'resetPassword'},
     {k:'login',t:'شاشة الدخول',i:'🔒'},
@@ -2722,12 +3499,14 @@ window.filterNavPages = function(q){
   const empty = sidebar.querySelector('.nav-search-empty');
   let visible = 0;
   sidebar.querySelectorAll('.nav-group').forEach(g=>{
+    const groupName = norm(g.getAttribute('data-nav-group')||'');
+    const groupMatch = query && groupName.includes(query);
     const items = [...g.querySelectorAll('a.nav-item')];
     let groupHit = 0;
     items.forEach(a=>{
       const title = norm(a.getAttribute('data-title')||a.textContent||'');
       const href = norm((a.getAttribute('href')||'').replace('#',''));
-      const show = !query || title.includes(query) || href.includes(query);
+      const show = !query || groupMatch || title.includes(query) || href.includes(query);
       a.classList.toggle('nav-hide', !show);
       if(show) groupHit++;
     });
@@ -2931,7 +3710,7 @@ window.updateObjection=async id=>{try{await WafraFeatureApi.update('fee-objectio
 
 S.supportReports=()=>phead('تقارير الدعم','اتجاهات التذاكر وأوقات الاستجابة والالتزام بالاتفاقية',['FR-ADS-RPT-01'])+card(tabs([{t:'ملخص الدعم',on:1},{t:'التذاكر'},{t:'أداء الفريق'}])+filters(['من تاريخ','إلى تاريخ','الحالة','الفريق'],'ابحث…')+`<div id="resource-supportReports"></div>`);
 function renderSupportReports(data){return `<div class="card-b">${kpi((data.kpis||[]).map(x=>({i:x.icon||'◌',l:x.label,v:x.value,u:x.unit||'',d:x.note||'',t:x.tone||'up'}))) }${card(cardH('التفصيل حسب الحالة')+table(['الحالة','العدد','متوسط أول رد','نسبة الالتزام'],data.rows||[]))}</div>`;}
-S.integrationStatus=()=>phead('حالة التكاملات','متابعة اتصال الدفع والرسائل والخرائط',['FR-ADX-INT-01'])+card(cardH('الخدمات المتصلة','تظهر الحالة من نقطة الصحة الخلفية')+`<div id="resource-integrationStatus"></div>`);
+S.integrationStatus=()=>phead('مركز التكاملات','متابعة اتصال الدفع والرسائل والخرائط والجهات الحكومية',['FR-ADX-INT-01'])+card(cardH('الخدمات المتصلة','تظهر الحالة من نقطة الصحة الخلفية')+`<div id="resource-integrationStatus"></div>`);
 function renderIntegrationStatus(data){return `<div class="card-b">${table(['الخدمة','الحالة','آخر فحص','التهيئة','الإجراء'],(data.items||[]).map(x=>[x.name,`<span class="integration-dot ${x.tone}"></span>${x.status}`,x.checkedAt||'—',x.configured?'مهيّأة':'تحتاج إعدادًا',`<button class="btn sm" onclick="mountResource('resource-integrationStatus','integrations/status',renderIntegrationStatus)">إعادة الفحص</button>`]))}</div>`;}
 S.welcomeCoupon=()=>phead('كوبون الترحيب','تعيين كوبون تلقائيًا للعميل عند التسجيل',['FR-CPN-WELCOME-01'])+card(cardH('إعداد قاعدة الترحيب','يُطبّق فقط على التسجيلات الجديدة بعد التفعيل')+`<div id="resource-welcomeCoupon"></div>`);
 function renderWelcomeCoupon(data){return `<div class="card-b"><div class="frow">${fld('الحالة',`<select class="native-input" id="welcome-active"><option ${data.active?'selected':''}>مفعّل</option><option ${!data.active?'selected':''}>معطّل</option></select>`)}${fld('الكوبون',`<input class="native-input" id="welcome-code" value="${esc(data.code||'')}">`)}</div><div class="frow">${fld('النوع',`<select class="native-input" id="welcome-type"><option>${esc(data.type||'نسبة مئوية')}</option><option>مبلغ ثابت</option></select>`)}${fld('القيمة',`<input class="native-input" id="welcome-value" value="${esc(data.value||'')}">`)}</div><div class="frow">${fld('حد الاستخدام لكل عميل',`<input class="native-input" id="welcome-limit" value="${esc(data.perCustomerLimit||1)}">`)}${fld('الحد الإجمالي',`<input class="native-input" id="welcome-total" value="${esc(data.totalLimit||'')}">`)}</div>${note('info','سجل التعيين','يجب أن يحتفظ الخادم بسجل لكل كوبون أُسند تلقائيًا لمنع تكرار التعيين.') }<button class="btn coral" onclick="saveWelcomeCoupon()">حفظ الإعداد</button></div>`;}
@@ -3020,7 +3799,13 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
     pages:[
       {id:1,title:'الشروط والأحكام',type:'صفحة قانونية',lang:'العربية والإنجليزية',status:'منشور',updated:'12 أغسطس 2026',body:'نسخة الشروط النافذة 3.2. تُعرض الموافقة قبل أي عملية حرجة.'},
       {id:2,title:'سياسة الخصوصية',type:'صفحة قانونية',lang:'العربية والإنجليزية',status:'منشور',updated:'03 مايو 2026',body:'توضح آلية جمع البيانات واستخدامها وحقوق المستخدم.'},
-      {id:3,title:'رسالة الترحيب',type:'نص واجهة',lang:'العربية',status:'مسودة',updated:'18 سبتمبر 2026',body:'أهلاً بك في وفرا، احجز سيارتك بسهولة وثقة.'}
+      {id:3,title:'سياسة الإلغاء والاسترداد',type:'صفحة قانونية',lang:'العربية والإنجليزية',status:'منشور',updated:'22 يوليو 2026',body:'تحدد قواعد الإلغاء والاسترداد قبل وبعد التأكيد.'},
+      {id:4,title:'شروط المزوّدين',type:'صفحة قانونية',lang:'العربية والإنجليزية',status:'منشور',updated:'14 يونيو 2026',body:'التزامات المزوّد ومستوى الخدمة والعمولة.'},
+      {id:5,title:'سياسة ملفات تعريف الارتباط',type:'صفحة قانونية',lang:'العربية والإنجليزية',status:'منشور',updated:'10 مارس 2026',body:'استخدام ملفات تعريف الارتباط وأدوات القياس.'},
+      {id:6,title:'اتفاقية مستوى الخدمة',type:'صفحة قانونية',lang:'العربية والإنجليزية',status:'منشور',updated:'01 فبراير 2026',body:'مستويات الاستجابة والتوفّر المتفق عليها.'},
+      {id:7,title:'سياسة الاستخدام المقبول',type:'صفحة قانونية',lang:'العربية والإنجليزية',status:'منشور',updated:'18 أبريل 2026',body:'السلوك المسموح والمحظور على المنصّة.'},
+      {id:8,title:'إخلاء المسؤولية',type:'صفحة قانونية',lang:'العربية والإنجليزية',status:'منشور',updated:'20 يناير 2026',body:'حدود المسؤولية القانونية للمنصّة.'},
+      {id:9,title:'رسالة الترحيب',type:'نص واجهة',lang:'العربية',status:'مسودة',updated:'18 سبتمبر 2026',body:'أهلاً بك في وفرا، احجز سيارتك بسهولة وثقة.'}
     ],
     slots:[
       {title:'بانر الرئيسية العلوي',channel:'تطبيق العميل + الويب',state:'مشغول',content:'عروض نهاية الصيف'},
@@ -3066,13 +3851,13 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
     editPage(id){const p=state().pages.find(x=>x.id===id);openM(modal('تحرير: '+esc(p.title),`<input type="hidden" id="page-id" value="${p.id}"><label class="field-label">العنوان</label><input class="cms-field" id="page-title" value="${esc(p.title)}"><label class="field-label">المحتوى</label><textarea class="cms-field" id="page-body">${esc(p.body)}</textarea><div class="audit-mini">يدعم الإنتاج مسودة ومراجعة ومعاينة ونشر منفصل لكل لغة.</div>`,`<button class="btn" onclick="WafraCMS.savePage()">حفظ المسودة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`))},
     savePage(){const s=state(),p=s.pages.find(x=>x.id===+document.getElementById('page-id').value);p.title=document.getElementById('page-title').value.trim()||p.title;p.body=document.getElementById('page-body').value.trim();p.status='مسودة';p.updated='الآن';save(s);log('تعديل صفحة أو نص',p.title);closeM();this.route('pages')},
     previewPage(id){const p=state().pages.find(x=>x.id===id);openM(modal('معاينة: '+esc(p.title),`<h2 style="font-size:20px;margin-bottom:14px">${esc(p.title)}</h2><p style="white-space:pre-wrap;line-height:2">${esc(p.body)}</p>`,`<button class="btn ghost" onclick="closeM()">إغلاق</button>`))},
-    renderAdmins(){const s=state();const columns=['مدير النظام','المدير المالي','مدير العمليات','مدير إقليمي','مدير شركة','المحتوى والتسويق','الدعم'];const matrix=[['عرض البيانات والتقارير','✓','✓','✓','✓','✓','✓','✓'],['عرض البيانات المالية','✓','✓','—','✓','✓','—','—'],['التصدير','✓','✓','✓','✓','✓','✓','—'],['تعديل عام','✓','—','✓','✓','✓','✓','—'],['إدارة المستخدمين والأدوار','✓','—','—','—','—','—','—'],['تعديل المزوّدين والمكاتب','✓','—','✓','—','✓','—','—'],['تعديل المستأجرين والحجوزات','✓','—','✓','✓','—','—','✓'],['إدارة محتوى الإعلانات','✓','—','—','—','✓','✓','—'],['اعتماد أو رفض المحتوى','✓','—','—','—','—','✓','—'],['ترقية خانات الظهور','✓','—','—','—','—','✓','—']];return phead('الإداريون والصلاحيات','نظام RBAC بنطاق بيانات وصلاحيات مفصّلة لكل دور',['FR-ADA-03','FR-ADA-04','FR-ADA-05','FR-ADA-07'],`<button class="btn" onclick="WafraCMS.newAdmin()">＋ إضافة إداري</button>`)+note('info','نطاق البيانات جزء من الصلاحية','كل دور لا يرى أو يعدّل إلا البيانات الواقعة ضمن نطاقه؛ يطبّق الخادم هذه القيود ويسجّل كل إجراء حساس.')+card(cardH('حسابات الإدارة','الحسابات الإدارية، نطاقها، وجلساتها النشطة')+table(['الاسم','البريد','الدور','نطاق البيانات','آخر دخول','الجلسات','2FA','الحالة','الإجراءات'],s.admins.map((a,i)=>[{v:esc(a.name),c:'strong'},esc(a.email),bdg(a.role,a.role.includes('Super Admin')?'r':'b'),a.scope,a.last,a.sessions,bdg(a.twofa?'مفعّل':'غير مفعّل',a.twofa?'g':'r'),bdg(a.active?'نشط':'معطّل',a.active?'g':'n'),`<button class="iact" title="${a.active?'تعطيل':'تفعيل'} الحساب" onclick="WafraCMS.toggleAdmin(${i})">${a.active?'⏸':'▶'}</button>`])))+`<div class="cms-grid" style="margin-top:18px">${roles.map(r=>`<article class="role-card"><span class="perm-chip">${r.scope}</span><h3 style="margin-top:9px">${r.name}</h3><p>${r.desc}</p><div class="perm-chips">${r.perms.map(x=>`<span class="perm-chip">${x}</span>`).join('')}</div></article>`).join('')}</div>`+card(cardH('مصفوفة الصلاحيات','✓ مسموح · — غير مسموح. النطاق يقيّد البيانات داخل كل صلاحية.')+`<div class="tw"><table class="matrix"><thead><tr><th>الإجراء</th>${columns.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${matrix.map(r=>`<tr>${r.map((x,i)=>`<td class="${i&&x==='✓'?'yes':i?'no':''}">${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`)},
+    renderAdmins(){return window.WafraRBAC?window.WafraRBAC.render():phead('الإداريون والصلاحيات','جاري التحميل…');},
     newAdmin(){openM(modal('إضافة إداري',`<label class="field-label">الاسم</label><input id="admin-name" class="cms-field"><label class="field-label">البريد الإلكتروني</label><input id="admin-email" type="email" class="cms-field"><div class="form-grid"><div><label class="field-label">الدور</label><select id="admin-role" class="cms-field">${roles.map(r=>`<option>${r.name}</option>`).join('')}</select></div><div><label class="field-label">نطاق البيانات</label><select id="admin-scope" class="cms-field"><option>كل البيانات</option><option>نطاق: الرياض</option><option>نطاق: جدة</option><option>نطاق: الشركة</option></select></div></div>`,`<button class="btn" onclick="WafraCMS.saveAdmin()">إضافة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`))},
     saveAdmin(){const name=document.getElementById('admin-name').value.trim(),email=document.getElementById('admin-email').value.trim();if(!name||!email){alert('أدخل الاسم والبريد الإلكتروني');return}const s=state();s.admins.push({name,email,role:document.getElementById('admin-role').value,scope:document.getElementById('admin-scope').value,last:'لم يسجل الدخول',sessions:0,twofa:true,active:true});save(s);log('إضافة إداري',name);closeM();location.hash='admins';render()},
     toggleAdmin(i){const s=state(),a=s.admins[i];a.active=!a.active;save(s);log(a.active?'تفعيل حساب إداري':'تعطيل حساب إداري',a.name);location.hash='admins';render()}
   };
   S.cms=()=>WafraCMS.render(window.__cmsTab||'overview');
-  S.content=()=>WafraCMS.render('pages');
+  /* المحتوى والشروط تبقى الصفحة القانونية الكاملة؛ صفحات CMS تُدار من مسار cms */
   S.banners=()=>WafraCMS.render('banners');
   S.admins=()=>WafraCMS.renderAdmins();
   const system=NAV.find(x=>x.g==='النظام'); if(system&&!system.items.some(x=>x.k==='cms')) system.items.splice(3,0,{k:'cms',t:'CMS المحتوى والبنرات',i:'✦'});
@@ -3495,6 +4280,13 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
     bookingTab:t=>{window.__bookingTab=t;render();},
     requestResponse:t=>ping(`${t}: تم فتح نموذج الرد وإضافته لسجل الإجراء.`),
     approveRequest:t=>ping(`تم ${t} الطلب تجريبياً وتحديث حالته.`),
+    approveRefund:id=>{if(confirm(`اعتماد استرداد ${id}؟`))ping(`تمت الموافقة على الاسترداد ${id}.`);},
+    rejectRefund:id=>{if(confirm(`رفض استرداد ${id}؟`))ping(`تم رفض الاسترداد ${id}.`);},
+    settleRecon:id=>{if(confirm(`تسوية فرق المعاملة ${id}؟`))ping(`تم فتح تسوية الفرق لـ ${id}.`);},
+    toggleTemplate:(name,action)=>ping(`تم ${action} القالب «${name}».`),
+    toggleCouponGov:(code,action)=>ping(`تم ${action} الكوبون ${code}.`),
+    investigateCoupon:code=>ping(`تم فتح تحقيق لسوء استخدام الكوبون ${code}.`),
+    adoptAbWinner:(name,ver)=>{if(confirm(`اعتماد النسخة ${ver} لاختبار «${name}»؟`))ping(`تم اعتماد الفائز ${ver} لـ ${name}.`);},
     confirmClose:t=>{if(confirm(`هل تريد إغلاق البلاغ ${t}؟`))ping(`تم إغلاق البلاغ ${t}.`);},
     openBooking:t=>{location.hash='#booking';ping(`تم فتح تفاصيل الحجز ${t}.`);}
   });
@@ -3507,7 +4299,7 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
 
   S.fleet=()=>phead('قائمة السيارات','السيارات ومخزونها المتاح لكل مزود وفرع',[],`<button class="btn coral" onclick="WafraOps.demoAction('إضافة سيارة أو مجموعة سيارات لمزود')">＋ إضافة سيارة</button>${exports('قائمة السيارات')}`)+card(controls([fld('المزود',`<select class="native-input"><option>كل المزودين</option><option>شركة الصحراء</option><option>كي رنت</option></select>`),fld('الحالة',`<select class="native-input"><option>كل الحالات</option><option>متاحة</option><option>محجوزة</option><option>موقفة</option></select>`),fld('الفرع',`<select class="native-input"><option>كل الفروع</option><option>مطار الملك خالد</option><option>جدة الشمالية</option></select>`)] )+`<div class="card-b">${table(['السيارة','الموديل','المزود','الفرع','المتاح','إجمالي الأسطول','الحالة','الإجراءات'],[['كامري 2026','تويوتا كامري','شركة الصحراء','مطار الملك خالد','42','48',pill('متاحة'),`${btn('إطلاع')} ${btn('تعديل')}`],['إلنترا 2025','هيونداي إلنترا','كي رنت','جدة الشمالية','27','36',pill('متاحة'),`${btn('إطلاع')} ${btn('تعديل')}`],['K5 2026','كيا K5','مسار','الخبر التشغيلي','0','12',pill('موقفة'),`${btn('إطلاع')} ${btn('تعديل')}`]])}</div>`);
 
-  S.templates=()=>phead('قوالب الإشعارات','إدارة القوالب العربية والإنجليزية والمتغيرات',[],`<button class="btn coral" onclick="WafraOps.demoAction('إضافة قالب إشعار')">＋ إضافة قالب</button>${exports('قوالب الإشعارات')}`)+card(controls([fld('القناة',`<select class="native-input"><option>كل القنوات</option><option>Push</option><option>SMS</option><option>البريد</option></select>`),fld('الحالة',`<select class="native-input"><option>كل الحالات</option><option>مفعّل</option><option>موقف</option></select>`)] )+`<div class="card-b">${table(['اسم القالب','القناة','العنوان','المتغيرات','الحالة','الإجراءات'],[['تأكيد الحجز','Push','تم تأكيد حجزك {رقم_الحجز}','{اسم_العميل} · {رقم_الحجز}',pill('مفعّل'),`${btn('إطلاع')} ${btn('تعديل')}`],['طلب وثائق المزود','البريد','نحتاج وثائق إضافية لاعتماد طلبك','{اسم_المزود} · {ملاحظات}',pill('مفعّل'),`${btn('إطلاع')} ${btn('تعديل')}`]])}</div>`);
+  S.templates=()=>phead('قوالب الإشعارات','إدارة القوالب العربية والإنجليزية والمتغيرات',[],`<button class="btn coral" onclick="WafraOps.demoAction('إضافة قالب إشعار')">＋ إضافة قالب</button>${exports('قوالب الإشعارات')}`)+card(controls([fld('القناة',`<select class="native-input"><option>كل القنوات</option><option>Push</option><option>SMS</option><option>البريد</option></select>`),fld('الحالة',`<select class="native-input"><option>كل الحالات</option><option>مفعّل</option><option>موقف</option></select>`)] )+`<div class="card-b">${table(['اسم القالب','القناة','العنوان','المتغيرات','الحالة','الإجراءات'],[['تأكيد الحجز','Push','تم تأكيد حجزك {رقم_الحجز}','{اسم_العميل} · {رقم_الحجز}',pill('مفعّل'),`${btn('إطلاع')} ${btn('تعديل')} <button class="btn danger sm" onclick="WafraOps.toggleTemplate('تأكيد الحجز','إيقاف')">إيقاف تفعيل</button>`],['طلب وثائق المزود','البريد','نحتاج وثائق إضافية لاعتماد طلبك','{اسم_المزود} · {ملاحظات}',pill('موقوف','r'),`${btn('إطلاع')} ${btn('تعديل')} <button class="btn sm st-approve" onclick="WafraOps.toggleTemplate('طلب وثائق المزود','تفعيل')">تفعيل</button>`]])}</div>`);
 
   S.kyc=()=>phead('طلبات الاعتماد','مراجعة بيانات المزود والمستندات مع قرار واضح لكل طلب',[],exports('طلبات الاعتماد'))+
     card(cardH('طلبات اعتماد المزودين','الطلبات الجديدة والمكتملة والمرفوضة')+controls([
@@ -3563,7 +4355,7 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
 
   S.models=()=>phead('الماركات والموديلات','تعريف وإدارة ماركات وموديلات المركبات',[],`<button class="btn coral" onclick="WafraOps.demoAction('إضافة ماركة أو موديل')">＋ إضافة ماركة أو موديل</button>`)+card(controls([fld('النوع',`<select class="native-input"><option>كل الأنواع</option><option>ماركة</option><option>موديل</option></select>`),fld('الحالة',`<select class="native-input"><option>كل الحالات</option><option>نشط</option><option>موقف</option></select>`)] )+`<div class="card-b">${table(['النوع','الاسم','المرجع','عدد السيارات','الحالة','الإجراءات'],[['ماركة','تويوتا','MK-001','671',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`],['موديل','كامري 2026','MD-014','212',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`],['موديل','K5 2026','MD-022','113',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`]])}</div>`);
 
-  S.refdata=()=>{const active=window.__referenceTab||'regions';const tabs=[['regions','المناطق'],['cities','المدن'],['classes','فئات السيارات'],['services','أنواع الخدمات']];const data={regions:table(['المنطقة','المدن','الحالة','الإجراءات'],[['الوسطى','الرياض · القصيم',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`],['الغربية','جدة · مكة · المدينة',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`],['الشرقية','الخبر · الدمام',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`]]),cities:table(['المدينة','المنطقة','الفروع','الحالة','الإجراءات'],[['الرياض','الوسطى','74',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`],['جدة','الغربية','45',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`],['الخبر','الشرقية','19',pill('نشط'),`${btn('إطلاع')} ${btn('تعديل')}`]]),classes:table(['الفئة','المركبات','الحالة'],[['اقتصادية','1,124',pill('نشط')],['متوسطة','1,806',pill('نشط')],['فاخرة','492',pill('نشط')]]),services:table(['الخدمة','الرسوم','الحالة'],[['كرسي أطفال',money('30'),pill('نشط')],['تصريح دول مجلس التعاون',money('120'),pill('نشط')],['كيلومتر مفتوح',money('80'),pill('نشط')],['سائق إضافي',money('70'),pill('نشط')]])}[active];return phead('البيانات المرجعية','تعريف المناطق والمدن وباقي البيانات المرجعية',[],`<button class="btn coral" onclick="WafraOps.demoAction('تعريف ${active==='regions'?'منطقة':'مدينة'}')">＋ تعريف ${active==='regions'?'منطقة':'مدينة'}</button>`)+card(`<div class="tabs">${tabs.map(x=>`<button class="tab ${x[0]===active?'on':''}" onclick="window.__referenceTab='${x[0]}';render()">${x[1]}</button>`).join('')}</div><div class="card-b">${data}</div>`);};
+  S.refdata=()=>{const active=window.__referenceTab||'regions';const tabs=[['regions','المناطق'],['cities','المدن'],['classes','فئات السيارات'],['services','أنواع الخدمات'],['cancel','أسباب الإلغاء'],['reject','أسباب الرفض'],['dispute','أنواع التظلّم']];const data={regions:table(['المنطقة','المدن','الحالة'],[['الوسطى','الرياض · القصيم',pill('نشط')],['الغربية','جدة · مكة · المدينة',pill('نشط')],['الشرقية','الخبر · الدمام',pill('نشط')]]),cities:table(['المدينة','المنطقة','الفروع','الحالة'],[['الرياض','الوسطى','74',pill('نشط')],['جدة','الغربية','45',pill('نشط')],['الخبر','الشرقية','19',pill('نشط')]]),classes:table(['الفئة','المركبات','الحالة'],[['اقتصادية','1,124',pill('نشط')],['متوسطة','1,806',pill('نشط')],['فاخرة','492',pill('نشط')]]),services:table(['الخدمة','الرسوم','الحالة'],[['كرسي أطفال',money('30'),pill('نشط')],['تصريح دول مجلس التعاون',money('120'),pill('نشط')],['كيلومتر مفتوح',money('80'),pill('نشط')],['سائق إضافي',money('70'),pill('نشط')]]),cancel:table(['السبب','الاستخدام','الحالة'],[['تغيّر خطة العميل','34%',pill('نشط')],['عدم توفّر السيارة','27%',pill('نشط')],['مشكلة في الدفع','19%',pill('نشط')]]),reject:table(['السبب','الاستخدام','الحالة'],[['وثائق ناقصة','41%',pill('نشط')],['سجل تجاري منتهٍ','22%',pill('نشط')],['تأمين غير ساري','18%',pill('نشط')]]),dispute:table(['النوع','العدد','الحالة'],[['رسوم تأمين','86',pill('نشط')],['رسوم تأخير','54',pill('نشط')],['رسوم تنظيف','31',pill('نشط')]])}[active];return phead('البيانات المرجعية','القوائم التي تعتمد عليها كل الشاشات — للاطلاع فقط',[],'')+note('info','للاطلاع فقط','لا يمكن التعديل أو الإضافة على أي بيانات في هذا القسم؛ يُعرض للمراجعة فقط.')+card(`<div class="tabs">${tabs.map(x=>`<button class="tab ${x[0]===active?'on':''}" onclick="window.__referenceTab='${x[0]}';render()">${x[1]}</button>`).join('')}</div><div class="card-b">${data}</div>`);};
 
   S.disputes=()=>phead('قائمة التظلمات','البحث برقم الحجز أو المزود أو رقم العميل مع ردود التظلم',[],exports('قائمة التظلمات'))+card(controls([fld('الحالة',`<select class="native-input"><option>كل الحالات</option><option>مفتوح</option><option>معلق</option><option>مغلق</option></select>`)] )+`<div class="card-b">${table(['رقم التظلم','رقم الحجز','العميل','المزود','الموضوع','الحالة','الإجراءات'],[['DP-441','BK-20418','أحمد الشمري','شركة الصحراء','مبلغ التأمين',pill('مفتوح'),`${btn('إطلاع')} ${btn('عرض الردود')}`],['DP-428','BK-20396','وليد الحربي','مسار','رسوم تأخير',pill('معلق'),`${btn('إطلاع')} ${btn('طلب رد','WafraOps.requestResponse')}`]])}</div>`);
 
@@ -3817,7 +4609,7 @@ function pill(value){
    saveArea:t=>{const n=document.getElementById('area-name').value.trim();if(!n){window.__toast('اكتب الاسم أولاً.');return;}state.areas=state.areas||{regions:[],cities:[]};state.areas[t].push(n);save();closeM();render();window.__toast('تم الحفظ بنجاح.');},
    providerPermission:(branch,key)=>{state.branchPermissions=state.branchPermissions||{};const id=`${branch}:${key}`;state.branchPermissions[id]=!state.branchPermissions[id];window.__branchPermissions=state.branchPermissions;save();render();}
  });
- S.recon=()=>{const active=window.__reconTab||'all';const rows={all:[['في البوابة فقط','pay_9L22XKQR','—','340.00 ر.س','—','340.00 ر.س','11:22'],['في النظام فقط','—','TX-88204','—','450.00 ر.س','450.00 ر.س','06:12'],['فرق مبلغ','pay_4T81MMZQ','TX-88190','610.00 ر.س','568.75 ر.س','41.25 ر.س','03:40']],gateway:[['في البوابة فقط','pay_9L22XKQR','—','340.00 ر.س','—','340.00 ر.س','11:22'],['في البوابة فقط','pay_2D81YTRQ','—','120.00 ر.س','—','120.00 ر.س','09:14']],system:[['في النظام فقط','—','TX-88204','—','450.00 ر.س','450.00 ر.س','06:12'],['في النظام فقط','—','TX-88178','—','190.00 ر.س','190.00 ر.س','01:18']],amount:[['فرق مبلغ','pay_4T81MMZQ','TX-88190','610.00 ر.س','568.75 ر.س','41.25 ر.س','03:40'],['فرق مبلغ','pay_1K09PPWT','TX-88176','880.00 ر.س','836.75 ر.س','43.25 ر.س','21:15']]}[active];return phead('مطابقة بوابة الدفع','مطابقة يومية بين المنصّة وكشف البوابة مع بيانات فروقات قابلة للمراجعة',[],`<button class="btn ghost" onclick="WafraOps.exportCurrent('مطابقة-بوابة-الدفع','Excel')">Excel ⤓</button>`)+kpi([{i:'✓',l:'مطابقة',v:'1,284',d:'99.1%',t:'up'},{i:'⚠',l:'في البوابة فقط',v:'7',d:'تحتاج ربطاً',t:'down'},{i:'⚠',l:'في النظام فقط',v:'4',d:'تحتاج معالجة',t:'down'},{i:'≠',l:'فروقات مبالغ',v:'2',d:'84.50 ر.س',t:'down'}])+card(`<div class="tabs">${[['all','الكل (13)'],['gateway','في البوابة فقط (7)'],['system','في النظام فقط (4)'],['amount','فروقات مبالغ (2)']].map(x=>`<button class="tab ${active===x[0]?'on':''}" onclick="window.__reconTab='${x[0]}';render()">${x[1]}</button>`).join('')}</div><div class="card-b">${table(['نوع الفرق','مرجع البوابة','مرجع النظام','مبلغ البوابة','مبلغ النظام','الفرق','الوقت','الإجراءات'],rows.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[6],`<button class="btn ghost sm" onclick="WafraOps.demoAction('فتح فرق ${r[1]}')">استعراض</button>`]))}</div>`);};
+ /* مطابقة بوابة الدفع — النموذج النهائي مُعرَّف في S.recon أعلاه */
  S.finance=()=>phead('النظرة المالية','رؤية شاملة للتحصيل والاستحقاقات والمصروفات والتسويات خلال الفترة المختارة',[],`<div class="fd">أغسطس 2026<span class="cv">▾</span></div><button class="btn ghost" onclick="WafraOps.exportCurrent('النظرة-المالية','Excel')">تصدير محاسبي</button>`)+kpi([{i:'💵',l:'إجمالي الإيرادات',v:'3,730,000',u:'ر.س',d:'▲ 9.8%',t:'up'},{i:'✓',l:'محصل فعلياً',v:'1,842,600',u:'ر.س',d:'▲ 9.8%',t:'up'},{i:'🏦',l:'عمولة المنصة',v:'221,112',u:'ر.س',d:'12% من الإيرادات',t:'up'},{i:'📤',l:'مستحق للمزودين',v:'486,300',u:'ر.س',d:'11 تسوية',t:'fl'},{i:'↩',l:'مستردات',v:'62,940',u:'ر.س',d:'▼ 4.1%',t:'up'},{i:'⚠',l:'معلّق أو فاشل',v:'18,420',u:'ر.س',d:'8 معاملات',t:'dn'}])+`<div class="grid2">${card(cardH('نمو الإيرادات','أبريل إلى سبتمبر')+`<div class="card-b">${spark([40,61,60,58,63,84],32)}<div class="legend"><span>أبريل</span><span>مايو</span><span>يونيو</span><span>يوليو</span><span>أغسطس</span><span>سبتمبر</span></div></div>`)}${card(cardH('توزيع الإيرادات حسب المدينة')+`<div class="card-b">${donut([['الرياض',31,'var(--navy)','1.16M'],['جدة',24,'var(--coral)','895K'],['الخبر',18,'var(--amber)','671K'],['مكة',14,'var(--green)','522K'],['أخرى',13,'#8367C7','482K']],'3.73M','ر.س')}</div>`)}</div>`+card(cardH('ملخص المصروفات والتسويات')+`<div class="card-b">${table(['البند','القيمة','الحالة','آخر تحديث'],[['تكلفة التوصيل','184,200 ر.س',pill('ضمن الميزانية'),'اليوم'],['تكاليف التسويق','112,600 ر.س',pill('تحت المراجعة','a'),'اليوم'],['تسويات المزودين','486,300 ر.س',pill('11 بانتظار الاعتماد','a'),'أمس'],['استردادات العملاء','62,940 ر.س',pill('مكتملة'),'أمس']])}</div>`);
  state.objections=state.objections||[{id:'OB-118',booking:'BK-20418',customer:'أحمد الشمري',provider:'شركة الصحراء',amount:'1,850 ر.س',reason:'رسوم تأمين',status:'مفتوحة'},{id:'OB-112',booking:'BK-20396',customer:'وليد الحربي',provider:'مسار',amount:'240 ر.س',reason:'رسوم تأخير',status:'بانتظار قرار'},{id:'OB-104',booking:'BK-20371',customer:'سلمان العنزي',provider:'كي رنت',amount:'110 ر.س',reason:'رسوم تنظيف',status:'مغلقة'}];
  S.objections=()=>{const active=window.__objectionsTab||'مفتوحة',items=state.objections.filter(x=>active==='الكل'||x.status===active);return phead('اعتراضات الرسوم والغرامات','مراجعة الاعتراضات وقراراتها مع بيانات محلية قابلة للتجربة',[],`<button class="btn ghost" onclick="WafraOps.exportCurrent('اعتراضات-الرسوم','Excel')">Excel ⤓</button>`)+card(`<div class="tabs">${['الكل','مفتوحة','بانتظار قرار','مغلقة'].map(x=>`<button class="tab ${active===x?'on':''}" onclick="WafraOps.objectionsTab('${x}')">${x}</button>`).join('')}</div><div class="filters"><label class="fsearch">⌕ <input placeholder="ابحث برقم الاعتراض أو الحجز"></label></div><div class="card-b">${table(['الاعتراض','الحجز','العميل','المزود','المبلغ','السبب','الحالة','الإجراء'],items.map(x=>[x.id,x.booking,x.customer,x.provider,x.amount,x.reason,pill(x.status,x.status==='مغلقة'?'g':'a'),`<button class="btn ghost sm" onclick="WafraOps.openObjection('${x.id}')">استعراض</button>`]))}</div>`);};
@@ -3845,10 +4637,26 @@ function pill(value){
   const reports=NAV.find(x=>x.g==='التقارير');if(reports){const i=NAV.indexOf(reports);if(i>1){NAV.splice(i,1);NAV.splice(1,0,reports);}}
   const providers=NAV.find(x=>x.g==='المزوّدون');if(providers&&!providers.items.some(x=>x.k==='providerPerformance'))providers.items.splice(1,0,{k:'providerPerformance',t:'أداء المزودين',i:'◷'});
   state.welcomeCoupon=state.welcomeCoupon||{active:true,code:'WELCOME10',type:'نسبة مئوية',value:'10%',perCustomerLimit:'1',totalLimit:'5,000',start:'01/10/2026',end:'31/12/2026',uses:'1,204'};
-  state.integrations=state.integrations||[{name:'بوابة الدفع (HyperPay)',status:'متصل',tone:'g',checked:'اليوم 12:41',configured:'مهيأة',note:'آخر تحصيل ناجح قبل دقيقتين'},{name:'رسائل SMS',status:'متصل',tone:'g',checked:'اليوم 12:39',configured:'مهيأة',note:'الرصيد 18,420 رسالة'},{name:'الخرائط والمواقع',status:'تنبيه',tone:'a',checked:'اليوم 12:35',configured:'مهيأة',note:'تحتاج مراجعة مفتاح منطقة تبوك'},{name:'البريد الإلكتروني',status:'متصل',tone:'g',checked:'اليوم 12:40',configured:'مهيأة',note:'معدل التسليم 99.4%'}];
+  const INTEGRATIONS_CATALOG=[
+    {name:'أبشر / يقين',status:'متصل',tone:'g',checked:'اليوم 12:42',configured:'مهيأة',note:'التحقق من الهوية الوطنية نشط'},
+    {name:'نجم',status:'متصل',tone:'g',checked:'اليوم 12:40',configured:'مهيأة',note:'استعلام الحوادث والمطالبات'},
+    {name:'ساهر',status:'تنبيه',tone:'a',checked:'اليوم 12:38',configured:'مهيأة',note:'تأخير في استجابة المخالفات'},
+    {name:'سداد',status:'متصل',tone:'g',checked:'اليوم 12:41',configured:'مهيأة',note:'آخر تحصيل ناجح قبل 4 دقائق'},
+    {name:'موثوق',status:'متصل',tone:'g',checked:'اليوم 12:37',configured:'مهيأة',note:'التوثيق الإلكتروني للمستندات'},
+    {name:'هيئة النقل',status:'متصل',tone:'g',checked:'اليوم 12:36',configured:'مهيأة',note:'تراخيص النشاط والمركبات'},
+    {name:'الفوترة الإلكترونية',status:'متصل',tone:'g',checked:'اليوم 12:35',configured:'مهيأة',note:'ZATCA · المرحلة الثانية'},
+    {name:'بوابة الدفع (HyperPay)',status:'متصل',tone:'g',checked:'اليوم 12:41',configured:'مهيأة',note:'آخر تحصيل ناجح قبل دقيقتين'},
+    {name:'رسائل SMS',status:'متصل',tone:'g',checked:'اليوم 12:39',configured:'مهيأة',note:'الرصيد 18,420 رسالة'},
+    {name:'الخرائط والمواقع',status:'تنبيه',tone:'a',checked:'اليوم 12:35',configured:'مهيأة',note:'تحتاج مراجعة مفتاح منطقة تبوك'},
+    {name:'البريد الإلكتروني',status:'متصل',tone:'g',checked:'اليوم 12:40',configured:'مهيأة',note:'معدل التسليم 99.4%'}
+  ];
+  state.integrations=state.integrations||[];
+  INTEGRATIONS_CATALOG.forEach(item=>{if(!state.integrations.some(x=>x.name===item.name))state.integrations.push(item);});
+  if(!state.integrations.length) state.integrations=INTEGRATIONS_CATALOG.slice();
+  save();
   Object.assign(WafraOps,{saveWelcome:()=>{const c=state.welcomeCoupon;c.active=document.getElementById('wc-active').value==='مفعّل';c.code=document.getElementById('wc-code').value.trim();c.type=document.getElementById('wc-type').value;c.value=document.getElementById('wc-value').value;c.perCustomerLimit=document.getElementById('wc-limit').value;c.totalLimit=document.getElementById('wc-total').value;save();window.__toast('تم حفظ إعداد كوبون الترحيب محلياً.');render();},checkIntegration:n=>{const i=state.integrations.find(x=>x.name===n);if(i){i.status='متصل';i.tone='g';i.checked='الآن';i.note='تم الفحص بنجاح؛ الخدمة تستجيب بشكل طبيعي.';save();render();window.__toast('تم فحص التكامل وتحديث حالته.');}}});
-  S.welcomeCoupon=()=>{const c=state.welcomeCoupon;return phead('كوبون الترحيب','تعيين كوبون تلقائيًا للعميل الجديد عند التسجيل',[],`<button class="btn ghost" onclick="WafraOps.exportCurrent('كوبون-الترحيب','Excel')">سجل التعيين</button>`)+card(cardH('إعداد قاعدة الترحيب','يُطبّق على التسجيلات الجديدة بعد التفعيل')+`<div class="card-b"><div class="grid3">${fld('الحالة',`<select id="wc-active" class="native-input"><option ${c.active?'selected':''}>مفعّل</option><option ${!c.active?'selected':''}>معطّل</option></select>`)}${fld('رمز الكوبون',`<input id="wc-code" class="native-input" value="${c.code}">`)}${fld('نوع الخصم',`<select id="wc-type" class="native-input"><option>${c.type}</option><option>مبلغ ثابت</option></select>`)}</div><div class="grid3">${fld('قيمة الخصم',`<input id="wc-value" class="native-input" value="${c.value}">`)}${fld('حد الاستخدام لكل عميل',`<input id="wc-limit" class="native-input" value="${c.perCustomerLimit}">`)}${fld('الحد الإجمالي للاستخدام',`<input id="wc-total" class="native-input" value="${c.totalLimit}">`)}</div><div class="grid3">${fld('بداية الصلاحية',`<input class="native-input" value="${c.start}">`)}${fld('نهاية الصلاحية',`<input class="native-input" value="${c.end}">`)}<div class="it"><div class="k">استخدامات حتى الآن</div><div class="v">${c.uses} استخدام</div></div></div><div class="note info">يُمنح الكوبون مرة واحدة فقط للعميل الجديد، ولا يجمع مع كوبونات المنصة الأخرى.</div><button class="btn coral" onclick="WafraOps.saveWelcome()">حفظ الإعداد</button></div>`);};
-  S.integrationStatus=()=>phead('حالة التكاملات','متابعة اتصال الدفع والرسائل والخرائط مع بيانات اختبارية',[],`<button class="btn ghost" onclick="render()">↻ تحديث الحالة</button>`)+card(cardH('الخدمات المتصلة','آخر فحص للخدمات وإعداداتها')+`<div class="card-b">${kpi([{i:'✓',l:'خدمات متصلة',v:'3',d:'تعمل بشكل طبيعي',t:'up'},{i:'⚠',l:'تنبيهات',v:'1',d:'تحتاج مراجعة',t:'down'},{i:'◷',l:'آخر فحص',v:'الآن',d:'بيانات محلية',t:'up'}])}${table(['الخدمة','الحالة','آخر فحص','التهيئة','الملاحظة','الإجراء'],state.integrations.map(x=>[x.name,`<span class="badge ${x.tone==='g'?'g':'a'}">${x.status}</span>`,x.checked,x.configured,x.note,`<button class="btn ghost sm" onclick="WafraOps.checkIntegration('${x.name}')">إعادة الفحص</button>`]))}</div>`);
+  S.welcomeCoupon=()=>{const c=state.welcomeCoupon;const hist=[['WELCOME10','أحمد الشمري','2026/09/28 14:22','BK-20418','مستخدم','10%'],['WELCOME10','نورة القحطاني','2026/09/27 11:05','BK-20381','مستخدم','10%'],['WELCOME10','وليد الحربي','2026/09/26 09:40','—','مُعيَّن','10%'],['WELCOME10','سارة العتيبي','2026/09/25 16:18','BK-20371','مستخدم','10%'],['WELCOME10','ماجد السبيعي','2026/09/24 08:12','—','منتهي','10%']];return phead('كوبون الترحيب','تعيين كوبون تلقائيًا للعميل الجديد عند التسجيل',[],`<button class="btn ghost" onclick="WafraOps.exportCurrent('سجل-كوبون-الترحيب','Excel')">⤓ تصدير السجل</button>`)+card(cardH('إعداد قاعدة الترحيب','يُطبّق على التسجيلات الجديدة بعد التفعيل')+`<div class="card-b"><div class="grid3">${fld('الحالة',`<select id="wc-active" class="native-input"><option ${c.active?'selected':''}>مفعّل</option><option ${!c.active?'selected':''}>معطّل</option></select>`)}${fld('رمز الكوبون',`<input id="wc-code" class="native-input" value="${c.code}">`)}${fld('نوع الخصم',`<select id="wc-type" class="native-input"><option>${c.type}</option><option>مبلغ ثابت</option></select>`)}</div><div class="grid3">${fld('قيمة الخصم',`<input id="wc-value" class="native-input" value="${c.value}">`)}${fld('حد الاستخدام لكل عميل',`<input id="wc-limit" class="native-input" value="${c.perCustomerLimit}">`)}${fld('الحد الإجمالي للاستخدام',`<input id="wc-total" class="native-input" value="${c.totalLimit}">`)}</div><div class="grid3">${fld('بداية الصلاحية',`<input class="native-input" value="${c.start}">`)}${fld('نهاية الصلاحية',`<input class="native-input" value="${c.end}">`)}<div class="it"><div class="k">استخدامات حتى الآن</div><div class="v">${c.uses} استخدام</div></div></div><div class="note info">يُمنح الكوبون مرة واحدة فقط للعميل الجديد، ولا يجمع مع كوبونات المنصة الأخرى.</div><button class="btn coral" onclick="WafraOps.saveWelcome()">حفظ الإعداد</button></div>`)+card(cardH('سجل كوبونات الترحيب','كل التعيينات والاستخدامات من هذا النوع')+`<div class="filters mkt-filters"><div class="fsearch">⌕<input placeholder="ابحث بالعميل أو رقم الحجز…"></div><button class="btn ghost sm" onclick="WafraOps.exportCurrent('سجل-كوبون-الترحيب','Excel')">تصدير</button></div><div class="card-b">${table(['الكود','العميل','تاريخ ووقت التعيين','الحجز','الحالة','القيمة'],hist.map(r=>[{v:r[0],c:'strong num'},r[1],{v:r[2],c:'num'},{v:r[3],c:'num'},bdg(r[4],r[4]==='مستخدم'?'g':r[4]==='منتهي'?'n':'a'),r[5]]))}</div>`);};
+  S.integrationStatus=()=>{const connected=state.integrations.filter(x=>x.tone==='g').length;const alerts=state.integrations.filter(x=>x.tone!=='g').length;return phead('مركز التكاملات','متابعة اتصال الدفع والرسائل والخرائط والجهات الحكومية',[],`<button class="btn ghost" onclick="render()">↻ تحديث الحالة</button>`)+card(cardH('الخدمات المتصلة','آخر فحص للخدمات وإعداداتها')+`<div class="card-b">${kpi([{i:'✓',l:'خدمات متصلة',v:String(connected),d:'تعمل بشكل طبيعي',t:'up'},{i:'⚠',l:'تنبيهات',v:String(alerts),d:'تحتاج مراجعة',t:'down'},{i:'◷',l:'آخر فحص',v:'الآن',d:'بيانات محلية',t:'up'}])}${table(['الخدمة','الحالة','آخر فحص','التهيئة','الملاحظة','الإجراء'],state.integrations.map(x=>[x.name,`<span class="badge ${x.tone==='g'?'g':'a'}">${x.status}</span>`,x.checked,x.configured,x.note,`<button class="btn ghost sm" onclick="WafraOps.checkIntegration('${x.name}')">إعادة الفحص</button>`]))}</div>`);};
   render();
 })();
 </script>
@@ -6415,6 +7223,146 @@ function pill(value){
 .btn.st-approve{background:#20A16E;color:#fff;border:0;box-shadow:0 4px 12px rgba(32,161,110,.22)}
 .btn.st-approve:hover{filter:brightness(.96)}
 .btn.st-detail{background:#fff;color:var(--navy);border:1px solid #C5D0EA}
+.rf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px 6px}
+.rf-toolbar .fsearch{flex:1;min-width:200px;max-width:320px}
+.rf-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rf-acts{flex-wrap:nowrap}
+.rf-amt{font:800 13px Cairo;color:var(--ink);white-space:nowrap;direction:rtl}
+.rf-foot{padding:12px 16px;border-top:1px solid var(--line);color:var(--muted);font:700 12.5px Cairo;text-align:center}
+.rc-amt{font:800 13px Cairo;color:var(--ink);white-space:nowrap}
+.rc-diff{display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:4px 10px;border-radius:99px;font:800 12px Cairo;white-space:nowrap}
+.rc-diff.neg{background:#FDECEC;color:#C62828}
+.rc-diff.pos{background:#E8F8F0;color:#148A5A}
+.rc-diff.warn{background:#FFF4DE;color:#9A6B00}
+.rc-status{display:inline-flex;align-items:center;padding:4px 12px;border-radius:99px;font:700 12px Cairo;white-space:nowrap}
+.rc-status.diff{background:#EAF0FF;color:#2C68D8}
+.rc-status.ok{background:#EEF1F6;color:#5A657C}
+.rc-dash{color:var(--muted);font-weight:700}
+.rc-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);color:var(--muted);font:700 12.5px Cairo}
+.gh-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media(max-width:1280px){.gh-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.gh-kpis{grid-template-columns:1fr 1fr}}
+.gh-ic{width:28px!important;height:28px!important;border-radius:9px!important;font-size:13px!important}
+.gh-ic.red{background:#FDECEC!important;color:#C62828!important}
+.gh-ic.green{background:#E8F8F0!important;color:#148A5A!important}
+.gh-ic.amber{background:#FFF4DE!important;color:#9A6B00!important}
+.gh-ic.blue{background:#EAF0FF!important;color:#2C68D8!important}
+.gh-ic.purple{background:#F3EEFF!important;color:#6B5CE7!important}
+.gh-chart{position:relative;min-height:220px;padding:8px 8px 0 28px}
+.gh-y{position:absolute;inset-inline-start:0;top:8px;font:700 11px Cairo;color:var(--muted)}
+.gh-bars{display:flex;align-items:flex-end;justify-content:space-around;gap:18px;height:180px;border-bottom:1px solid var(--line);padding-bottom:0}
+.gh-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:120px}
+.gh-bar-wrap{width:100%;height:140px;display:flex;align-items:flex-end;justify-content:center}
+.gh-bar{width:42px;border-radius:8px 8px 0 0;min-height:8px;transition:height .25s}
+.gh-label{font:700 11.5px Cairo;color:var(--ink-2);text-align:center;line-height:1.3}
+.gh-val{font:800 12px Cairo;color:var(--muted)}
+.gh-dist{padding-top:4px}
+.gh-dist-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 4px;border-bottom:1px dashed #E6EAF3;font:700 13.5px Cairo;color:var(--ink)}
+.gh-dist-row:last-child{border-bottom:0}
+.gh-dist-row .n{font:800 15px Cairo;color:var(--navy);direction:ltr;min-width:24px}
+.mkt-filters{flex-wrap:wrap;gap:8px}
+.mkt-filters .mkt-date{display:inline-flex;align-items:center;gap:6px;cursor:default}
+.mkt-filters .mkt-date input{border:0;outline:0;background:transparent;font:600 12px Cairo;color:var(--ink);max-width:130px}
+.roas-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:980px){.roas-kpis{grid-template-columns:1fr 1fr}}
+.roas-loss{border-color:#F3E2B3;background:#FFFBF0}
+.roas-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font:800 12px Cairo;background:#E8F8F0;color:#148A5A;white-space:nowrap}
+.roas-pill.top{background:#EAF0FF;color:#2C68D8}
+.cg-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1180px){.cg-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.cg-kpis{grid-template-columns:1fr 1fr}}
+.cg-alert{border-color:#F5C6C6;background:#FFF5F5}
+.cg-status{display:inline-flex;align-items:center;padding:4px 12px;border-radius:99px;font:700 12px Cairo;white-space:nowrap}
+.cg-status.active{background:#E8F8F0;color:#148A5A}
+.cg-status.stopped{background:#FDECEC;color:#C62828}
+.cg-status.suspect{background:#FFF0F0;color:#C62828;border:1px solid #F5C6C6}
+.cg-ret{font:800 13px Cairo;color:#148A5A;direction:ltr;display:inline-block}
+.ab-kpis{grid-template-columns:repeat(2,minmax(180px,240px));justify-content:start}
+.ab-imp{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font:800 12px Cairo;white-space:nowrap;direction:ltr}
+.ab-imp.up{background:#E8F8F0;color:#148A5A}
+.ab-imp.dn{background:#FDECEC;color:#C62828}
+.seg-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
+@media(max-width:1400px){.seg-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:800px){.seg-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.seg-grid{grid-template-columns:1fr}}
+.seg-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 16px;box-shadow:var(--sh-s);display:flex;flex-direction:column;gap:10px;min-height:150px}
+.seg-card b{font:800 15px Cairo;color:var(--ink)}
+.seg-card p{margin:0;font:600 12.5px Cairo;color:var(--muted);line-height:1.55;flex:1}
+.seg-card .btn{align-self:stretch;justify-content:center}
+.sb-layout{align-items:start}
+.sb-fields{gap:14px 16px}
+.sb-toggle{display:flex;align-items:flex-end;padding-bottom:4px}
+.sb-toggle .sw-row{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#FAFBFE}
+.sb-actions{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.sb-btns{display:flex;gap:8px;flex-wrap:wrap}
+.sb-more{margin-top:12px;font:700 12.5px Cairo;color:var(--muted)}
+.sb-more b{color:var(--navy)}
+.sb-karma{display:inline-flex;padding:3px 10px;border-radius:99px;font:700 11.5px Cairo}
+.sb-karma.ok{background:#E8F8F0;color:#148A5A}
+.sb-karma.watch{background:#FFF4DE;color:#9A6B00}
+.sb-karma.n{background:#EEF1F6;color:#5A657C}
+.rr-kpis{grid-template-columns:repeat(3,minmax(0,280px));justify-content:start}
+@media(max-width:900px){.rr-kpis{grid-template-columns:1fr}}
+.rr-hi{border-color:#F5C6C6;background:#FFF8F8}
+.rr-mid{border-color:#F3E2B3;background:#FFFBF0}
+.rr-lvl{display:inline-flex;padding:4px 12px;border-radius:99px;font:700 12px Cairo;white-space:nowrap}
+.rr-lvl.hi{background:#FDECEC;color:#C62828}
+.rr-lvl.mid{background:#FFF4DE;color:#9A6B00}
+.rr-lvl.lo{background:#E8F8F0;color:#148A5A}
+.sla-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:980px){.sla-kpis{grid-template-columns:1fr 1fr}}
+.sla-pill{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:99px;font:800 12px Cairo}
+.sla-pill.ok{background:#E8F8F0;color:#148A5A}
+.sla-pill.near{background:#FFF4DE;color:#9A6B00}
+.sla-pill.late{background:#FDECEC;color:#C62828}
+.fd-kpis{grid-template-columns:repeat(2,minmax(180px,260px));justify-content:start}
+.fd-score{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:99px;font:800 12px Cairo}
+.fd-score.hi{background:#FDECEC;color:#C62828}
+.fd-score.mid{background:#FFF4DE;color:#9A6B00}
+.fd-score.lo{background:#E8F8F0;color:#148A5A}
+.fd-open{display:inline-flex;padding:4px 12px;border-radius:99px;font:700 12px Cairo;background:#EAF0FF;color:#2C68D8}
+.rs-st{display:inline-flex;padding:4px 12px;border-radius:99px;font:700 12px Cairo;white-space:nowrap}
+.rs-st.on{background:#E8F8F0;color:#148A5A}
+.rs-st.off{background:#FDECEC;color:#C62828}
+.fp-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:980px){.fp-kpis{grid-template-columns:1fr 1fr}}
+.fp-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}
+@media(max-width:1280px){.fp-slots{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:800px){.fp-slots{grid-template-columns:1fr}}
+.fp-card{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--sh-s);display:flex;flex-direction:column}
+.fp-tier{font:800 12.5px Cairo;padding:12px 14px 0;color:var(--navy)}
+.fp-co{font:800 13.5px Cairo;color:var(--ink);padding:6px 14px 10px;line-height:1.35}
+.fp-metrics{padding:0 14px 12px;display:flex;flex-direction:column;gap:7px;flex:1}
+.fp-metrics div{display:flex;justify-content:space-between;align-items:center;gap:8px;font:600 12px Cairo;color:var(--muted)}
+.fp-metrics strong{font:800 12.5px Cairo;color:var(--ink);direction:ltr}
+.fp-ret{margin-top:auto;padding:10px 14px;font:800 13px Cairo;text-align:center}
+.fp-card.plat .fp-ret{background:#EAF0FF;color:#2C68D8}
+.fp-card.gold .fp-ret{background:#FFF4DE;color:#9A6B00}
+.fp-card.silv .fp-ret{background:#EEF1F6;color:#5A657C}
+.fp-chart{display:flex;align-items:flex-end;justify-content:space-around;gap:16px;height:220px;padding:12px 8px 0;border-bottom:1px solid var(--line)}
+.fp-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:120px}
+.fp-bars{display:flex;align-items:flex-end;gap:6px;height:180px}
+.fp-bar{width:22px;border-radius:6px 6px 0 0;min-height:6px}
+.fp-bar.rev{background:var(--navy)}
+.fp-bar.fee{background:#20A16E}
+.fp-x{font:700 11.5px Cairo;color:var(--muted)}
+.jr-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1180px){.jr-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.jr-kpis{grid-template-columns:1fr 1fr}}
+.jr-funnel{display:flex;flex-direction:column;gap:14px}
+.jr-row{display:grid;grid-template-columns:110px 1fr 140px;align-items:center;gap:12px}
+@media(max-width:720px){.jr-row{grid-template-columns:1fr;gap:6px}}
+.jr-lab{font:700 13px Cairo;color:var(--ink-2)}
+.jr-track{height:28px;background:#EEF1F6;border-radius:8px;overflow:hidden;display:flex;justify-content:flex-start;direction:rtl}
+.jr-fill{display:block;height:100%;border-radius:8px}
+.jr-fill.navy{background:var(--navy)}
+.jr-fill.coral{background:var(--coral)}
+.jr-fill.amber{background:#E8A23A}
+.jr-val{font:800 12.5px Cairo;color:var(--ink);direction:ltr;text-align:left}
+.jr-idle{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font:700 12px Cairo;background:#FFF4DE;color:#9A6B00;white-space:nowrap}
+.ab-status{display:inline-flex;align-items:center;padding:4px 12px;border-radius:99px;font:700 12px Cairo;white-space:nowrap}
+.ab-status.active{background:#E8F8F0;color:#148A5A}
+.ab-status.done{background:#EAF0FF;color:#2C68D8}
 .btn.st-xls,.btn.st-pdf{padding:8px 11px;font-size:12px}
 .st-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
 .st-filters .fsearch{flex:1;min-width:220px}
@@ -7060,6 +8008,279 @@ function pill(value){
     window.TITLES.compDisputes='المنازعات والتعويضات';
   }
 
+})();
+</script>
+<style id="wafra-popups-gallery">
+.popups-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px}
+.popup-tile{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid #E4E9F3;border-radius:12px;padding:16px 14px;cursor:pointer;text-align:right;font:700 13px Cairo;color:var(--navy);box-shadow:0 4px 12px rgba(25,42,84,.04);transition:border-color .15s,box-shadow .15s,transform .15s}
+.popup-tile:hover{border-color:#B8C4DF;box-shadow:0 8px 18px rgba(25,42,84,.08);transform:translateY(-1px)}
+.popup-tile-t{flex:1;line-height:1.45}
+.popup-tile-ic{flex:0 0 auto;opacity:.55;font-size:15px;color:var(--navy)}
+@media(max-width:1200px){.popups-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:800px){.popups-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.popups-grid{grid-template-columns:1fr}}
+</style>
+<style id="wafra-rbac-matrix">
+.rbac-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+.rbac-roles{display:flex;flex-direction:column;gap:12px}
+.rbac-role{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:16px;cursor:pointer;text-align:right;transition:border-color .15s,box-shadow .15s}
+.rbac-role:hover{border-color:#C5D0E8}
+.rbac-role.on{border-color:var(--navy);box-shadow:0 0 0 3px rgba(35,56,109,.12)}
+.rbac-role .ic{width:42px;height:42px;border-radius:12px;background:#EEF2FB;display:grid;place-items:center;font-size:20px;margin-bottom:10px;color:var(--navy)}
+.rbac-role h3{margin:0 0 6px;font:700 14px Cairo;color:var(--ink)}
+.rbac-role p{margin:0 0 10px;font:500 12px/1.55 Cairo;color:var(--muted)}
+.rbac-scope{display:inline-flex;align-items:center;gap:6px;font:700 11.5px Cairo;color:var(--navy);background:#EEF2FB;border-radius:99px;padding:4px 10px}
+.rbac-main{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh-s);padding:20px 22px 24px}
+.rbac-main-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.rbac-main-h h2{margin:0;font:700 17px Cairo;color:var(--ink)}
+.rbac-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.rbac-stat{background:#FAFBFE;border:1px solid #E8EDF6;border-radius:12px;padding:12px 14px}
+.rbac-stat .k{font:600 11.5px Cairo;color:var(--muted);margin-bottom:4px}
+.rbac-stat .v{font:800 15px Cairo;color:var(--ink)}
+.rbac-stat .v.ok{color:#1F8A55}
+.rbac-sec{margin-top:18px}
+.rbac-sec>h4{margin:0 0 12px;font:700 13.5px Cairo;color:var(--ink)}
+.rbac-special{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rbac-pill{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #E4E9F3;border-radius:12px;padding:11px 12px;background:#fff;font:700 12.5px Cairo;color:var(--ink-2)}
+.rbac-scope-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.rbac-scope-row select{min-width:220px;border:1px solid #D7DEEE;border-radius:10px;padding:10px 12px;font:600 13px Cairo;background:#fff}
+.rbac-mod{border:1px solid #E8EDF6;border-radius:14px;padding:14px 14px 12px;margin-bottom:12px;background:#FAFBFE}
+.rbac-mod-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.rbac-mod-h b{font:700 13.5px Cairo}
+.rbac-mod-h .cnt{color:var(--muted);font:700 12px Cairo;margin-inline-start:6px}
+.rbac-mod-h .all{border:0;background:0;color:var(--navy);font:700 12px Cairo;cursor:pointer;padding:0}
+.rbac-mod-grid{display:flex;flex-wrap:wrap;gap:8px}
+.rbac-tg{width:40px;height:22px;border-radius:99px;background:#D8DEE9;position:relative;flex:0 0 40px;border:0;cursor:pointer;padding:0;transition:background .15s}
+.rbac-tg::after{content:'';position:absolute;top:2.5px;inset-inline-end:2.5px;width:17px;height:17px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.rbac-tg.on{background:#22A06B}
+.rbac-tg.on::after{inset-inline-end:auto;inset-inline-start:2.5px}
+@media(max-width:1100px){.rbac-layout{grid-template-columns:1fr}.rbac-stats{grid-template-columns:1fr 1fr}.rbac-special{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.rbac-special,.rbac-stats{grid-template-columns:1fr}}
+</style>
+<script>
+/* مصفوفة RBAC — الأدوار والصلاحيات حسب التصميم */
+(function(){
+  const KEY='wafra-rbac-matrix-v1';
+  const SPECIAL=[
+    {id:'financeView',label:'عرض البيانات المالية'},
+    {id:'usersManage',label:'إدارة المستخدمين'},
+    {id:'export',label:'تصدير البيانات'},
+    {id:'editGeneral',label:'تعديل عام'},
+    {id:'editProvider',label:'تعديل المزود ومكاتبه'},
+    {id:'editTenant',label:'تعديل المستأجر وحجوزاته'},
+    {id:'adsEdit',label:'إنشاء / تعديل الإعلانات'},
+    {id:'contentApprove',label:'قبول / رفض المحتوى'},
+    {id:'slotUpgrade',label:'ترقية الظهور الكامل'}
+  ];
+  const MODULE_GROUPS=[
+    {id:'home',title:'الرئيسية',items:['مركز القيادة','شاشة العمليات NOC','لوحة التحكم','البحث والتحليل','مركز الإشعارات','الرسائل']},
+    {id:'providers',title:'المزودون',items:['قائمة المزودين','طابور الاعتماد','معالج تهيئة مزود','معالج تهيئة الفروع','أداء المزودين المقارن']},
+    {id:'fleet',title:'الأسطول',items:['الفروع','السيارات','مراقبة الجودة','الماركات والموديلات','طلبات إضافة موديل']},
+    {id:'users',title:'المستخدمون',items:['كل الحسابات','إدارة المستأجرين','معالج تهيئة مستأجر','طلبات الحذف','حسابات مشبوهة']},
+    {id:'bookings',title:'الحجوزات',items:['كل الحجوزات','طلبات التمديد','الحجوزات المتعثّرة']},
+    {id:'disputes',title:'التظلمات',items:['قائمة التظلمات']},
+    {id:'finance',title:'المالية',items:['النظرة المالية','سجل المعاملات','معاملات فاشلة','تسويات المزودين','الاستردادات','الفواتير','مطابقة بوابة الدفع','نسب العمولات']},
+    {id:'wallet',title:'التأمين والمحفظة',items:['التأمين والمطالبات','المحفظة والودائع']},
+    {id:'marketing',title:'التسويق',items:['الكوبونات','الحملات','البنرات والتسويق','إعلانات المزودين']},
+    {id:'notify',title:'الإشعارات',items:['إرسال إشعار','سجل الإشعارات','القوالب']},
+    {id:'support',title:'الدعم',items:['التذاكر','الشات بوت','مركز المساعدة']},
+    {id:'reports',title:'التقارير',items:['مركز التقارير','منشئ التقارير']},
+    {id:'analytics',title:'التحليلات',items:['المقارنات','التحليل العميق','المؤشرات التشغيلية','الخريطة التفاعلية','النقل بين الفروع','خدمة التوصيل','التقارير المجدولة','تحليل الأفواج LTV/CAC']},
+    {id:'leasePlat',title:'منصة التأجير',items:['خريطة العرض/الطلب','جاهزية الأسطول','التسعير الديناميكي','دورة حياة الحجز','ولاء وتصنيف العملاء','شرائح العمولات','استغلال الأسطول','المخالفات والودائع','التنبؤ بالطلب']},
+    {id:'mktPlat',title:'منصة التسويق',items:['إسناد التحويلات ROAS','حوكمة الكوبونات','اختبار A/B','تجربة الجمهور','أداء الشراكات المؤثرة','رحلة العميل والاحتفاظ','منشئ الشرائح']},
+    {id:'risk',title:'المخاطر والأتمتة',items:['رادار المخاطر','مسارات الأتمتة','مراقبة مستوى الخدمة','كشف الاحتيال','صحة بوابة الدفع','سجل التقارير']},
+    {id:'system',title:'النظام',items:['مركز التكاملات','صلاحيات الحقول','الإعدادات التشغيلية','البيانات المرجعية','المحتوى والشروط','الإداريون والصلاحيات','سجل التدقيق','شاشة الدخول','الوثائق الحساسة']}
+  ];
+  const ROLES=[
+    {id:'super',name:'مدير النظام (Super Admin)',desc:'وصول كامل لكل البيانات والوحدات وصلاحيات التعديل والاعتماد.',scope:'كل البيانات',scopeOpts:['كل البيانات'],preset:'all'},
+    {id:'finance',name:'المدير المالي',desc:'تحليلات وتقارير مالية شاملة دون إدارة أو تعديل.',scope:'كل البيانات',scopeOpts:['كل البيانات'],preset:'finance'},
+    {id:'ops',name:'مدير العمليات',desc:'التشغيل والأسطول + تعديل بيانات المزودين والمستأجرين — المالية مخفية.',scope:'كل البيانات',scopeOpts:['كل البيانات'],preset:'ops'},
+    {id:'regional',name:'مدير إقليمي — الرياض',desc:'مقيّد ببيانات الرياض — يعدّل ملفات المستأجرين وحجوزاتهم.',scope:'مدينة: الرياض',scopeOpts:['مدينة: الرياض','مدينة: جدة','مدينة: الدمام'],preset:'regional'},
+    {id:'company',name:'مدير شركة (مزود)',desc:'يدير شركته ومكاتبه وإعلاناته فقط — التعديل خاضع للاعتماد.',scope:'شركة محددة',scopeOpts:['شركة محددة'],preset:'company'},
+    {id:'content',name:'مدير المحتوى والتسويق',desc:'يعتمد الإعلانات والبنرات ويدير خانات الظهور والحملات.',scope:'كل البيانات',scopeOpts:['كل البيانات'],preset:'content'},
+    {id:'support',name:'مسؤول الدعم',desc:'الدعم وتعديل ملفات المستأجرين لحل المشكلات دون وصول مالي.',scope:'كل البيانات',scopeOpts:['كل البيانات'],preset:'support'}
+  ];
+  const allModulesOn=()=>{const o={};MODULE_GROUPS.forEach(g=>g.items.forEach(i=>o[i]=true));return o};
+  const modulesOn=(names)=>{const o={};MODULE_GROUPS.forEach(g=>g.items.forEach(i=>o[i]=names.includes(i)));return o};
+  const specialAll=on=>{const o={};SPECIAL.forEach(s=>o[s.id]=!!on);return o};
+  function preset(kind){
+    if(kind==='all') return {special:specialAll(true),modules:allModulesOn(),scope:'كل البيانات'};
+    if(kind==='finance') return {special:{financeView:true,usersManage:false,export:true,editGeneral:false,editProvider:false,editTenant:false,adsEdit:false,contentApprove:false,slotUpgrade:false},modules:modulesOn(['النظرة المالية','سجل المعاملات','معاملات فاشلة','تسويات المزودين','الاستردادات','الفواتير','مطابقة بوابة الدفع','نسب العمولات','مركز التقارير','منشئ التقارير','التقارير المجدولة','المقارنات','التحليل العميق']),scope:'كل البيانات'};
+    if(kind==='ops') return {special:{financeView:false,usersManage:false,export:true,editGeneral:true,editProvider:true,editTenant:true,adsEdit:false,contentApprove:false,slotUpgrade:false},modules:modulesOn(['مركز القيادة','شاشة العمليات NOC','لوحة التحكم','البحث والتحليل','مركز الإشعارات','الرسائل','قائمة المزودين','طابور الاعتماد','معالج تهيئة مزود','معالج تهيئة الفروع','أداء المزودين المقارن','الفروع','السيارات','مراقبة الجودة','الماركات والموديلات','طلبات إضافة موديل','كل الحسابات','إدارة المستأجرين','كل الحجوزات','طلبات التمديد','الحجوزات المتعثّرة','قائمة التظلمات','رادار المخاطر','مسارات الأتمتة','مراقبة مستوى الخدمة']),scope:'كل البيانات'};
+    if(kind==='regional') return {special:{financeView:true,usersManage:false,export:true,editGeneral:true,editProvider:false,editTenant:true,adsEdit:false,contentApprove:false,slotUpgrade:false},modules:modulesOn(['لوحة التحكم','مركز الإشعارات','الرسائل','إدارة المستأجرين','كل الحجوزات','طلبات التمديد','الحجوزات المتعثّرة','قائمة التظلمات','التذاكر']),scope:'مدينة: الرياض'};
+    if(kind==='company') return {special:{financeView:true,usersManage:false,export:true,editGeneral:true,editProvider:true,editTenant:false,adsEdit:true,contentApprove:false,slotUpgrade:false},modules:modulesOn(['لوحة التحكم','الفروع','السيارات','إعلانات المزودين','كل الحجوزات','النظرة المالية','تسويات المزودين']),scope:'شركة محددة'};
+    if(kind==='content') return {special:{financeView:false,usersManage:false,export:true,editGeneral:true,editProvider:false,editTenant:false,adsEdit:true,contentApprove:true,slotUpgrade:true},modules:modulesOn(['الكوبونات','الحملات','البنرات والتسويق','إعلانات المزودين','إرسال إشعار','سجل الإشعارات','القوالب','إسناد التحويلات ROAS','حوكمة الكوبونات','اختبار A/B','تجربة الجمهور','أداء الشراكات المؤثرة','رحلة العميل والاحتفاظ','منشئ الشرائح','المحتوى والشروط']),scope:'كل البيانات'};
+    return {special:{financeView:false,usersManage:false,export:false,editGeneral:false,editProvider:false,editTenant:true,adsEdit:false,contentApprove:false,slotUpgrade:false},modules:modulesOn(['التذاكر','الشات بوت','مركز المساعدة','إدارة المستأجرين','كل الحجوزات','قائمة التظلمات','مركز الإشعارات','الرسائل']),scope:'كل البيانات'};
+  }
+  function defaults(){
+    const d={active:'super',roles:{}};
+    ROLES.forEach(r=>{d.roles[r.id]=preset(r.preset)});
+    return d;
+  }
+  function load(){
+    try{
+      const raw=JSON.parse(localStorage.getItem(KEY)||'null');
+      if(!raw) return defaults();
+      const base=defaults();
+      base.active=raw.active||'super';
+      ROLES.forEach(r=>{base.roles[r.id]=Object.assign({},base.roles[r.id],raw.roles&&raw.roles[r.id]||{},{special:Object.assign({},base.roles[r.id].special,(raw.roles&&raw.roles[r.id]&&raw.roles[r.id].special)||{}),modules:Object.assign({},base.roles[r.id].modules,(raw.roles&&raw.roles[r.id]&&raw.roles[r.id].modules)||{})});});
+      return base;
+    }catch(e){return defaults()}
+  }
+  function save(st){localStorage.setItem(KEY,JSON.stringify(st))}
+  const tg=(on,fn)=>`<button type="button" class="rbac-tg ${on?'on':''}" onclick="${fn}"></button>`;
+
+  window.WafraRBAC={
+    select(id){const st=load();st.active=id;save(st);render()},
+    toggleSpecial(id){const st=load();const r=st.roles[st.active];r.special[id]=!r.special[id];save(st);render()},
+    toggleModule(name){const st=load();const r=st.roles[st.active];r.modules[name]=!r.modules[name];save(st);render()},
+    toggleGroup(gid,on){const st=load();const r=st.roles[st.active];const g=MODULE_GROUPS.find(x=>x.id===gid);if(!g)return;g.items.forEach(i=>r.modules[i]=!!on);save(st);render()},
+    setScope(v){const st=load();st.roles[st.active].scope=v;save(st);render()},
+    editRole(){const st=load();const role=ROLES.find(x=>x.id===st.active);if(window.__toast)window.__toast('وضع التعديل مفعّل لـ '+role.name+' — غيّر المفاتيح مباشرة');},
+    render(){
+      const st=load();
+      const role=ROLES.find(x=>x.id===st.active)||ROLES[0];
+      const data=st.roles[role.id];
+      const totalMods=MODULE_GROUPS.reduce((n,g)=>n+g.items.length,0);
+      const onMods=MODULE_GROUPS.reduce((n,g)=>n+g.items.filter(i=>data.modules[i]).length,0);
+      const finOk=!!data.special.financeView;
+      const expOk=!!data.special.export;
+
+      const rolesCol=ROLES.map(r=>`<button type="button" class="rbac-role ${r.id===role.id?'on':''}" onclick="WafraRBAC.select('${r.id}')">
+        <div class="ic">👤</div>
+        <h3>${r.name}</h3>
+        <p>${r.desc}</p>
+        <span class="rbac-scope">🛡 ${st.roles[r.id].scope||r.scope}</span>
+      </button>`).join('');
+
+      const specialHtml=SPECIAL.map(s=>`<div class="rbac-pill"><span>${s.label}</span>${tg(!!data.special[s.id],`WafraRBAC.toggleSpecial('${s.id}')`)}</div>`).join('');
+
+      const modulesHtml=MODULE_GROUPS.map(g=>{
+        const cnt=g.items.filter(i=>data.modules[i]).length;
+        const allOn=cnt===g.items.length;
+        return `<div class="rbac-mod">
+          <div class="rbac-mod-h">
+            <div><b>${g.title}</b><span class="cnt">${cnt}/${g.items.length}</span></div>
+            <button type="button" class="all" onclick="WafraRBAC.toggleGroup('${g.id}',${!allOn})">${allOn?'إلغاء الكل':'تحديد الكل'}</button>
+          </div>
+          <div class="rbac-mod-grid">${g.items.map(i=>`<div class="rbac-pill"><span>${i}</span>${tg(!!data.modules[i],`WafraRBAC.toggleModule('${i.replace(/'/g,"\\'")}')`)}</div>`).join('')}</div>
+        </div>`;
+      }).join('');
+
+      const scopeOpts=(role.scopeOpts||['كل البيانات']).map(o=>`<option ${data.scope===o?'selected':''}>${o}</option>`).join('');
+
+      return phead('الصلاحيات والأدوار (RBAC)','تحكم دقيق في الوحدات والبيانات التي يصل إليها كل دور — مع معاينة فورية لما يراه المستخدم',['FR-ADA-03','FR-ADA-04','FR-ADA-05','FR-ADA-07'],
+        `<button class="btn" onclick="WafraCMS.newAdmin()">＋ إضافة إداري</button>`)
+      + `<div class="rbac-layout">
+          <aside class="rbac-roles">${rolesCol}</aside>
+          <section class="rbac-main">
+            <div class="rbac-main-h">
+              <h2>مصفوفة صلاحيات: ${role.name}</h2>
+              <button class="btn" onclick="WafraRBAC.editRole()">✦ تعديل هذا الدور</button>
+            </div>
+            <div class="rbac-stats">
+              <div class="rbac-stat"><div class="k">الوحدات المتاحة</div><div class="v">${onMods} / ${totalMods}</div></div>
+              <div class="rbac-stat"><div class="k">البيانات المالية</div><div class="v ${finOk?'ok':''}">${finOk?'ظاهرة':'مخفية'}</div></div>
+              <div class="rbac-stat"><div class="k">التصدير</div><div class="v ${expOk?'ok':''}">${expOk?'مسموح':'غير مسموح'}</div></div>
+              <div class="rbac-stat"><div class="k">نطاق البيانات</div><div class="v">${data.scope||role.scope}</div></div>
+            </div>
+            <div class="rbac-sec"><h4>الصلاحيات الخاصة</h4><div class="rbac-special">${specialHtml}</div></div>
+            <div class="rbac-sec"><h4>نطاق البيانات — مستوى الصف</h4>
+              <div class="rbac-scope-row">
+                <select onchange="WafraRBAC.setScope(this.value)">${scopeOpts}</select>
+                <span style="font:500 12px Cairo;color:var(--muted)">يقيّد ما يراه الدور من بيانات دون حجب الوحدة كاملة.</span>
+              </div>
+            </div>
+            <div class="rbac-sec"><h4>الوصول للوحدات</h4>${modulesHtml}</div>
+          </section>
+        </div>`;
+    }
+  };
+  S.admins=()=>WafraRBAC.render();
+})();
+</script>
+<style id="wafra-field-permissions">
+.sfp-card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh-s);overflow:hidden}
+.sfp-head{padding:22px 24px 8px}
+.sfp-head h2{margin:0 0 8px;font:700 20px Cairo;color:var(--ink)}
+.sfp-head p{margin:0;font:500 13px/1.7 Cairo;color:var(--muted);max-width:720px}
+.sfp-table{width:100%;border-collapse:collapse}
+.sfp-table th,.sfp-table td{padding:16px 14px;border-bottom:1px solid #EEF1F7;text-align:center;vertical-align:middle}
+.sfp-table th:first-child,.sfp-table td:first-child{text-align:right;white-space:nowrap;font:700 13.5px Cairo;color:var(--ink);min-width:140px}
+.sfp-table thead th{font:700 11.5px Cairo;color:#8A93A8;background:#FAFBFE}
+.sfp-role{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-direction:column}
+.sfp-role .badge-ltr{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:800 11px Cairo;color:#fff}
+.sfp-role .nm{font:700 11.5px Cairo;color:var(--ink-2);max-width:92px;line-height:1.35}
+.sfp-tg{width:42px;height:24px;border-radius:99px;background:#D8DEE9;position:relative;cursor:pointer;margin:0 auto;border:0;padding:0;transition:background .15s}
+.sfp-tg::after{content:'';position:absolute;top:3px;inset-inline-end:3px;width:18px;height:18px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:inset-inline .15s}
+.sfp-tg.on{background:#22A06B}
+.sfp-tg.on::after{inset-inline-end:auto;inset-inline-start:3px}
+.sfp-foot{margin:0 18px 18px;padding:12px 14px;border-radius:12px;background:#EDF4FF;color:#2F4F8A;font:600 12.5px/1.65 Cairo}
+@media(max-width:900px){.sfp-table{display:block;overflow-x:auto}}
+</style>
+<script>
+/* صلاحيات الحقول الحساسة — مصفوفة إظهار/إخفاء حسب الدور */
+(function(){
+  const KEY='wafra-field-perms-v1';
+  const roles=[
+    {id:'finance',letter:'ما',color:'#3B6FE2',name:'المدير المالي'},
+    {id:'ops',letter:'ع',color:'#5B6B8C',name:'مدير العمليات'},
+    {id:'regional',letter:'ر',color:'#C45C26',name:'مدير إقليمي'},
+    {id:'company',letter:'ش',color:'#2F7D57',name:'مدير شركة'},
+    {id:'content',letter:'ت',color:'#8A651A',name:'مدير المحتوى والتسويق'},
+    {id:'support',letter:'ه',color:'#6B5B95',name:'مسؤول الدعم'}
+  ];
+  const fields=[
+    {id:'nationalId',label:'رقم الهوية'},
+    {id:'iban',label:'الآيبان البنكي'},
+    {id:'mobile',label:'الجوال'},
+    {id:'email',label:'البريد الإلكتروني'}
+  ];
+  const defaults={
+    nationalId:{finance:false,ops:false,regional:false,company:false,content:false,support:false},
+    iban:{finance:true,ops:false,regional:false,company:true,content:false,support:false},
+    mobile:{finance:true,ops:true,regional:true,company:true,content:true,support:true},
+    email:{finance:true,ops:true,regional:true,company:true,content:true,support:true}
+  };
+  function load(){try{return Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'null')||{})}catch(e){return JSON.parse(JSON.stringify(defaults))}}
+  function save(m){localStorage.setItem(KEY,JSON.stringify(m))}
+  window.WafraFieldPerms={
+    toggle(field,role){
+      const m=load();
+      m[field]=m[field]||{};
+      m[field][role]=!m[field][role];
+      save(m);
+      if(window.__toast) window.__toast(m[field][role]?'الحقل ظاهر لهذا الدور':'الحقل مقنّع لهذا الدور');
+      render();
+    }
+  };
+  S.fieldPermissions=()=>{
+    const m=load();
+    const head=roles.map(r=>`<th><div class="sfp-role"><span class="badge-ltr" style="background:${r.color}">${r.letter}</span><span class="nm">${r.name}</span></div></th>`).join('');
+    const rows=fields.map(f=>{
+      const row=m[f.id]||defaults[f.id];
+      const cells=roles.map(r=>{
+        const on=!!row[r.id];
+        return `<td><button type="button" class="sfp-tg ${on?'on':''}" aria-label="${f.label} — ${r.name}" onclick="WafraFieldPerms.toggle('${f.id}','${r.id}')"></button></td>`;
+      }).join('');
+      return `<tr><td>${f.label}</td>${cells}</tr>`;
+    }).join('');
+    return phead('صلاحيات الحقول الحساسة','تحكم دقيق بإظهار أو إخفاء الحقول الحساسة حسب الدور',['FR-ADA-FIELD-01'])
+      + `<div class="sfp-card">
+          <div class="sfp-head">
+            <h2>صلاحيات الحقول الحساسة</h2>
+            <p>تحكم دقيق: إخفاء أعمدة بعينها (هوية، آيبان…) عن أدوار محددة دون حجب الوحدة كاملة. «مدير النظام» يرى الكل دائماً.</p>
+          </div>
+          <div class="tw" style="padding:0 8px 8px">
+            <table class="sfp-table">
+              <thead><tr><th>الحقل</th>${head}</tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="sfp-foot">المفتاح الفعّال = الحقل ظاهر لهذا الدور. المطفأ = مقنّع (مثل ****42)، يُطبّق فوراً على ملفات المستأجرين والمزوّدين.</div>
+        </div>`;
+  };
+  if(window.TITLES) window.TITLES.fieldPermissions='صلاحيات الحقول';
 })();
 </script>
 <script>
