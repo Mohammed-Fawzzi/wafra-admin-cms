@@ -425,11 +425,21 @@ function setupControls(root){
     t.onclick=()=>{ const p=t.parentElement;
       p.querySelectorAll('.thumb').forEach(x=>x.classList.remove('on')); t.classList.add('on'); }; });
   // standalone filter chips outside a table card (page headers, report filters)
-  root.querySelectorAll('.phead .fd, .card-b .fd').forEach(fd=>{
+  function standaloneOpts(label){
+    const L = label || '';
+    if(/مزو/.test(L)) return ['شركة الصحراء','كي رنت','مسار','الوسام كار','درب الخليج'];
+    if(/مدن|مدينة/.test(L)) return ['الرياض','جدة','الدمام','مكة المكرمة','الخبر','تبوك'];
+    if(/يومي|أسبوعي|شهري/.test(L)) return ['يومي','أسبوعي','شهري'];
+    if(/مجمّعة|مجمعة/.test(L)) return ['مجمّعة حسب الشركة','مجمّعة حسب المدينة','مجمّعة حسب الفرع'];
+    if(/أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر|يناير|فبراير|مارس|أبريل|مايو|يونيو|يوليو/.test(L))
+      return ['يوليو 2026','أغسطس 2026','سبتمبر 2026','أكتوبر 2026'];
+    return ['آخر 7 أيام','آخر 30 يوماً','آخر 90 يوماً','هذا العام'];
+  }
+  root.querySelectorAll('.phead .fd, .card-b .fd, .card-h .fd').forEach(fd=>{
     if(fd.__w || fd.closest('.filters')) return; fd.__w=1;
     const label = norm(fd.childNodes[0].textContent);
     fd.onclick = e=>{ e.stopPropagation();
-      openMenu(fd, ['آخر 7 أيام','آخر 30 يوماً','آخر 90 يوماً','هذا العام'], '', v=>{
+      openMenu(fd, standaloneOpts(label), '', v=>{
         fd.childNodes[0].textContent = (v||label)+' ';
         fd.classList.toggle('act', !!v);
       }, label); };

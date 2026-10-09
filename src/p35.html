@@ -9,7 +9,8 @@
 .sa-filter-card{background:#fff;border:1px solid #E4E9F3;border-radius:16px;padding:14px 16px;box-shadow:0 6px 18px rgba(25,42,84,.04)}
 .sa-filter-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .sa-filter-row .sa-sel,.sa-filter-row .sa-inp{min-height:40px;border:1px solid #D7DEEE;border-radius:10px;background:#fff;padding:8px 12px;font:600 12.5px Cairo;color:var(--ink);outline:0}
-.sa-filter-row .sa-sel{min-width:150px;cursor:pointer}
+.sa-filter-row .sa-sel{min-width:150px;cursor:pointer;appearance:auto;-webkit-appearance:menulist}
+.sa-filter-row .sa-sel.sa-value-sel{min-width:180px;flex:1;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%233A4663' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat left 12px center;padding-inline-end:12px;padding-inline-start:28px}
 .sa-filter-row .sa-inp{min-width:160px;flex:1}
 .sa-filter-row .sa-sel:focus,.sa-filter-row .sa-inp:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(35,56,109,.1)}
 .sa-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
@@ -20,7 +21,8 @@
 .sa-btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
 .sa-exports{display:flex;gap:6px;margin-inline-start:auto}
 .sa-exports .sa-btn{padding:8px 10px;min-width:52px;justify-content:center}
-.sa-chips{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.sa-chips{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.sa-grid > .sa-chips{grid-column:1/-1}
 .sa-chip{flex:0 0 auto;min-width:210px;max-width:260px;display:flex;gap:10px;align-items:flex-start;background:linear-gradient(135deg,#F3EEFF,#F8F4FF);border:1px solid #E4D9FF;border-radius:14px;padding:12px 14px;color:#3D2B6B;box-shadow:0 6px 14px rgba(88,58,160,.06);cursor:pointer}
 .sa-chip:hover{transform:translateY(-1px);box-shadow:0 10px 18px rgba(88,58,160,.1)}
 .sa-chip .bolt{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#7B4FE0;color:#fff;font-size:14px;flex:0 0 auto}
@@ -78,6 +80,20 @@
     users:['الاسم','نوع المستخدم','المدينة','الحالة']
   };
   const valueHints={
+    cars:{
+      'نوع السيارة (الماركة)':['تويوتا','هيونداي','كيا','نيسان','لكزس','مرسيدس'],
+      'الموديل':['كامري','كورولا','هايلوكس','لاندكروزر','إلنترا','K5','صني'],
+      'سنة الصنع':['2021','2022','2023','2024','2025','2026'],
+      'اللون':['أبيض','أسود','رمادي','أحمر','أزرق','فضي'],
+      'الحالة':['متوفرة','محجوزة','صيانة','موقوفة'],
+      'المدينة':['الرياض','جدة','الدمام','الخبر','مكة','أبها']
+    },
+    contracts:{
+      'حالة العقد':['مفتوح','مغلق','ملغى','متأخر'],
+      'المدينة':['الرياض','جدة','مكة','الدمام','الخبر','نجران','عسير'],
+      'السيارة (الماركة)':['تويوتا','هيونداي','كيا','نيسان','لكزس','مرسيدس'],
+      'المدة (أيام)':['1','2','3','4','5','7','14','30']
+    },
     complaints:{
       'نوع الشكوى':['تأخر الاستلام','حالة السيارة','سلوك الموظف','خطأ فاتورة','إجراءات الحجز','النظافة'],
       'الحالة':['مفتوحة','مغلقة'],
@@ -271,9 +287,12 @@
       const q=(s.value||'').trim();
       const filtered=(!q)?data.rows:data.rows.filter(r=>r.map(cellStr).join(' ').includes(q));
       const tabBar=`<div class="sa-tabs">${tabs.map(t=>`<button type="button" class="sa-tab ${tab===t.k?'on':''}" onclick="WafraOps.saTab('${t.k}')"><span class="ic">${t.i}</span>${t.t}</button>`).join('')}</div>`;
-      const hints=((valueHints[tab]||{})[field])||[];
-      const valueControl=hints.length
-        ? `<select id="sa-value" class="sa-sel" style="min-width:180px;flex:1"><option value="">اختر القيمة</option>${hints.map(v=>`<option ${v===s.value?'selected':''}>${v}</option>`).join('')}</select>`
+      const freeText=/(سعر|قيمة العقد|تاريخ|بريد|جوال|هوية|رقم الشركة|رقم الهوية)/.test(field);
+      const hinted=((valueHints[tab]||{})[field])||[];
+      const forceSelect=(tab==='cars'||tab==='contracts')&&!freeText;
+      const opts=hinted.length?hinted:(forceSelect?['—']:[]);
+      const valueControl=opts.length
+        ? `<select id="sa-value" class="sa-sel sa-value-sel"><option value="">اختر القيمة</option>${opts.filter(v=>v!=='—').map(v=>`<option value="${v.replace(/"/g,'&quot;')}" ${v===s.value?'selected':''}>${v}</option>`).join('')}</select>`
         : `<input id="sa-value" class="sa-inp" value="${(s.value||'').replace(/"/g,'&quot;')}" placeholder="القيمة">`;
       const filterCard=`<div class="sa-filter-card"><div class="sa-filter-row">
         <select id="sa-field" class="sa-sel" onchange="WafraOps.saFieldChange()">${fieldOpts.map(f=>`<option ${f===field?'selected':''}>${f}</option>`).join('')}</select>
@@ -296,9 +315,10 @@
       const body=`<div class="sa-grid">
         <div class="sa-panel"><div class="sa-panel-h">توزيع النتائج</div><div class="sa-panel-b">${hbars(data.chart)}</div></div>
         <div class="sa-panel"><div class="sa-panel-h">نتائج ${tabs.find(t=>t.k===tab)?.t||''} · ${filtered.length}</div><div class="sa-panel-b sa-table-wrap">${table(data.cols,filtered)}</div></div>
+        ${chipRow}
       </div>`;
       return phead('محرك البحث والتحليل','ابحث داخل جميع بيانات المنصّة، اجمع أكثر من فلتر، واحصل على النتائج والرسوم فوراً',[])
-        +`<div class="sa-wrap">${tabBar}${filterCard}${chipRow}${stats}${body}</div>`;
+        +`<div class="sa-wrap">${tabBar}${filterCard}${stats}${body}</div>`;
     }catch(err){
       console.error(err);
       return phead('محرك البحث والتحليل','تعذّر عرض الشاشة',[])+note('dngr','خطأ في العرض',String(err&&err.message||err));

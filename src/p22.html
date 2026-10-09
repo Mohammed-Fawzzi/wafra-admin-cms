@@ -95,7 +95,7 @@
   const providerGroup=NAV.find(g=>g.g==='المزوّدون'); if(providerGroup&&!providerGroup.items.some(x=>x.k==='providerSetup'))providerGroup.items.push({k:'providerSetup',t:'تهيئة مزود وفرع',i:'＋'});
   const fleetGroup=NAV.find(g=>g.g==='إدارة الأسطول'); if(fleetGroup){const q=fleetGroup.items.find(x=>x.k==='fleetReview');if(q)q.t='مراقبة جودة الأسطول';}
   const marketing=NAV.find(g=>g.g==='التسويق'); if(marketing){['coupons','campaigns','banners','vendorAds'].forEach(k=>{const i=marketing.items.find(x=>x.k===k);if(i)i.t+=' — تصدير';});}
-  const reports=NAV.find(g=>g.g==='التقارير'); if(reports&&!reports.items.some(x=>x.k==='analytics'))reports.items.push({k:'analytics',t:'التحليلات ومركز التقارير',i:'◫'});
+  const reports=NAV.find(g=>g.g==='التقارير'); if(reports){const a=reports.items.find(x=>x.k==='analytics'); if(a)a.t='التحليلات'; else reports.items.push({k:'analytics',t:'التحليلات',i:'◫'});}
   NAV.forEach(g=>g.items.forEach(i=>window.TITLES[i.k]=i.t)); render();
 })();
 </script>

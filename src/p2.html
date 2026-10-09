@@ -2,54 +2,162 @@
 const S = {}; window.S = S;
 
 /* ========== 1. المؤشرات الرئيسية ========== */
-S.dashboard = () => phead('المؤشرات الرئيسية','صورة لحظية عن حالة المنصّة خلال الفترة المختارة',['FR-ADH-01','FR-ADH-02','FR-ADH-03','FR-ADH-04','FR-ADH-05','FR-ADH-06','FR-ADH-07'],
-  `<div class="fd">آخر 30 يوماً<span class="cv">▾</span></div><div class="fd">كل المزوّدين<span class="cv">▾</span></div><div class="fd">كل المدن<span class="cv">▾</span></div><button class="btn ghost">⤓ تصدير</button>`)
-+ `<section class="command-hero"><div class="command-copy"><span class="eyebrow">وفرا / مركز القيادة</span><h2>صباح الخير، محمد.</h2><p>الحركة التشغيلية مستقرة اليوم، وهناك <b>14 قرارًا</b> تحتاج اهتمامك لتستمر التجربة بسلاسة.</p><div class="hero-actions"><a class="btn coral" href="#disputes">مراجعة القرارات</a><a class="hero-link" href="#reports">عرض ملخص الأداء ←</a></div></div><div class="hero-orbit"><span class="orb a">4.8★<small>التقييم</small></span><span class="orb b">317<small>حجز نشط</small></span><span class="orb c">94%<small>القبول</small></span><div class="hero-core">و<span>.</span></div></div></section>`
+window.__dash = window.__dash || {period:'آخر 30 يوماً', vendor:null, city:null};
+const DASH_BY_PERIOD = {
+  'آخر 7 أيام': {
+    decisions:8, rating:'4.9', active:'298', accept:'96%',
+    bookings:'1,086', bookingsD:'▲ 4.2% عن الفترة السابقة', bookingsT:'up',
+    activeK:'298', activeD:'▲ 1.8%', activeT:'up',
+    rev:'486,200', revD:'▲ 5.1%', revT:'up',
+    fee:'58,344', feeD:'▲ 5.1%', feeT:'up',
+    vendors:'44', vendorsD:'▲ مزوّد جديد', vendorsT:'up',
+    customers:'312', customersD:'▲ 6.4%', customersT:'up',
+    range:'3 — 9 أكتوبر 2026', spark:[48,52,44,61,58,70,66], sparkHi:5,
+    acceptBar:91, cancelBar:9, noShow:3, complete:74,
+    reply:'11 دقيقة', ratingAvg:'4.7 / 5', avgBook:'448 ر.س',
+    donut:[[40,'434'],[28,'304'],[22,'239'],[10,'109']],
+    todos:{kyc:7,disputes:11,sla:4,settle:8,ads:3,pay:5,settleAmt:'212,400'},
+    top:[['642','286,400'],['518','241,900'],['403','188,200'],['361','162,700'],['298','134,500']].map(r=>[Math.round(+r[0].replace(/,/g,'')*0.26).toLocaleString('en-US'), Math.round(+r[1].replace(/,/g,'')*0.26).toLocaleString('en-US')])
+  },
+  'آخر 30 يوماً': {
+    decisions:14, rating:'4.8', active:'317', accept:'94%',
+    bookings:'4,182', bookingsD:'▲ 12.4% عن الفترة السابقة', bookingsT:'up',
+    activeK:'317', activeD:'▲ 3.1%', activeT:'up',
+    rev:'1,842,600', revD:'▲ 9.8%', revT:'up',
+    fee:'221,112', feeD:'▲ 9.8%', feeT:'up',
+    vendors:'46', vendorsD:'▲ 4 مزوّدين جدد', vendorsT:'up',
+    customers:'1,204', customersD:'▼ 2.3%', customersT:'dn',
+    range:'10 سبتمبر — 9 أكتوبر 2026', spark:[32,45,38,60,52,71,48,66,80,58,74,62,90,70,84,66,58,77,69,95,72,64,81,58,73,88,67,79,61,86], sparkHi:19,
+    acceptBar:87, cancelBar:12, noShow:4, complete:73,
+    reply:'14 دقيقة', ratingAvg:'4.6 / 5', avgBook:'441 ر.س',
+    donut:[[38,'1,589'],[27,'1,129'],[24,'1,004'],[11,'460']],
+    todos:{kyc:9,disputes:14,sla:6,settle:11,ads:5,pay:8,settleAmt:'486,300'},
+    top:[['642','286,400'],['518','241,900'],['403','188,200'],['361','162,700'],['298','134,500']]
+  },
+  'آخر 90 يوماً': {
+    decisions:22, rating:'4.7', active:'341', accept:'92%',
+    bookings:'11,640', bookingsD:'▲ 8.6% عن الفترة السابقة', bookingsT:'up',
+    activeK:'341', activeD:'▲ 5.4%', activeT:'up',
+    rev:'5,218,900', revD:'▲ 11.2%', revT:'up',
+    fee:'626,268', feeD:'▲ 11.2%', feeT:'up',
+    vendors:'51', vendorsD:'▲ 7 مزوّدين جدد', vendorsT:'up',
+    customers:'3,418', customersD:'▲ 4.1%', customersT:'up',
+    range:'11 يوليو — 9 أكتوبر 2026', spark:[28,34,40,36,48,55,50,62,58,70,66,74,68,80,76,84,78,90,86,94,88,92,85,96,90,98,93,100,95,102], sparkHi:29,
+    acceptBar:85, cancelBar:14, noShow:5, complete:71,
+    reply:'16 دقيقة', ratingAvg:'4.5 / 5', avgBook:'448 ر.س',
+    donut:[[36,'4,190'],[28,'3,259'],[24,'2,794'],[12,'1,397']],
+    todos:{kyc:12,disputes:19,sla:9,settle:15,ads:7,pay:11,settleAmt:'1,124,800'},
+    top:[['1,820','812,100'],['1,468','685,400'],['1,142','533,600'],['1,024','461,200'],['846','381,500']]
+  },
+  'هذا العام': {
+    decisions:31, rating:'4.6', active:'356', accept:'91%',
+    bookings:'38,920', bookingsD:'▲ 18.3% عن الفترة السابقة', bookingsT:'up',
+    activeK:'356', activeD:'▲ 7.2%', activeT:'up',
+    rev:'17,640,200', revD:'▲ 21.4%', revT:'up',
+    fee:'2,116,824', feeD:'▲ 21.4%', feeT:'up',
+    vendors:'58', vendorsD:'▲ 14 مزوّداً جديداً', vendorsT:'up',
+    customers:'12,860', customersD:'▲ 15.8%', customersT:'up',
+    range:'1 يناير — 9 أكتوبر 2026', spark:[40,48,52,46,58,64,60,72,68,80,76,88,84,92,90,96,94,100,98,105,102,110,108,114,112,118,116,122,120,128], sparkHi:29,
+    acceptBar:84, cancelBar:15, noShow:6, complete:70,
+    reply:'17 دقيقة', ratingAvg:'4.5 / 5', avgBook:'453 ر.س',
+    donut:[[35,'13,622'],[29,'11,287'],[24,'9,341'],[12,'4,670']],
+    todos:{kyc:14,disputes:24,sla:11,settle:18,ads:9,pay:13,settleAmt:'2,480,600'},
+    top:[['6,420','2,864,000'],['5,180','2,419,000'],['4,030','1,882,000'],['3,610','1,627,000'],['2,980','1,345,000']]
+  },
+  'الكل': {
+    decisions:38, rating:'4.6', active:'362', accept:'90%',
+    bookings:'52,410', bookingsD:'▲ 24.1% عن الفترة السابقة', bookingsT:'up',
+    activeK:'362', activeD:'▲ 8.0%', activeT:'up',
+    rev:'23,880,500', revD:'▲ 26.8%', revT:'up',
+    fee:'2,865,660', feeD:'▲ 26.8%', feeT:'up',
+    vendors:'61', vendorsD:'▲ 18 مزوّداً جديداً', vendorsT:'up',
+    customers:'18,240', customersD:'▲ 19.2%', customersT:'up',
+    range:'منذ إطلاق المنصّة', spark:[22,28,34,40,38,48,52,60,58,70,74,80,78,88,92,96,94,102,108,112,110,118,122,126,124,132,136,140,138,148], sparkHi:29,
+    acceptBar:83, cancelBar:16, noShow:6, complete:69,
+    reply:'18 دقيقة', ratingAvg:'4.4 / 5', avgBook:'456 ر.س',
+    donut:[[34,'17,819'],[30,'15,723'],[24,'12,578'],[12,'6,290']],
+    todos:{kyc:16,disputes:28,sla:13,settle:21,ads:11,pay:15,settleAmt:'3,120,400'},
+    top:[['8,640','3,860,000'],['6,980','3,240,000'],['5,420','2,520,000'],['4,860','2,180,000'],['4,010','1,810,000']]
+  }
+};
+S.dashboard = () => {
+  const d = window.__dash || {period:'آخر 30 يوماً', vendor:null, city:null};
+  const periodKey = d.period || 'الكل';
+  const base = DASH_BY_PERIOD[periodKey] || DASH_BY_PERIOD['آخر 30 يوماً'];
+  let scale = 1;
+  if(d.vendor) scale *= 0.22;
+  if(d.city) scale *= 0.35;
+  const n = (s)=>{
+    const raw = String(s).replace(/,/g,'');
+    if(!/^\d+(\.\d+)?$/.test(raw)) return s;
+    return Math.max(1, Math.round(+raw * scale)).toLocaleString('en-US');
+  };
+  const periodLabel = d.period || 'الكل';
+  const vendorLabel = d.vendor || 'كل المزوّدين';
+  const cityLabel = d.city || 'كل المدن';
+  const periodAct = d.period && d.period !== 'آخر 30 يوماً' ? ' act' : '';
+  const vendorAct = d.vendor ? ' act' : '';
+  const cityAct = d.city ? ' act' : '';
+  const topNames = [
+    ['شركة الصحراء لتأجير السيارات','الرياض','94%','4.8','نشط','g'],
+    ['كي رنت','جدة','91%','4.7','نشط','g'],
+    ['مسار لتأجير المركبات','الدمام','88%','4.5','نشط','g'],
+    ['الوسام كار','مكة المكرمة','79%','4.1','تحت المراقبة','a'],
+    ['درب الخليج','الرياض','92%','4.6','نشط','g']
+  ];
+  let topRows = topNames.map((t,i)=>[String(i+1),{v:t[0],c:'strong'},t[1],n(base.top[i][0]),{v:n(base.top[i][1]),c:'num'},t[2],t[3],bdg(t[4],t[5])]);
+  if(d.vendor) topRows = topRows.filter(r=>String(r[1].v).includes(d.vendor.replace(/^شركة\s*/,'').slice(0,4)) || String(r[1].v).includes(d.vendor));
+  if(d.city) topRows = topRows.filter(r=>r[2]===d.city);
+  if(!topRows.length) topRows = [[ '—',{v:d.vendor||'لا نتائج',c:'strong'},d.city||'—','0',{v:'0',c:'num'},'—','—',bdg('—','n')]];
+  const donutSegs = [
+    ['استلام من المطار',base.donut[0][0],'var(--coral)',n(base.donut[0][1])],
+    ['توصيل للباب',base.donut[1][0],'var(--navy)',n(base.donut[1][1])],
+    ['حجز فوري',base.donut[2][0],'var(--green)',n(base.donut[2][1])],
+    ['تسليم بين المدن',base.donut[3][0],'var(--amber)',n(base.donut[3][1])]
+  ];
+  return phead('المؤشرات الرئيسية','صورة لحظية عن حالة المنصّة خلال الفترة المختارة',['FR-ADH-01','FR-ADH-02','FR-ADH-03','FR-ADH-04','FR-ADH-05','FR-ADH-06','FR-ADH-07'],
+  `<div class="fd${periodAct}" data-kind="period" data-default="آخر 30 يوماً" data-opts="آخر 7 أيام|آخر 30 يوماً|آخر 90 يوماً|هذا العام">${periodLabel}<span class="cv">▾</span></div><div class="fd${vendorAct}" data-kind="vendor" data-default="كل المزوّدين" data-opts="شركة الصحراء|كي رنت|مسار|الوسام كار|درب الخليج">${vendorLabel}<span class="cv">▾</span></div><div class="fd${cityAct}" data-kind="city" data-default="كل المدن" data-opts="الرياض|جدة|الدمام|مكة المكرمة|الخبر|تبوك">${cityLabel}<span class="cv">▾</span></div><button class="btn ghost">⤓ تصدير</button>`)
++ `<section class="command-hero"><div class="command-copy"><span class="eyebrow">وفرا / مركز القيادة</span><h2>صباح الخير، محمد.</h2><p>الحركة التشغيلية مستقرة اليوم، وهناك <b>${base.decisions} قرارًا</b> تحتاج اهتمامك لتستمر التجربة بسلاسة.${d.period?` <span style="opacity:.85">· الفترة: ${periodLabel}</span>`:''}${d.city?` · ${d.city}`:''}${d.vendor?` · ${d.vendor}`:''}</p><div class="hero-actions"><a class="btn coral" href="#disputes">مراجعة القرارات</a><a class="hero-link" href="#performanceSummary">عرض ملخص الأداء ←</a></div></div><div class="hero-orbit"><span class="orb a">${base.rating}★<small>التقييم</small></span><span class="orb b">${n(base.active)}<small>حجز نشط</small></span><span class="orb c">${base.accept}<small>القبول</small></span><div class="hero-core">و<span>.</span></div></div></section>`
 + kpi([
-  {i:'📋',l:'إجمالي الحجوزات',v:'4,182',d:'▲ 12.4% عن الفترة السابقة',t:'up'},
-  {i:'🚗',l:'الحجوزات النشطة',v:'317',d:'▲ 3.1%',t:'up'},
-  {i:'💰',l:'إجمالي الإيرادات',v:'1,842,600',u:'ر.س',d:'▲ 9.8%',t:'up'},
-  {i:'🏦',l:'عمولة المنصّة',v:'221,112',u:'ر.س',d:'▲ 9.8%',t:'up'},
-  {i:'🏢',l:'المزوّدون النشطون',v:'46',d:'▲ 4 مزوّدين جدد',t:'up'},
-  {i:'👤',l:'عملاء جدد',v:'1,204',d:'▼ 2.3%',t:'dn'},
+  {i:'📋',l:'إجمالي الحجوزات',v:n(base.bookings),d:base.bookingsD,t:base.bookingsT},
+  {i:'🚗',l:'الحجوزات النشطة',v:n(base.activeK),d:base.activeD,t:base.activeT},
+  {i:'💰',l:'إجمالي الإيرادات',v:n(base.rev),u:'ر.س',d:base.revD,t:base.revT},
+  {i:'🏦',l:'عمولة المنصّة',v:n(base.fee),u:'ر.س',d:base.feeD,t:base.feeT},
+  {i:'🏢',l:'المزوّدون النشطون',v:n(base.vendors),d:base.vendorsD,t:base.vendorsT},
+  {i:'👤',l:'عملاء جدد',v:n(base.customers),d:base.customersD,t:base.customersT},
 ])
 + `<div class="g-1-2">`
 + card(cardH('يحتاج إجراء','عناصر معلّقة تنتظر قراراً من فريق الإدارة') + `<div class="card-b flush">
-    <div class="todo"><span class="ic" style="background:var(--amber-bg);color:var(--amber-ink)">🏢</span><div class="tx"><b>طلبات اعتماد مزوّدين</b><span>أقدمها منذ 6 أيام</span></div><span class="n" style="color:var(--amber-ink)">9</span><span class="go">‹</span></div>
-    <div class="todo"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">⚖</span><div class="tx"><b>تظلّمات مفتوحة</b><span>3 منها تجاوزت المهلة</span></div><span class="n" style="color:var(--red-ink)">14</span><span class="go">‹</span></div>
-    <div class="todo"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">🎫</span><div class="tx"><b>تذاكر تجاوزت الـ SLA</b><span>أعلاها أولوية: مشكلة دفع</span></div><span class="n" style="color:var(--red-ink)">6</span><span class="go">‹</span></div>
-    <div class="todo"><span class="ic" style="background:var(--amber-bg);color:var(--amber-ink)">💳</span><div class="tx"><b>تسويات بانتظار الاعتماد</b><span>إجمالي 486,300 ر.س</span></div><span class="n" style="color:var(--amber-ink)">11</span><span class="go">‹</span></div>
-    <div class="todo"><span class="ic" style="background:var(--blue-bg);color:var(--blue-ink)">📣</span><div class="tx"><b>إعلانات بانتظار الموافقة</b><span>من 4 مزوّدين</span></div><span class="n" style="color:var(--blue-ink)">5</span><span class="go">‹</span></div>
-    <div class="todo"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">⚠</span><div class="tx"><b>مدفوعات فاشلة</b><span>تحتاج إعادة محاولة أو إلغاء</span></div><span class="n" style="color:var(--red-ink)">8</span><span class="go">‹</span></div>
+    <div class="todo"><span class="ic" style="background:var(--amber-bg);color:var(--amber-ink)">🏢</span><div class="tx"><b>طلبات اعتماد مزوّدين</b><span>أقدمها منذ 6 أيام</span></div><span class="n" style="color:var(--amber-ink)">${base.todos.kyc}</span><span class="go">‹</span></div>
+    <div class="todo"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">⚖</span><div class="tx"><b>تظلّمات مفتوحة</b><span>3 منها تجاوزت المهلة</span></div><span class="n" style="color:var(--red-ink)">${base.todos.disputes}</span><span class="go">‹</span></div>
+    <div class="todo"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">🎫</span><div class="tx"><b>تذاكر تجاوزت الـ SLA</b><span>أعلاها أولوية: مشكلة دفع</span></div><span class="n" style="color:var(--red-ink)">${base.todos.sla}</span><span class="go">‹</span></div>
+    <div class="todo"><span class="ic" style="background:var(--amber-bg);color:var(--amber-ink)">💳</span><div class="tx"><b>تسويات بانتظار الاعتماد</b><span>إجمالي ${n(base.todos.settleAmt)} ر.س</span></div><span class="n" style="color:var(--amber-ink)">${base.todos.settle}</span><span class="go">‹</span></div>
+    <div class="todo"><span class="ic" style="background:var(--blue-bg);color:var(--blue-ink)">📣</span><div class="tx"><b>إعلانات بانتظار الموافقة</b><span>من 4 مزوّدين</span></div><span class="n" style="color:var(--blue-ink)">${base.todos.ads}</span><span class="go">‹</span></div>
+    <div class="todo"><span class="ic" style="background:var(--red-bg);color:var(--red-ink)">⚠</span><div class="tx"><b>مدفوعات فاشلة</b><span>تحتاج إعادة محاولة أو إلغاء</span></div><span class="n" style="color:var(--red-ink)">${base.todos.pay}</span><span class="go">‹</span></div>
   </div>`)
 + card(cardH('الإيرادات والحجوزات','مقارنة يومية خلال الفترة المختارة',`<div class="fd">يومي<span class="cv">▾</span></div>`) + `<div class="card-b">
     <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px">
-      <span style="font-family:Cairo;font-size:26px;font-weight:700">1,842,600</span><span style="color:var(--muted);font-size:12px">ر.س</span>
-      <span class="dl up" style="font-size:12px">▲ 9.8%</span></div>
-    <div style="color:var(--muted);font-size:11.5px">1 — 30 أغسطس 2026</div>
-    ${spark([32,45,38,60,52,71,48,66,80,58,74,62,90,70,84,66,58,77,69,95,72,64,81,58,73,88,67,79,61,86],19)}
+      <span style="font-family:Cairo;font-size:26px;font-weight:700">${n(base.rev)}</span><span style="color:var(--muted);font-size:12px">ر.س</span>
+      <span class="dl ${base.revT==='dn'?'dn':'up'}" style="font-size:12px">${base.revD}</span></div>
+    <div style="color:var(--muted);font-size:11.5px">${base.range}</div>
+    ${spark(base.spark, base.sparkHi)}
   </div>`)
 + `</div>`
 + `<div class="grid2">`
 + card(cardH('مؤشّرات صحّة التشغيل','تُلوَّن تلقائياً عند تجاوز العتبات المعرَّفة في الإعدادات') + `<div class="card-b">
-    ${bars([['نسبة قبول الطلبات',87],['نسبة الإلغاء قبل التأكيد',12,'var(--amber)'],['نسبة عدم الحضور',4,'var(--green)'],['نسبة اكتمال ملفات المزوّدين',73]])}
+    ${bars([['نسبة قبول الطلبات',base.acceptBar],['نسبة الإلغاء قبل التأكيد',base.cancelBar,'var(--amber)'],['نسبة عدم الحضور',base.noShow,'var(--green)'],['نسبة اكتمال ملفات المزوّدين',base.complete]])}
     <div style="display:flex;gap:22px;margin-top:16px;padding-top:15px;border-top:1px solid var(--line)">
-      <div><div style="font-size:11.5px;color:var(--muted)">متوسّط زمن ردّ المزوّد</div><div style="font-family:Cairo;font-size:19px;font-weight:700">14 دقيقة</div></div>
-      <div><div style="font-size:11.5px;color:var(--muted)">متوسّط تقييم المنصّة</div><div style="font-family:Cairo;font-size:19px;font-weight:700">4.6 / 5</div></div>
-      <div><div style="font-size:11.5px;color:var(--muted)">متوسّط قيمة الحجز</div><div style="font-family:Cairo;font-size:19px;font-weight:700">441 ر.س</div></div>
+      <div><div style="font-size:11.5px;color:var(--muted)">متوسّط زمن ردّ المزوّد</div><div style="font-family:Cairo;font-size:19px;font-weight:700">${base.reply}</div></div>
+      <div><div style="font-size:11.5px;color:var(--muted)">متوسّط تقييم المنصّة</div><div style="font-family:Cairo;font-size:19px;font-weight:700">${base.ratingAvg}</div></div>
+      <div><div style="font-size:11.5px;color:var(--muted)">متوسّط قيمة الحجز</div><div style="font-family:Cairo;font-size:19px;font-weight:700">${base.avgBook}</div></div>
     </div></div>`)
 + card(cardH('توزيع الحجوزات حسب نوع الخدمة') + `<div class="card-b">
-    ${donut([['استلام من المطار',38,'var(--coral)','1,589'],['توصيل للباب',27,'var(--navy)','1,129'],['حجز فوري',24,'var(--green)','1,004'],['تسليم بين المدن',11,'var(--amber)','460']],'4,182','إجمالي الحجوزات')}
+    ${donut(donutSegs, n(base.bookings),'إجمالي الحجوزات')}
   </div>`)
 + `</div>`
 + card(cardH('أعلى المزوّدين أداءً','خلال الفترة المختارة',`<button class="btn ghost sm">عرض كل المزوّدين</button>`)
-  + table(['#','المزوّد','المدينة','الحجوزات','الإيراد (ر.س)','نسبة القبول','التقييم','الحالة'],[
-    ['1',{v:'شركة الصحراء لتأجير السيارات',c:'strong'},'الرياض','642',{v:'286,400',c:'num'},'94%','4.8',bdg('نشط','g')],
-    ['2',{v:'كي رنت',c:'strong'},'جدة','518',{v:'241,900',c:'num'},'91%','4.7',bdg('نشط','g')],
-    ['3',{v:'مسار لتأجير المركبات',c:'strong'},'الدمام','403',{v:'188,200',c:'num'},'88%','4.5',bdg('نشط','g')],
-    ['4',{v:'الوسام كار',c:'strong'},'مكة المكرمة','361',{v:'162,700',c:'num'},'79%','4.1',bdg('تحت المراقبة','a')],
-    ['5',{v:'درب الخليج',c:'strong'},'الرياض','298',{v:'134,500',c:'num'},'92%','4.6',bdg('نشط','g')],
-  ]));
+  + table(['#','المزوّد','المدينة','الحجوزات','الإيراد (ر.س)','نسبة القبول','التقييم','الحالة'], topRows));
+};
 
 /* ========== 2. قائمة المزوّدين ========== */
 S.vendors = () => phead('المزوّدون','كل شركات التأجير المسجّلة على المنصّة وحالتها',['FR-ADV-01','FR-ADV-09'],
@@ -236,14 +344,27 @@ S.deletions = () => phead('طلبات حذف الحساب','تُنفَّذ خل�
 + pager(27,3));
 
 /* ========== 12. الحسابات المشبوهة ========== */
-S.fraud = () => phead('الحسابات المشبوهة','أنماط تستدعي المراجعة، لا اتهاماً — كل حالة تحتاج قراراً بشرياً',['FR-ADM-07'])
-+ card(tabs([{t:'جديدة',n:17,on:1},{t:'قيد المراجعة',n:5},{t:'مؤكّدة',n:9},{t:'مُتجاهَلة',n:42}])
-+ filters(['نوع الإشارة','درجة الخطورة','التاريخ'],'ابحث بالاسم أو الجوال أو الجهاز…')
-+ table(['الحساب','نوع الإشارة','التفاصيل','الخطورة','تاريخ الكشف','الإجراءات'],[
-  [{v:'سلطان ع.<span class="sub">0551119988</span>',c:'strong'},'حسابات متعدّدة بنفس البطاقة','4 حسابات تستخدم بطاقة تنتهي بـ 4419',bdg('مرتفعة','r'),'2026/08/27',`<button class="btn sm" onclick="openM(M.disableUser())">مراجعة</button>`],
-  [{v:'نايف م.<span class="sub">0538820011</span>',c:'strong'},'معدّل إلغاء مرتفع','9 إلغاءات من 11 حجزاً خلال 30 يوماً',bdg('متوسطة','a'),'2026/08/26',`<button class="btn sm" onclick="openM(M.disableUser())">مراجعة</button>`],
-  [{v:'وليد ح.<span class="sub">0509934411</span>',c:'strong'},'محاولات دفع فاشلة متكرّرة','14 محاولة فاشلة بـ 6 بطاقات مختلفة',bdg('مرتفعة','r'),'2026/08/25',`<button class="btn sm" onclick="openM(M.disableUser())">مراجعة</button>`],
-  [{v:'عبير ط.<span class="sub">0544772200</span>',c:'strong'},'حسابات بنفس الجهاز','3 حسابات على نفس معرّف الجهاز',bdg('منخفضة','n'),'2026/08/23',`<button class="btn sm" onclick="openM(M.disableUser())">مراجعة</button>`],
-])
-+ pager(17,2));
+S.fraud = () => {
+  const rows=[
+    {name:'سلطان ع.',phone:'0551119988',signal:'حسابات متعدّدة بنفس البطاقة',detail:'4 حسابات تستخدم بطاقة تنتهي بـ 4419',severity:'مرتفعة',date:'2026/08/27',status:'جديدة'},
+    {name:'نايف م.',phone:'0538820011',signal:'معدّل إلغاء مرتفع',detail:'9 إلغاءات من 11 حجزاً خلال 30 يوماً',severity:'متوسطة',date:'2026/08/26',status:'قيد المراجعة'},
+    {name:'وليد ح.',phone:'0509934411',signal:'محاولات دفع فاشلة متكرّرة',detail:'14 محاولة فاشلة بـ 6 بطاقات مختلفة',severity:'مرتفعة',date:'2026/08/25',status:'جديدة'},
+    {name:'عبير ط.',phone:'0544772200',signal:'حسابات بنفس الجهاز',detail:'3 حسابات على نفس معرّف الجهاز',severity:'منخفضة',date:'2026/08/23',status:'مُتجاهَلة'}
+  ];
+  const acts=r=>{
+    const n=r.name, view=`<button class="btn ghost sm" onclick="WafraOps.openCustomerFile&&WafraOps.openCustomerFile('${n}')">اطلاع على الملف</button>`;
+    if(r.status==='مُتجاهَلة') return `${view}<button class="btn ghost sm" onclick="WafraOps.reopenFraud&&WafraOps.reopenFraud('${n}')">إعادة فتح</button>`;
+    if(r.status==='مؤكّدة') return `${view}<button class="btn danger sm" onclick="WafraOps.freezeFraudAccount&&WafraOps.freezeFraudAccount('${n}')">تجميد الحساب</button>`;
+    if(r.status==='قيد المراجعة') return `${view}<button class="btn coral sm" onclick="WafraOps.confirmFraud&&WafraOps.confirmFraud('${n}')">تأكيد الاشتباه</button><button class="btn ghost sm" onclick="WafraOps.dismissFraud&&WafraOps.dismissFraud('${n}')">تجاهل</button><button class="btn danger sm" onclick="WafraOps.freezeFraudAccount&&WafraOps.freezeFraudAccount('${n}')">تجميد</button>`;
+    return `${view}<button class="btn coral sm" onclick="WafraOps.startFraudReview&&WafraOps.startFraudReview('${n}')">بدء المراجعة</button><button class="btn ghost sm" onclick="WafraOps.dismissFraud&&WafraOps.dismissFraud('${n}')">تجاهل</button>`;
+  };
+  const sev=s=>bdg(s,s==='مرتفعة'?'r':s==='متوسطة'?'a':'n');
+  return phead('الحسابات المشبوهة','أنماط تستدعي المراجعة، لا اتهاماً — الإجراءات حسب حالة كل إشارة',['FR-ADM-07'])
+  + card(`<div class="note info">جديدة ← بدء مراجعة أو تجاهل · قيد المراجعة ← تأكيد / تجاهل / تجميد · مؤكّدة ← تجميد · مُتجاهَلة ← إعادة فتح.</div>`
+  + tabs([{t:'جديدة',n:17,on:1},{t:'قيد المراجعة',n:5},{t:'مؤكّدة',n:9},{t:'مُتجاهَلة',n:42}])
+  + filters(['نوع الإشارة','درجة الخطورة','التاريخ'],'ابحث بالاسم أو الجوال أو الجهاز…')
+  + table(['الحساب','نوع الإشارة','التفاصيل','الخطورة','الحالة','تاريخ الكشف','الإجراءات'],
+    rows.map(r=>[{v:`${r.name}<span class="sub">${r.phone}</span>`,c:'strong'},r.signal,r.detail,sev(r.severity),pill(r.status),r.date,acts(r)]))
+  + pager(17,2));
+};
 </script>

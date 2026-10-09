@@ -1,0 +1,166 @@
+<script>
+/* التظلمات واعتراضات الرسوم — أزرار فعّالة + طلب معلومات بشاشة مستقلة. */
+(function(){
+  const state=window.WAFRA_DATA||(window.WAFRA_DATA={});
+  const save=()=>{try{localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));}catch(e){}};
+  const toast=msg=>{if(typeof window.__toast==='function')window.__toast(msg);else if(WafraOps.demoAction)WafraOps.demoAction(msg);};
+  const dlg=(t,b,f)=>`<div class="modal"><div class="modal-h"><h3>${t}</h3><span class="x" onclick="closeM()">✕</span></div><div class="modal-b">${b}</div><div class="modal-f">${f||'<button class="btn ghost" onclick="closeM()">إغلاق</button>'}</div></div>`;
+  const val=id=>document.getElementById(id)?.value?.trim()||'';
+
+  state.disputesList=state.disputesList||[
+    {id:'DP-441',booking:'BK-20418',customer:'أحمد الشمري',provider:'شركة الصحراء',subject:'مبلغ التأمين',amount:'1,850 ر.س',status:'مفتوح',detail:'صور التسليم توضح عدم وجود ضرر قبل بدء الحجز.',replies:[{at:'اليوم 10:20',who:'النظام',txt:'تم استلام التظلم.'},{at:'اليوم 11:05',who:'الإدارة',txt:'طُلب رد من المزود خلال 48 ساعة.'}]},
+    {id:'DP-428',booking:'BK-20396',customer:'وليد الحربي',provider:'مسار',subject:'رسوم تأخير',amount:'240 ر.س',status:'معلق',detail:'يطلب العميل مراجعة وقت الإرجاع المثبت في النظام.',replies:[{at:'أمس 16:40',who:'العميل',txt:'أُرجعت السيارة في الموعد حسب التطبيق.'}]}
+  ];
+  state.objections=state.objections||[
+    {id:'OB-118',booking:'BK-20418',customer:'أحمد الشمري',provider:'شركة الصحراء',amount:'1,850 ر.س',reason:'رسوم تأمين',status:'مفتوحة',detail:'يعترض العميل على خصم مبلغ التأمين رغم عدم وجود أضرار موثّقة.'},
+    {id:'OB-112',booking:'BK-20396',customer:'وليد الحربي',provider:'مسار',amount:'240 ر.س',reason:'رسوم تأخير',status:'بانتظار قرار',detail:'يطلب مراجعة وقت الإرجاع المسجّل في النظام.'},
+    {id:'OB-104',booking:'BK-20371',customer:'سلمان العنزي',provider:'كي رنت',amount:'110 ر.س',reason:'رسوم تنظيف',status:'مغلقة',detail:'أُغلق بعد تقديم صور التسليم من المزود.'}
+  ];
+
+  Object.assign(WafraOps,{
+    openDispute:id=>{
+      const d=state.disputesList.find(x=>x.id===id); if(!d) return;
+      openM(dlg(`تفاصيل التظلم ${d.id}`,
+        `<div class="dl-grid">
+          <div class="it"><div class="k">رقم الحجز</div><div class="v">${d.booking}</div></div>
+          <div class="it"><div class="k">العميل</div><div class="v">${d.customer}</div></div>
+          <div class="it"><div class="k">المزود</div><div class="v">${d.provider}</div></div>
+          <div class="it"><div class="k">الموضوع</div><div class="v">${d.subject}</div></div>
+          <div class="it"><div class="k">القيمة محل الاعتراض</div><div class="v">${d.amount}</div></div>
+          <div class="it"><div class="k">الحالة</div><div class="v">${d.status}</div></div>
+        </div>
+        <h4 style="margin:14px 0 8px">تفاصيل التظلم</h4><p>${d.detail}</p>`,
+        `<button class="btn ghost" onclick="closeM();WafraOps.openBooking('${d.booking}')">فتح الحجز</button>
+         <button class="btn ghost" onclick="closeM();WafraOps.showDisputeReplies('${d.id}')">عرض الردود</button>
+         <button class="btn coral" onclick="closeM();WafraOps.requestDisputeReply('${d.id}')">طلب رد</button>`
+      ));
+    },
+    showDisputeReplies:id=>{
+      const d=state.disputesList.find(x=>x.id===id); if(!d) return;
+      const rows=(d.replies||[]).map(r=>[r.at,r.who,r.txt]);
+      openM(dlg(`سجل الردود — ${id}`,
+        rows.length?table(['الوقت','الطرف','المحتوى'],rows):`<p class="note info">لا توجد ردود مسجّلة بعد.</p>`,
+        `<button class="btn coral" onclick="closeM();WafraOps.requestDisputeReply('${id}')">طلب رد جديد</button><button class="btn ghost" onclick="closeM()">إغلاق</button>`
+      ));
+    },
+    requestDisputeReply:id=>{
+      openM(dlg(`طلب رد — ${id}`,
+        `${fld('الطرف المطلوب',`<select id="dsp-reply-party" class="native-input"><option>المزود</option><option>العميل</option><option>كلا الطرفين</option></select>`)}
+         ${fld('المهلة',`<select id="dsp-reply-sla" class="native-input"><option>24 ساعة</option><option selected>48 ساعة</option><option>72 ساعة</option></select>`)}
+         ${fld('المطلوب في الرد',`<textarea id="dsp-reply-msg" class="native-input" rows="3" placeholder="مثال: أرفق صور التسليم ووقت الإرجاع المسجّل…"></textarea>`)}`,
+        `<button class="btn coral" onclick="WafraOps.sendDisputeReplyRequest('${id}')">إرسال الطلب</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    sendDisputeReplyRequest:id=>{
+      const msg=val('dsp-reply-msg');
+      if(!msg){toast('اكتب المطلوب في الرد أولاً.');return;}
+      const d=state.disputesList.find(x=>x.id===id);
+      if(d){
+        d.replies=d.replies||[];
+        d.replies.push({at:'الآن',who:'الإدارة',txt:`طلب رد (${val('dsp-reply-party')} · ${val('dsp-reply-sla')}): ${msg}`});
+        if(d.status==='مفتوح') d.status='معلق';
+        save();
+      }
+      closeM(); render(); toast(`تم إرسال طلب الرد لـ ${id}.`);
+    },
+
+    openObjection:id=>{
+      const a=(state.objections||[]).find(x=>x.id===id); if(!a) return;
+      if(!a.detail){
+        a.detail=({
+          'OB-118':'يعترض العميل على خصم مبلغ التأمين رغم عدم وجود أضرار موثّقة.',
+          'OB-112':'يطلب مراجعة وقت الإرجاع المسجّل في النظام.',
+          'OB-104':'أُغلق بعد تقديم صور التسليم من المزود.'
+        })[a.id]||`اعتراض على ${a.reason} بمبلغ ${a.amount}.`;
+      }
+      const closed=a.status==='مغلقة';
+      openM(dlg(`استعراض الاعتراض ${a.id}`,
+        `<div class="dl-grid">
+          <div class="it"><div class="k">الحجز</div><div class="v">${a.booking}</div></div>
+          <div class="it"><div class="k">العميل</div><div class="v">${a.customer}</div></div>
+          <div class="it"><div class="k">المزود</div><div class="v">${a.provider}</div></div>
+          <div class="it"><div class="k">المبلغ</div><div class="v">${a.amount}</div></div>
+          <div class="it"><div class="k">السبب</div><div class="v">${a.reason}</div></div>
+          <div class="it"><div class="k">الحالة</div><div class="v">${a.status}</div></div>
+        </div>
+        <h4 style="margin:14px 0 8px">تفاصيل الاعتراض</h4>
+        <p>${a.detail}</p>
+        ${a.infoRequest?`<div class="note info" style="margin-top:12px"><b>طلب معلومات سابق:</b> ${a.infoRequest}</div>`:''}
+        ${a.note?`<div class="note" style="margin-top:8px"><b>ملاحظة القرار:</b> ${a.note}</div>`:''}`,
+        closed
+          ?`<button class="btn ghost" onclick="closeM()">إغلاق</button><button class="btn ghost" onclick="closeM();WafraOps.openBooking('${a.booking}')">فتح الحجز</button>`
+          :`<button class="btn ghost" onclick="closeM();WafraOps.openBooking('${a.booking}')">فتح الحجز</button>
+            <button class="btn ghost" onclick="WafraOps.requestObjectionInfo('${a.id}')">طلب معلومات</button>
+            <button class="btn coral" onclick="WafraOps.resolveObjectionForm('${a.id}')">قبول وإغلاق</button>`
+      ));
+    },
+    requestObjectionInfo:id=>{
+      openM(dlg(`طلب معلومات — ${id}`,
+        `<p class="sub" style="margin:0 0 12px">حدد المعلومات المطلوبة من العميل أو المزود لمتابعة الاعتراض.</p>
+         ${fld('المطلوب منه',`<select id="obj-info-from" class="native-input"><option>العميل</option><option>المزود</option><option>كلا الطرفين</option></select>`)}
+         ${fld('نوع المعلومات',`<select id="obj-info-type" class="native-input"><option>صور / مرفقات</option><option>توضيح كتابي</option><option>إثبات وقت / موقع</option><option>فاتورة أو إيصال</option><option>أخرى</option></select>`)}
+         ${fld('ما هي المعلومات المطلوبة؟',`<textarea id="obj-info-detail" class="native-input" rows="4" placeholder="اكتب بوضوح ما المطلوب إرفاقه أو توضيحه…"></textarea>`)}
+         ${fld('المهلة',`<select id="obj-info-sla" class="native-input"><option>24 ساعة</option><option selected>48 ساعة</option><option>72 ساعة</option></select>`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveObjectionInfoRequest('${id}')">إرسال طلب المعلومات</button><button class="btn ghost" onclick="closeM();WafraOps.openObjection('${id}')">رجوع</button>`
+      ));
+    },
+    saveObjectionInfoRequest:id=>{
+      const detail=val('obj-info-detail');
+      if(!detail){toast('اكتب المعلومات المطلوبة أولاً.');return;}
+      const a=state.objections.find(x=>x.id===id); if(!a) return;
+      a.infoRequest=`من ${val('obj-info-from')} · ${val('obj-info-type')} · مهلة ${val('obj-info-sla')}: ${detail}`;
+      a.status='بانتظار قرار';
+      save(); closeM(); render();
+      toast(`تم إرسال طلب المعلومات لـ ${id}.`);
+    },
+    resolveObjectionForm:id=>{
+      openM(dlg(`قبول وإغلاق — ${id}`,
+        `${fld('ملخص القرار',`<textarea id="obj-resolve-note" class="native-input" rows="3" placeholder="اكتب قرار الإغلاق والسبب للعميل والمزود"></textarea>`)}
+         ${fld('الاسترداد',`<select id="obj-resolve-refund" class="native-input"><option>بدون استرداد</option><option>استرداد جزئي</option><option>استرداد كامل</option></select>`)}`,
+        `<button class="btn coral" onclick="WafraOps.resolveObjection('${id}','مغلقة')">تأكيد الإغلاق</button><button class="btn ghost" onclick="closeM();WafraOps.openObjection('${id}')">رجوع</button>`
+      ));
+    },
+    resolveObjection:(id,status)=>{
+      const a=state.objections.find(x=>x.id===id); if(!a) return;
+      const note=val('obj-resolve-note')||document.getElementById('objection-note-local')?.value?.trim()||'';
+      if(status==='مغلقة'&&!note){toast('اكتب ملخص القرار أولاً.');return;}
+      a.status=status;
+      a.note=note+(val('obj-resolve-refund')?` · ${val('obj-resolve-refund')}`:'');
+      save(); closeM(); render(); toast('تم تحديث حالة الاعتراض.');
+    }
+  });
+
+  const disputeActs=d=>{
+    const view=`<button class="btn ghost sm" onclick="WafraOps.openDispute('${d.id}')">إطلاع</button>`;
+    if(d.status==='مغلق') return `${view}<button class="btn ghost sm" onclick="WafraOps.showDisputeReplies('${d.id}')">عرض الردود</button>`;
+    if(d.status==='معلق') return `${view}<button class="btn ghost sm" onclick="WafraOps.requestDisputeReply('${d.id}')">طلب رد</button>`;
+    return `${view}<button class="btn ghost sm" onclick="WafraOps.showDisputeReplies('${d.id}')">عرض الردود</button>`;
+  };
+
+  S.disputes=()=>{
+    const f=window.__disputeFilter||{};
+    const rows=state.disputesList.filter(d=>!f.status||d.status===f.status);
+    return phead('قائمة التظلمات','البحث برقم الحجز أو المزود أو رقم العميل مع ردود التظلم',[],
+      `<button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('قائمة التظلمات','Excel')">Excel ⤓</button>
+       <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('قائمة التظلمات','PDF')">PDF ⤓</button>`)
+      +card(`<div class="filters">${fld('الحالة',`<select class="native-input" onchange="window.__disputeFilter={status:this.value||''};render()"><option value="">كل الحالات</option>${['مفتوح','معلق','مغلق'].map(x=>`<option value="${x}" ${f.status===x?'selected':''}>${x}</option>`).join('')}</select>`)}<label class="fsearch">⌕ <input placeholder="اكتب للبحث…"></label></div>
+        <div class="card-b">${table(['رقم التظلم','رقم الحجز','العميل','المزود','الموضوع','الحالة','الإجراءات'],
+          rows.map(d=>[d.id,d.booking,d.customer,d.provider,d.subject,pill(d.status,d.status==='مفتوح'?'r':d.status==='معلق'?'a':'n'),disputeActs(d)]))}</div>`);
+  };
+
+  S.objections=()=>{
+    const active=window.__objectionsTab||'الكل';
+    const items=state.objections.filter(x=>active==='الكل'||x.status===active);
+    const tone=s=>s==='مغلقة'?'g':s==='بانتظار قرار'?'a':'r';
+    return phead('اعتراضات الرسوم والغرامات','مراجعة الاعتراضات وقراراتها — طلب المعلومات يظهر شاشة مستقلة',[],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('اعتراضات-الرسوم','Excel')">Excel ⤓</button>`)
+      +card(`<div class="tabs">${['الكل','مفتوحة','بانتظار قرار','مغلقة'].map(x=>`<button class="tab ${active===x?'on':''}" onclick="WafraOps.objectionsTab('${x}')">${x}</button>`).join('')}</div>
+        <div class="filters"><label class="fsearch">⌕ <input placeholder="ابحث برقم الاعتراض أو الحجز"></label></div>
+        <div class="card-b">${table(['الاعتراض','الحجز','العميل','المزود','المبلغ','السبب','الحالة','الإجراء'],
+          items.map(x=>[x.id,x.booking,x.customer,x.provider,x.amount,x.reason,pill(x.status,tone(x.status)),
+            `<button class="btn ghost sm" onclick="WafraOps.openObjection('${x.id}')">استعراض</button>`]))}</div>`);
+  };
+
+  if(!WafraOps.objectionsTab) WafraOps.objectionsTab=t=>{window.__objectionsTab=t;render();};
+})();
+</script>

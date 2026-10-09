@@ -57,7 +57,15 @@
   const home=NAV.find(x=>x.g===null), providers=NAV.find(x=>x.g==='المزوّدون'), fleet=NAV.find(x=>x.g==='إدارة الأسطول'), bookings=NAV.find(x=>x.g==='الحجوزات');
   if(home){home.items=home.items.filter(x=>!['inbox','messages'].includes(x.k)); if(!home.items.some(x=>x.k==='analytics'))home.items.push({k:'analytics',t:'التحليلات',i:'◫'});}
   if(providers){const k=providers.items.find(x=>x.k==='kyc');if(k)k.t='طلبات الاعتماد';if(!providers.items.some(x=>x.k==='providerPerformance'))providers.items.push({k:'providerPerformance',t:'أداء المزودين',i:'◷'});}
-  if(fleet){if(!fleet.items.some(x=>x.k==='fleetDynamic'))fleet.items.push({k:'fleetDynamic',t:'التسعير الديناميكي',i:'↕'});if(!fleet.items.some(x=>x.k==='fleetQuality'))fleet.items.push({k:'fleetQuality',t:'مراقبة جودة الأسطول',i:'✓'});}
+  if(fleet){
+    if(!fleet.items.some(x=>x.k==='fleetAddons')){
+      const svcIdx=fleet.items.findIndex(x=>x.k==='fleetServices');
+      const addon={k:'fleetAddons',t:'الإضافات',i:'＋'};
+      if(svcIdx>=0) fleet.items.splice(svcIdx+1,0,addon); else fleet.items.push(addon);
+    }
+    if(!fleet.items.some(x=>x.k==='fleetDynamic'))fleet.items.push({k:'fleetDynamic',t:'التسعير الديناميكي',i:'↕'});
+    if(!fleet.items.some(x=>x.k==='fleetQuality'))fleet.items.push({k:'fleetQuality',t:'مراقبة جودة الأسطول',i:'✓'});
+  }
   if(bookings){const k=bookings.items.find(x=>x.k==='bookings');if(k)k.t='قائمة الحجوزات';if(!bookings.items.some(x=>x.k==='cancellationRequests'))bookings.items.push({k:'cancellationRequests',t:'طلبات الإلغاء',i:'↩',n:2});}
   const users=NAV.find(x=>x.g==='المستخدمون'); if(users){users.g='العملاء';const u=users.items.find(x=>x.k==='users');if(u)u.t='قائمة العملاء';}
   NAV.forEach(g=>g.items.forEach(i=>window.TITLES[i.k]=i.t));

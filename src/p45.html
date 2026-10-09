@@ -1,0 +1,50 @@
+<script>
+/* تفاصيل المزود: نظرة عامة ثابتة أعلى الصفحة، والتبويبات تحتها بدون تكرار الفروع. */
+(function(){
+  const setTab=t=>{window.__providerTab=t;render();};
+  Object.assign(WafraOps,{
+    switchProviderTab:setTab,
+    providerTeamTab:setTab
+  });
+  const overviewHead=()=>`<div class="grid2" style="margin-bottom:14px">${card(cardH('بيانات الاعتماد')+`<div class="card-b">${dl([['اسم المزود','شركة الصحراء لتأجير السيارات'],['السجل التجاري','1010893442'],['المدينة الرئيسية','الرياض'],['البريد','info@sahra.example'],['رقم التواصل','920000000'],['الحالة',typeof pill==='function'?pill('نشط'):bdg('نشط','g')]])}</div>`)}${card(cardH('ملخص مالي وتشغيلي')+`<div class="card-b">${dl([['إجمالي الإيرادات','286,400 ر.س'],['عمولة المنصة','34,368 ر.س'],['الحجوزات النشطة','23'],['السيارات المتاحة','214'],['خدمة التوصيل','مفعلة'],['آخر تحديث','28 سبتمبر 2026']])}</div>`)}</div>`;
+  const tabNav=active=>{
+    const tabs=[{k:'branches',t:'الفروع'},{k:'fleet',t:'الأسطول'},{k:'bookings',t:'الحجوزات'},{k:'ratings',t:'التقييمات'},{k:'pricing',t:'التسعير'},{k:'services',t:'الخدمات'},{k:'documents',t:'المستندات'},{k:'permissions',t:'الصلاحيات'}];
+    return `<div class="tabs">${tabs.map(x=>`<button type="button" class="tab ${active===x.k?'on':''}" onclick="WafraOps.switchProviderTab('${x.k}')">${x.t}</button>`).join('')}</div>`;
+  };
+  const status=v=>typeof pill==='function'?pill(v):bdg(v,v==='نشط'||v==='مفعلة'||v==='مكتمل'?'g':'a');
+  const amt=v=>({v:v+' ر.س',c:'num'});
+  S.vendorFile=()=>{
+    let active=window.__providerTab||'branches';
+    if(active==='overview'||active==='team') active=active==='team'?'permissions':'branches';
+    window.__providerTab=active;
+    const bodies={
+      branches:table(['الفرع','المدينة','النوع','السيارات المتاحة','الحجوزات','الإيرادات','الحالة','الإجراء'],[
+        ['مطار الملك خالد','الرياض','مطار','48','12',amt('86,400'),status('نشط'),`<a class="btn ghost sm" href="#branchDetail">استعراض</a>`],
+        ['طريق الملك عبدالعزيز','الرياض','داخلي','36','7',amt('62,200'),status('نشط'),`<a class="btn ghost sm" href="#branchDetail">استعراض</a>`],
+        ['جدة الشمالية','جدة','داخلي','31','4',amt('45,600'),status('نشط'),`<a class="btn ghost sm" href="#branchDetail">استعراض</a>`]
+      ]),
+      fleet:table(['السيارة','الفئة','الموديل','المتاح','الحالة','الإجراء'],[
+        ['كامري 2026','سيدان','كامري','48',status('مفعلة'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل السيارة')">تعديل</button>`],
+        ['إلنترا 2025','اقتصادية','إلنترا','36',status('مفعلة'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل السيارة')">تعديل</button>`],
+        ['K5 2026','سيدان','K5','0',bdg('إتاحتها صفر','r'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('فتح السيارة')">إطلاع</button>`]
+      ]),
+      bookings:table(['رقم الحجز','السيارة','العميل','الاستلام','التسليم','الفرع','المدفوع','الحالة','الإجراء'],[
+        ['BK-2048','كامري 2026','أحمد الشمري','25 أغسطس','28 أغسطس','مطار الملك خالد',amt('570'),status('نشط'),`<a class="btn ghost sm" href="#booking">إطلاع</a>`],
+        ['BK-2039','إلنترا 2025','نورة القحطاني','24 أغسطس','26 أغسطس','جدة الشمالية',amt('380'),status('مكتمل'),`<a class="btn ghost sm" href="#booking">إطلاع</a>`]
+      ]),
+      ratings:table(['العميل','التقييم','الملاحظة','التاريخ'],[['أحمد الشمري','5 / 5','سهولة الاستلام وحسن الخدمة','اليوم'],['نورة القحطاني','4 / 5','السيارة نظيفة','أمس']]),
+      pricing:table(['الموديل','يومي','أسبوعي','شهري'],[['كامري',amt('190'),amt('1,140'),amt('4,200')],['إلنترا',amt('145'),amt('870'),amt('3,220')]]),
+      services:table(['الخدمة','الرسوم','الفروع','الحالة'],[['استلام من الفرع',amt('0'),'7',status('مفعلة')],['توصيل',amt('45'),'6',status('مفعلة')]]),
+      documents:table(['المستند','الرقم','تاريخ الانتهاء','الحالة','الإجراء'],[
+        ['السجل التجاري','1010893442','30 ديسمبر 2027',status('مكتمل'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('عرض السجل')">إطلاع</button>`],
+        ['الرخصة التجارية','RL-55021','15 مايو 2027',status('مكتمل'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('تحديث الرخصة')">تعديل</button>`],
+        ['وثيقة التأمين','INS-2026-92','02 يناير 2027',status('مكتمل'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('عرض التأمين')">إطلاع</button>`]
+      ]),
+      permissions:`<h3 style="margin:0 0 10px">صلاحيات الفروع</h3>${[['مطار الملك خالد','الرياض · 48 سيارة'],['طريق الملك عبدالعزيز','الرياض · 36 سيارة'],['جدة الشمالية','جدة · 31 سيارة']].map((x,i)=>`<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:12px"><div><b>${x[0]}</b><span class="sub">${x[1]}</span></div>${status('نشط')}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn coral sm" onclick="WafraOps.demoAction('تبديل الحجوزات')">الحجوزات ✓</button><button class="btn ghost sm" onclick="WafraOps.demoAction('تبديل التوصيل')">التوصيل ○</button><button class="btn ghost sm" onclick="WafraOps.demoAction('تبديل الظهور')">الظهور بالبحث ○</button>${i===2?'':`<button class="btn ghost sm" onclick="WafraOps.demoAction('تبديل التأجير')">التأجير الذاتي ○</button>`}</div></div>`).join('')}`
+    };
+    return phead('تفاصيل المزود','بيانات شاملة للمزود وفروعه وأسطوله وحجوزاته',[],`<a class="btn ghost" href="#vendors">‹ رجوع لقائمة المزودين</a><button class="btn coral" onclick="WafraOps.editProvider?WafraOps.editProvider('PV-001'):WafraOps.demoAction('تعديل بيانات المزود')">تعديل بيانات المزود</button>`)
+      +overviewHead()
+      +card(tabNav(active)+`<div class="card-b">${bodies[active]||bodies.branches}</div>`);
+  };
+})();
+</script>

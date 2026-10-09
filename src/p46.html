@@ -1,0 +1,23 @@
+<script>
+/* طابور الاعتماد: أزرار الإجراءات حسب الحالة فقط. */
+(function(){
+  const acts=a=>{
+    const id=a.id, st=a.status;
+    const view=`<button class="btn ghost sm" onclick="WafraOps.viewApproval('${id}')">استعراض</button>`;
+    if(st==='معتمد') return `<div class="approval-actions">${view}<a class="btn ghost sm" href="#vendorFile">فتح الملف</a></div>`;
+    if(st==='مرفوض') return `<div class="approval-actions">${view}<button class="btn ghost sm" onclick="WafraOps.viewApproval('${id}')">عرض سبب الرفض</button></div>`;
+    if(st==='طلب وثائق') return `<div class="approval-actions">${view}<button class="btn ghost sm" onclick="WafraOps.requestDocs('${id}')">تذكير بالوثائق</button><button class="btn danger sm" onclick="WafraOps.approvalDecision('${id}','مرفوض')">رفض</button></div>`;
+    return `<div class="approval-actions">${view}<button class="btn ghost sm" onclick="WafraOps.requestDocs('${id}')">طلب وثائق</button><button class="btn coral sm" onclick="WafraOps.approvalDecision('${id}','معتمد')">اعتماد</button><button class="btn danger sm" onclick="WafraOps.approvalDecision('${id}','مرفوض')">رفض</button></div>`;
+  };
+  const tone=s=>s==='معتمد'||s==='مكتمل'?'g':s==='مرفوض'?'r':'a';
+  S.kyc=()=>{
+    const state=window.WAFRA_DATA||{};
+    const rows=state.approvals||[];
+    return phead('طابور الاعتماد','مراجعة بيانات المزود والمستندات — الإجراءات تظهر حسب حالة كل طلب',[],`<button class="btn ghost" onclick="WafraOps.exportApprovals&&WafraOps.exportApprovals()">Excel ⤓</button><button class="btn ghost" onclick="window.print()">PDF ⤓</button>`)
+      +card(`<div class="note info">طلب وثائق ← تذكير أو رفض · مكتمل ← اعتماد أو رفض · معتمد ← فتح الملف · مرفوض ← عرض السبب.</div><div class="card-b">${table(['رقم الطلب','المزود','المدينة','المستندات','الحالة','تاريخ التقديم','الإجراءات'],rows.map(a=>[a.id,a.provider,a.city,`${a.docs}/${a.total}`,pill(a.status,tone(a.status)),a.date,acts(a)]))}</div>`);
+  };
+  const nav=NAV.find(g=>g.g==='المزوّدون'||g.g==='المزودون');
+  if(nav){const k=nav.items.find(x=>x.k==='kyc'); if(k) k.t='طابور الاعتماد';}
+  if(window.TITLES) window.TITLES.kyc='طابور الاعتماد';
+})();
+</script>

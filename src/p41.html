@@ -73,10 +73,73 @@
     return `<select class="ix-ysel" id="${id}" onchange="WafraOps.ixSelect('${id}',this.value)"><option value="" ${!cur?'selected':''}>${all}</option>${opts.map(o=>`<option value="${o}" ${cur===o?'selected':''}>${o}</option>`).join('')}</select>`;
   };
 
+  const LC_FLOW=[
+    {stage:'بانتظار التسليم',tone:'r',next:'تم التسليم',btn:'تأكيد تم التسليم'},
+    {stage:'تم التسليم',tone:'g',next:'قيد الاستخدام',btn:'تأكيد قيد الاستخدام'},
+    {stage:'قيد الاستخدام',tone:'g',next:'بانتظار الفحص',btn:'تأكيد بانتظار الفحص'},
+    {stage:'بانتظار الفحص',tone:'a',next:'مكتمل',btn:'تأكيد مكتمل'},
+    {stage:'مكتمل',tone:'g',next:null,btn:null}
+  ];
+  const lcMeta=s=>LC_FLOW.find(x=>x.stage===s)||LC_FLOW[0];
+  const ensureLc=()=>{
+    if(!window.__ixLifecycle) window.__ixLifecycle=[
+      {id:'BK-20010',customer:'أحمد العتيبي',car:'نيسان التيما 2021',stage:'بانتظار التسليم',photos:'2',docs:'✓',damage:'—'},
+      {id:'BK-20014',customer:'عبدالله الزهراني',car:'هيونداي أكسنت 2020',stage:'تم التسليم',photos:'4',docs:'✓',damage:'—'},
+      {id:'BK-20018',customer:'سارة القحطاني',car:'تويوتا لاندكروزر 2025',stage:'قيد الاستخدام',photos:'6',docs:'✓',damage:'—'},
+      {id:'BK-20022',customer:'فهد الشمري',car:'كامري 2026',stage:'بانتظار الفحص',photos:'8',docs:'✓',damage:'—'},
+      {id:'BK-20026',customer:'نورة الدوسري',car:'K5 2026',stage:'بانتظار التسليم',photos:'0',docs:'○',damage:'—'},
+      {id:'BK-20030',customer:'خالد الحربي',car:'كورولا 2025',stage:'قيد الاستخدام',photos:'5',docs:'✓',damage:'—'}
+    ];
+    return window.__ixLifecycle;
+  };
+  const SEG_OPTS=['موثوق','عادي','مراقب','عالي المخاطر'];
+  const segTone=s=>({موثوق:'g',عادي:'n',مراقب:'a','عالي المخاطر':'r'}[s]||'n');
+  const segDeposit=s=>({موثوق:['0%','أساسي'],عادي:['0%','أساسي'],مراقب:['25%','شامل'],'عالي المخاطر':['50%','شامل']}[s]||['0%','أساسي']);
+  const ensureLy=()=>{
+    if(!window.__ixLoyalty) window.__ixLoyalty=[
+      {name:'بدر الشمري',city:'تبوك',bookings:'42',score:'100',segment:'موثوق',deposit:'0%',insurance:'أساسي'},
+      {name:'يوسف الحربي',city:'الخبر',bookings:'28',score:'100',segment:'مراقب',deposit:'25%',insurance:'شامل'},
+      {name:'أحمد العتيبي',city:'نجران',bookings:'68',score:'100',segment:'موثوق',deposit:'0%',insurance:'أساسي'},
+      {name:'نورة القحطاني',city:'مكة المكرمة',bookings:'35',score:'100',segment:'عادي',deposit:'0%',insurance:'أساسي'},
+      {name:'سارة الدوسري',city:'أبها',bookings:'19',score:'100',segment:'مراقب',deposit:'25%',insurance:'شامل'},
+      {name:'خالد المطيري',city:'الرياض',bookings:'54',score:'100',segment:'عالي المخاطر',deposit:'50%',insurance:'شامل'},
+      {name:'ريم الشمري',city:'جدة',bookings:'14',score:'100',segment:'موثوق',deposit:'0%',insurance:'أساسي'},
+      {name:'وليد العنزي',city:'الدمام',bookings:'22',score:'100',segment:'عادي',deposit:'0%',insurance:'أساسي'}
+    ];
+    return window.__ixLoyalty;
+  };
+
   Object.assign(WafraOps,{
     ixFilter:v=>{window.__ixQ=(v||'').trim();render();},
     ixSelect:(id,v)=>{window.__ixSel=window.__ixSel||{};window.__ixSel[id]=v;render();},
     ixAction:t=>toast(t),
+    advanceLifecycle:id=>{
+      const row=ensureLc().find(x=>x.id===id); if(!row) return;
+      const meta=lcMeta(row.stage);
+      if(!meta.next){toast('الحجز مكتمل مسبقاً');return;}
+      row.stage=meta.next;
+      if(row.stage!=='بانتظار التسليم') row.docs='✓';
+      if(row.photos==='0') row.photos='2';
+      toast('تم تحديث '+id+' إلى: '+row.stage);
+      render();
+    },
+    openLoyaltySegment:name=>{
+      const row=ensureLy().find(x=>x.name===name); if(!row) return;
+      const opts=SEG_OPTS.map(o=>`<option value="${o}" ${o===row.segment?'selected':''}>${o}</option>`).join('');
+      openM(modal('تعديل شريحة العميل',
+        `<div style="margin-bottom:10px;font:800 14px Cairo;color:var(--ink)">${row.name}</div>
+         ${note('info','تنبيه','الشريحة المحسوبة حالياً: '+row.segment+'. التعديل اليدوي يتجاوز الحساب الآلي.')}
+         ${fld('الشريحة الجديدة',`<select id="ly-seg-new" class="native-input">${opts}</select>`)}`,
+        `<button type="button" class="btn coral" onclick='WafraOps.saveLoyaltySegment(${JSON.stringify(row.name)})'>حفظ</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>`,
+        true));
+    },
+    saveLoyaltySegment:name=>{
+      const row=ensureLy().find(x=>x.name===name); if(!row) return;
+      const next=document.getElementById('ly-seg-new')?.value||row.segment;
+      row.segment=next;
+      const d=segDeposit(next); row.deposit=d[0]; row.insurance=d[1];
+      closeM(); toast('تم تحديث شريحة '+name+' إلى '+next); render();
+    },
     openReport:k=>{
       const map={supply:'supplyDemand',readiness:'fleetReadiness',utilization:'fleetUtil',forecast:'demandForecast',lifecycle:'bookingLifecycle',loyalty:'customerLoyalty',commission:'commissionTiers',violations:'violationsDeposits'};
       location.hash='#'+(map[k]||'supplyDemand');
@@ -194,19 +257,20 @@
   /* 5 — دورة حياة الحجز */
   S.bookingLifecycle=()=>{
     const stage=window.__ixSel?.lcStage||'';
-    const all=[
-      ['BK-20010','أحمد العتيبي','نيسان التيما 2021',bdg('بانتظار التسليم','r'),'2','✓','—',`<button class="ix-gbtn" onclick="WafraOps.ixAction('تأكيد تم التسليم — BK-20010')">تأكيد تم التسليم</button>`],
-      ['BK-20014','عبدالله الزهراني','هيونداي أكسنت 2020',bdg('تم التسليم','g'),'4','✓','—',`<button class="ix-gbtn" onclick="WafraOps.ixAction('تأكيد قيد الاستخدام — BK-20014')">تأكيد قيد الاستخدام</button>`],
-      ['BK-20018','سارة القحطاني','تويوتا لاندكروزر 2025',bdg('قيد الاستخدام','g'),'6','✓','—',`<button class="ix-gbtn" onclick="WafraOps.ixAction('تأكيد بانتظار الفحص — BK-20018')">تأكيد بانتظار الفحص</button>`],
-      ['BK-20022','فهد الشمري','كامري 2026',bdg('بانتظار الفحص','a'),'8','✓','—',`<button class="ix-gbtn" onclick="WafraOps.ixAction('تأكيد مكتمل — BK-20022')">تأكيد مكتمل</button>`],
-      ['BK-20026','نورة الدوسري','K5 2026',bdg('بانتظار التسليم','r'),'0','○','—',`<button class="ix-gbtn" onclick="WafraOps.ixAction('تأكيد تم التسليم — BK-20026')">تأكيد تم التسليم</button>`],
-      ['BK-20030','خالد الحربي','كورولا 2025',bdg('قيد الاستخدام','g'),'5','✓','—',`<button class="ix-gbtn" onclick="WafraOps.ixAction('تأكيد بانتظار الفحص — BK-20030')">تأكيد بانتظار الفحص</button>`]
-    ];
+    const list=ensureLc();
+    const all=list.map(r=>{
+      const meta=lcMeta(r.stage);
+      const act=meta.btn
+        ? `<button type="button" class="ix-gbtn" onclick="WafraOps.advanceLifecycle('${r.id}')">${meta.btn}</button>`
+        : bdg('مكتمل','g');
+      return [r.id,r.customer,r.car,bdg(r.stage,meta.tone),r.photos,r.docs,r.damage,act];
+    });
     let rows=sf(all,[0,1,2]);
     if(stage) rows=rows.filter(r=>String(r[3]).includes(stage));
+    const cnt=s=>list.filter(x=>x.stage===s).length;
     return phead('دورة حياة الحجز','نتتبع التسليم والاستلام والفحص والإصلاح بالتصوير والتوثيق لتقليل نزاعات الأضرار',[])
       +`<div class="ix-wrap">
-        <div class="ix-kpis c4">${kpi('◷','بانتظار التسليم','11')}${kpi('🛞','قيد الاستخدام','10')}${kpi('⚠','بانتظار الفحص','12')}${kpi('✓','مكتملة','0')}</div>
+        <div class="ix-kpis c4">${kpi('◷','بانتظار التسليم',String(cnt('بانتظار التسليم')))}${kpi('🛞','قيد الاستخدام',String(cnt('قيد الاستخدام')))}${kpi('⚠','بانتظار الفحص',String(cnt('بانتظار الفحص')))}${kpi('✓','مكتملة',String(cnt('مكتمل')))}</div>
         ${tools('بحث بالعميل...',sel('lcStage',['بانتظار التسليم','تم التسليم','قيد الاستخدام','بانتظار الفحص','مكتمل'],'كل المراحل'))}
         <div class="ix-panel"><div class="ix-panel-b">${table(['الحجز','العميل','السيارة','المرحلة','الصور','التوثيق','الأضرار',''],rows)}${foot(46,4)}</div></div>
       </div>`;
@@ -215,23 +279,16 @@
   /* 6 — ولاء وتصنيف العملاء */
   S.customerLoyalty=()=>{
     const seg=window.__ixSel?.lySeg||'';
-    const all=[
-      ['بدر الشمري','تبوك','42','100',bdg('موثوق','g'),'0%','أساسي'],
-      ['يوسف الحربي','الخبر','28','100',bdg('مراقب','a'),'25%','شامل'],
-      ['أحمد العتيبي','نجران','68','100',bdg('موثوق','g'),'0%','أساسي'],
-      ['نورة القحطاني','مكة المكرمة','35','100',bdg('عادي','n'),'0%','أساسي'],
-      ['سارة الدوسري','أبها','19','100',bdg('مراقب','a'),'25%','شامل'],
-      ['خالد المطيري','الرياض','54','100',bdg('عالي المخاطر','r'),'50%','شامل'],
-      ['ريم الشمري','جدة','14','100',bdg('موثوق','g'),'0%','أساسي'],
-      ['وليد العنزي','الدمام','22','100',bdg('عادي','n'),'0%','أساسي']
-    ];
+    const list=ensureLy();
+    const all=list.map(r=>[r.name,r.city,r.bookings,r.score,bdg(r.segment,segTone(r.segment)),r.deposit,r.insurance]);
     let rows=sf(all,[0,1]);
     if(seg) rows=rows.filter(r=>String(r[4]).includes(seg));
+    const cnt=s=>list.filter(x=>x.segment===s).length;
     return phead('ولاء وتصنيف العملاء','تصنيف المستأجرين حسب الولاء والمخاطر — يؤثر على الوديعة والتأمين المطلوبين',[])
       +`<div class="ix-wrap">
-        <div class="ix-kpis c4">${kpi('🛡','موثوق','357')}${kpi('👤','عادي','19')}${kpi('⚠','مراقب','88')}${kpi('🛡','عالي المخاطر','56')}</div>
-        ${tools('بحث بالاسم...',sel('lySeg',['موثوق','عادي','مراقب','عالي المخاطر'],'كل الشرائح'))}
-        <div class="ix-panel"><div class="ix-panel-b">${table(['العميل','المدينة','الحجوزات','درجة الولاء','الشريحة','الرصيد المطلوب','التأمين',''],rows.map(r=>[...r,`<button class="ix-wbtn" onclick="WafraOps.ixAction('تعديل شريحة ${r[0]}')">تعديل الشريحة</button>`]))}${foot(520,44)}</div></div>
+        <div class="ix-kpis c4">${kpi('🛡','موثوق',String(cnt('موثوق')))}${kpi('👤','عادي',String(cnt('عادي')))}${kpi('⚠','مراقب',String(cnt('مراقب')))}${kpi('🛡','عالي المخاطر',String(cnt('عالي المخاطر')))}</div>
+        ${tools('بحث بالاسم...',sel('lySeg',SEG_OPTS,'كل الشرائح'))}
+        <div class="ix-panel"><div class="ix-panel-b">${table(['العميل','المدينة','الحجوزات','درجة الولاء','الشريحة','الرصيد المطلوب','التأمين',''],rows.map(r=>[...r,`<button type="button" class="ix-wbtn" onclick='WafraOps.openLoyaltySegment(${JSON.stringify(r[0])})'>تعديل الشريحة</button>`]))}${foot(520,44)}</div></div>
       </div>`;
   };
 

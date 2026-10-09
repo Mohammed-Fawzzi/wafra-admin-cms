@@ -2,7 +2,7 @@
 /* أمثلة بيانات محلية لشاشات كانت تعتمد سابقاً على API غير مهيأ. */
 (function(){
   const state=window.WAFRA_DATA||{};const save=()=>localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));
-  const oldMount=mountResource;mountResource=async(hostId,resource,renderData)=>{if(['resource-welcomeCoupon','resource-integrationStatus'].includes(hostId))return;return oldMount(hostId,resource,renderData);};
+  const oldMount=mountResource;mountResource=async(hostId,resource,renderData)=>{if(['resource-welcomeCoupon','resource-integrationStatus','resource-reports'].includes(hostId))return;return oldMount(hostId,resource,renderData);};
   const reports=NAV.find(x=>x.g==='التقارير');if(reports){const i=NAV.indexOf(reports);if(i>1){NAV.splice(i,1);NAV.splice(1,0,reports);}}
   const providers=NAV.find(x=>x.g==='المزوّدون');if(providers&&!providers.items.some(x=>x.k==='providerPerformance'))providers.items.splice(1,0,{k:'providerPerformance',t:'أداء المزودين',i:'◷'});
   state.welcomeCoupon=state.welcomeCoupon||{active:true,code:'WELCOME10',type:'نسبة مئوية',value:'10%',perCustomerLimit:'1',totalLimit:'5,000',start:'01/10/2026',end:'31/12/2026',uses:'1,204'};

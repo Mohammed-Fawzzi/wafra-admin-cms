@@ -28,7 +28,7 @@
   if(providerNav){providerNav.g='المزودون';providerNav.items=[{k:'vendors',t:'قائمة المزودين',i:'🏢'},{k:'kyc',t:'طابور الاعتماد',i:'📋',n:9},{k:'vendorFile',t:'ملف مزود',i:'📁',sub:'vendors'}];}
   const oldFleet=NAV.find(g=>g.g==='المركبات'||g.g==='السيارات والماركات والموديلات');
   if(oldFleet){oldFleet.g='الفروع';oldFleet.items=[{k:'branchAreas',t:'المناطق والمدن',i:'◉'},{k:'branches',t:'قائمة الفروع',i:'📍'},{k:'intercityFees',t:'رسوم بين المدن',i:'↔'}];}
-  const branchIndex=NAV.indexOf(oldFleet); NAV.splice(branchIndex+1,0,{g:'إدارة الأسطول',items:[{k:'fleetCategories',t:'الفئات',i:'◈'},{k:'fleetMakesModels',t:'الماركات والموديلات',i:'🏷'},{k:'fleetAvailable',t:'السيارات المتاحة',i:'🚗'},{k:'fleetPricing',t:'التسعير',i:'◷'},{k:'fleetServices',t:'الخدمات',i:'✚'},{k:'fleetReview',t:'مراقبة الإتاحة',i:'⚠',n:8}]});
+  const branchIndex=NAV.indexOf(oldFleet); NAV.splice(branchIndex+1,0,{g:'إدارة الأسطول',items:[{k:'fleetCategories',t:'الفئات',i:'◈'},{k:'fleetMakesModels',t:'الماركات والموديلات',i:'🏷'},{k:'fleetAvailable',t:'السيارات المتاحة',i:'🚗'},{k:'fleetPricing',t:'التسعير',i:'◷'},{k:'fleetServices',t:'الخدمات',i:'✚'},{k:'fleetAddons',t:'الإضافات',i:'＋'},{k:'fleetReview',t:'مراقبة الإتاحة',i:'⚠',n:8}]});
   S.fleet=S.fleetAvailable; S.models=S.fleetMakesModels; S.pricingServices=S.fleetPricing;
   render();
 })();

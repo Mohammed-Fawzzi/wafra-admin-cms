@@ -34,6 +34,12 @@
     {name:'توصيل',desc:'تسليم المركبة لموقع العميل',fee:'45',branches:112,status:'مفعلة'},
     {name:'تسليم بين المدن',desc:'استلام وتسليم في مدينتين مختلفتين',fee:'180',branches:42,status:'مفعلة'}
   ];
+  state.fleetAddons=state.fleetAddons||[
+    {name:'كرسي أطفال',desc:'مقعد أطفال مناسب للعمر والوزن',fee:'35',unit:'يوم',branches:156,status:'مفعلة'},
+    {name:'سائق إضافي',desc:'إضافة سائق مرخّص على العقد',fee:'50',unit:'يوم',branches:142,status:'مفعلة'},
+    {name:'جهاز GPS',desc:'تتبع وملاحة أثناء التأجير',fee:'25',unit:'يوم',branches:98,status:'مفعلة'},
+    {name:'تأمين شامل إضافي',desc:'تغطية موسّعة فوق التأمين الأساسي',fee:'80',unit:'يوم',branches:120,status:'مفعلة'}
+  ];
   state.fleetCategories=state.fleetCategories||[
     {name:'اقتصادية',desc:'استهلاك منخفض وحجم صغير',models:96,cars:1204,status:'مفعلة'},
     {name:'صغيرة',desc:'مدينة وحجم مدمج',models:72,cars:864,status:'مفعلة'},
@@ -133,6 +139,51 @@
       closeM(); render(); toast(`تم تفعيل «${name}» على ${count} فرع (${label}).`);
     },
 
+    /* —— الإضافات الاختيارية أثناء الحجز —— */
+    addFleetAddon:()=>{
+      openM(dlg('تعريف إضافة جديدة وتفعيلها',
+        `${fld('اسم الإضافة',`<input id="addon-name" class="native-input" placeholder="مثال: كرسي أطفال">`)}
+         ${fld('الوصف',`<input id="addon-desc" class="native-input" placeholder="وصف مختصر يظهر للعميل">`)}
+         <div class="frow">${fld('الرسوم الافتراضية (ر.س)',`<input id="addon-fee" class="native-input" type="number" value="35">`)}
+         ${fld('وحدة التسعير',`<select id="addon-unit" class="native-input"><option>يوم</option><option>حجز</option></select>`)}</div>
+         ${fld('نطاق التفعيل',`<select id="addon-scope" class="native-input" onchange="WafraOps.addonScopeChange()"><option value="all">كل المزودين / كل الفروع</option><option value="providers">مزودين محددين</option><option value="branches">فروع محددة</option></select>`)}
+         <div id="addon-providers-wrap" style="display:none;margin-top:8px">
+           <div style="font:700 12px Cairo;margin-bottom:6px">اختر المزودين</div>
+           ${providers.map(p=>`<label style="display:block;margin:6px 0;font:600 12px Cairo"><input type="checkbox" class="addon-prov" value="${p}"> ${p}</label>`).join('')}
+         </div>
+         <div id="addon-branches-wrap" style="display:none;margin-top:8px">
+           <div style="font:700 12px Cairo;margin-bottom:6px">اختر الفروع</div>
+           ${allBranches.map(b=>`<label style="display:block;margin:6px 0;font:600 12px Cairo"><input type="checkbox" class="addon-br" value="${b}"> ${b}</label>`).join('')}
+         </div>`,
+        `<button class="btn coral" onclick="WafraOps.saveFleetAddon()">حفظ وتفعيل الإضافة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    addonScopeChange:()=>{
+      const s=val('addon-scope');
+      const pw=document.getElementById('addon-providers-wrap');
+      const bw=document.getElementById('addon-branches-wrap');
+      if(pw) pw.style.display=s==='providers'?'block':'none';
+      if(bw) bw.style.display=s==='branches'?'block':'none';
+    },
+    saveFleetAddon:()=>{
+      const name=val('addon-name'); if(!name){toast('أدخل اسم الإضافة.');return;}
+      const scope=val('addon-scope');
+      let count=0, label='';
+      if(scope==='all'){count=allBranches.length;label='فروع كل المزودين';}
+      else if(scope==='providers'){
+        const sel=[...document.querySelectorAll('.addon-prov:checked')].map(x=>x.value);
+        if(!sel.length){toast('اختر مزوداً واحداً على الأقل.');return;}
+        count=sel.reduce((n,p)=>n+(branchesByProvider[p]||[]).length,0);
+        label=sel.join(' · ');
+      }else{
+        const sel=[...document.querySelectorAll('.addon-br:checked')].map(x=>x.value);
+        if(!sel.length){toast('اختر فرعاً واحداً على الأقل.');return;}
+        count=sel.length; label=sel.join(' · ');
+      }
+      state.fleetAddons=state.fleetAddons||[];
+      state.fleetAddons.unshift({name,desc:val('addon-desc')||'—',fee:val('addon-fee')||'0',unit:val('addon-unit')||'يوم',branches:count,status:'مفعلة'});
+      closeM(); render(); toast(`تم تفعيل «${name}» على ${count} فرع (${label}).`);
+    },
+
     /* —— إضافة عميل حسب النوع —— */
     addUser:()=>{
       openM(dlg('إضافة عميل / مستخدم',
@@ -178,6 +229,15 @@
       closeM(); render(); toast('تم حفظ الحساب حسب النوع المحدد.');
     },
     reactivateAccount:name=>{toast(`تم تفعيل حساب ${name} مرة أخرى وإلغاء طلب الحذف.`);},
+    extendDeletionGrace:name=>{toast(`تم تمديد مهلة حذف حساب ${name} لمدة 7 أيام.`);},
+    followActiveBooking:name=>{location.hash='#bookings';toast(`متابعة الحجز الجاري لـ ${name}.`);},
+    followOutstandingDues:name=>{toast(`فتح متابعة المستحقات لـ ${name}.`);},
+    reactivateAfterPayment:name=>{toast(`يُفعَّل حساب ${name} بعد تأكيد سداد المستحقات.`);},
+    startFraudReview:name=>{toast(`بدأ مراجعة الحساب المشبوه: ${name}.`);},
+    confirmFraud:name=>{toast(`تم تأكيد الاشتباه على ${name} وتحويله للمتابعة.`);},
+    dismissFraud:name=>{toast(`تم تجاهل إشارة الاشتباه لـ ${name}.`);},
+    freezeFraudAccount:name=>{toast(`تم تجميد حساب ${name} مؤقتاً.`);},
+    reopenFraud:name=>{toast(`أُعيد فتح ملف الاشتباه لـ ${name}.`);},
     openCustomerFile:name=>{location.hash='#customer';toast(`تم فتح ملف العميل: ${name}`);},
     extensionLog:id=>{
       openM(dlg(`سجل التمديد ${id}`,
@@ -188,7 +248,43 @@
         `<button class="btn ghost" onclick="closeM()">إغلاق</button>`));
     },
     sendPayLink:id=>{toast(`تم إرسال رابط السداد للحجز ${id} (حالة العقد: معلق).`);},
-    transferBooking:id=>{toast(`تم فتح تحويل الحجز ${id}.`);},
+    transferBooking:id=>{
+      openM(dlg(`تحويل الحجز ${id}`,
+        `${fld('المزود الجديد',`<select id="xfer-provider" class="native-input"><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}
+         ${fld('الفرع المستلم',`<select id="xfer-branch" class="native-input"><option>مطار الملك خالد</option><option>جدة الشمالية</option><option>الخبر التشغيلي</option></select>`)}
+         ${fld('سبب التحويل',`<textarea id="xfer-note" class="native-input" rows="2" placeholder="سبب تحويل الحجز لمزود/فرع آخر"></textarea>`)}
+         <div class="note info">يُشعر العميل والمزودان بالتغيير بعد التأكيد.</div>`,
+        `<button class="btn coral" onclick="WafraOps.confirmTransferBooking('${id}')">تأكيد التحويل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    confirmTransferBooking:id=>{
+      const p=val('xfer-provider')||'مزود', b=val('xfer-branch')||'فرع';
+      closeM(); toast(`تم تحويل الحجز ${id} إلى ${p} · ${b}.`);
+    },
+    decideCancellation:(id,decision)=>{
+      const title=decision==='معتمد'?'اعتماد إلغاء الحجز':'رفض طلب الإلغاء';
+      openM(dlg(`${title} — ${id}`,
+        decision==='مرفوض'
+          ?`${fld('سبب الرفض',`<textarea id="cancel-note" class="native-input" rows="3" placeholder="اكتب سبب رفض طلب الإلغاء للعميل"></textarea>`)}`
+          :`<div class="note ok">سيتم إلغاء الحجز ${id} وإشعار العميل والمزود، مع احتساب سياسة الاسترداد حسب التوقيت.</div>
+            ${fld('ملاحظة (اختياري)',`<textarea id="cancel-note" class="native-input" rows="2" placeholder="ملاحظة داخلية أو للعميل"></textarea>`)}`,
+        `<button class="btn ${decision==='مرفوض'?'danger':'coral'}" onclick="WafraOps.saveCancellationDecision('${id}','${decision}')">تأكيد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    saveCancellationDecision:(id,decision)=>{
+      const note=val('cancel-note');
+      if(decision==='مرفوض'&&!note){toast('اكتب سبب الرفض أولاً.');return;}
+      state.cancelRequests=state.cancelRequests||[];
+      const row=state.cancelRequests.find(x=>x.id===id);
+      if(row){row.status=decision;row.note=note||'';}
+      try{localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));}catch(e){}
+      closeM(); render();
+      toast(decision==='معتمد'?`تم اعتماد إلغاء ${id}.`:`تم رفض طلب إلغاء ${id}.`);
+    },
+    approveRequest:(t,id)=>{
+      if(id&&(t==='اعتماد'||t==='رفض')){WafraOps.decideCancellation(id,t==='اعتماد'?'معتمد':'مرفوض');return;}
+      toast(`تم ${t} الطلب وتحديث حالته.`);
+    },
     openBooking:id=>{
       window.__bookingId=id||'BK-20418';
       window.__bookingTab='الملخص';
@@ -271,6 +367,13 @@
       state.fleetServices.map(s=>[s.name,s.desc,money(s.fee),String(s.branches),bdg(s.status,'g'),
         `<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل خدمة ${s.name}')">✎</button>`])));
 
+  /* —— الإضافات: خيارات اختيارية أثناء الحجز (كرسي أطفال، سائق إضافي…) —— */
+  S.fleetAddons=()=>phead('الإضافات','تعريف الإضافات الاختيارية التي تظهر للعميل أثناء الحجز',[],
+    `<button class="btn coral" onclick="WafraOps.addFleetAddon()">＋ إضافة وتفعيلها</button>`)
+    +card(table(['الإضافة','الوصف','الرسوم الافتراضية','الفروع المفعّلة','الحالة','الإجراءات'],
+      (state.fleetAddons||[]).map(a=>[a.name,a.desc,{v:`${a.fee} ر.س${a.unit?` / ${a.unit}`:''}`,c:'num'},String(a.branches),bdg(a.status,'g'),
+        `<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل إضافة ${a.name}')">✎</button>`])));
+
   /* —— العملاء: نفس تصميم القائمة + كروت المميزين + نموذج حسب النوع —— */
   S.users=()=>{
     const f=window.__userFilters||{};
@@ -300,25 +403,65 @@
            <button class="btn ghost sm" onclick="WafraOps.editUser('${u.id}')">تعديل</button>`]))}</div>`);
   };
 
-  /* —— طلبات الحذف: أعمدة إضافية + اطلاع + تفعيل —— */
-  S.deletions=()=>phead('طلبات حذف الحساب','تُنفَّذ خلال 30 يوماً وفق سياسة البيانات، وتُوقَف عند وجود التزام قائم',['FR-ADM-05'])
-    +card(tabs([{t:'قيد المهلة',n:23,on:1},{t:'موقوفة',n:4},{t:'مكتملة',n:186}])
-    +filters(['سبب الإيقاف','تاريخ الطلب'],'ابحث بالاسم أو الجوال…')
-    +table(['العميل','تاريخ الطلب','تاريخ التنفيذ','المتبقّي','حجوزات مكتملة','إجمالي المدفوعات','إجمالي المستحقات','الحالة','الإجراءات'],[
-      [{v:'ماجد السبيعي<span class="sub">0551002233</span>',c:'strong'},'2026/08/02','2026/09/01','4 أيام','12',money('8,420'),'—',bdg('قيد المهلة','b'),
-        `<button class="btn ghost sm" onclick="WafraOps.openCustomerFile('ماجد السبيعي')">اطلاع على الملف</button>
-         <button class="btn coral sm" onclick="WafraOps.reactivateAccount('ماجد السبيعي')">تفعيل مرة أخرى</button>`],
-      [{v:'ريم الزهراني<span class="sub">0533447788</span>',c:'strong'},'2026/08/11','2026/09/10','13 يوماً','7',money('4,180'),'—',bdg('قيد المهلة','b'),
-        `<button class="btn ghost sm" onclick="WafraOps.openCustomerFile('ريم الزهراني')">اطلاع على الملف</button>
-         <button class="btn coral sm" onclick="WafraOps.reactivateAccount('ريم الزهراني')">تفعيل مرة أخرى</button>`],
-      [{v:'تركي العنزي<span class="sub">0509911223</span>',c:'strong'},'2026/07/28','—','—','19',money('14,260'),money('840'),bdg('موقوف — حجز جارٍ','a'),
-        `<button class="btn ghost sm" onclick="WafraOps.openCustomerFile('تركي العنزي')">اطلاع على الملف</button>
-         <button class="btn coral sm" onclick="WafraOps.reactivateAccount('تركي العنزي')">تفعيل مرة أخرى</button>`],
-      [{v:'هند الشهري<span class="sub">0566330099</span>',c:'strong'},'2026/07/19','—','—','5',money('3,100'),money('1,260'),bdg('موقوف — مستحقّات','a'),
-        `<button class="btn ghost sm" onclick="WafraOps.openCustomerFile('هند الشهري')">اطلاع على الملف</button>
-         <button class="btn coral sm" onclick="WafraOps.reactivateAccount('هند الشهري')">تفعيل مرة أخرى</button>`]
-    ])
-    +pager(27,3));
+  /* —— طلبات الحذف: إجراءات حسب الحالة —— */
+  const deletionActs=(name,status)=>{
+    const view=`<button class="btn ghost sm" onclick="WafraOps.openCustomerFile('${name}')">اطلاع على الملف</button>`;
+    if(status.includes('مكتمل')) return view;
+    if(status.includes('حجز')) return `${view}
+      <button class="btn ghost sm" onclick="WafraOps.followActiveBooking('${name}')">متابعة الحجز</button>`;
+    if(status.includes('مستحق')) return `${view}
+      <button class="btn ghost sm" onclick="WafraOps.followOutstandingDues('${name}')">متابعة المستحقات</button>
+      <button class="btn coral sm" onclick="WafraOps.reactivateAfterPayment('${name}')">تفعيل بعد السداد</button>`;
+    return `${view}
+      <button class="btn ghost sm" onclick="WafraOps.extendDeletionGrace('${name}')">تمديد المهلة</button>
+      <button class="btn coral sm" onclick="WafraOps.reactivateAccount('${name}')">إلغاء الحذف وتفعيل</button>`;
+  };
+  S.deletions=()=>{
+    const rows=[
+      {name:'ماجد السبيعي',phone:'0551002233',req:'2026/08/02',exec:'2026/09/01',left:'4 أيام',done:'12',paid:'8,420',dues:'—',status:'قيد المهلة'},
+      {name:'ريم الزهراني',phone:'0533447788',req:'2026/08/11',exec:'2026/09/10',left:'13 يوماً',done:'7',paid:'4,180',dues:'—',status:'قيد المهلة'},
+      {name:'تركي العنزي',phone:'0509911223',req:'2026/07/28',exec:'—',left:'—',done:'19',paid:'14,260',dues:'840',status:'موقوف — حجز جارٍ'},
+      {name:'هند الشهري',phone:'0566330099',req:'2026/07/19',exec:'—',left:'—',done:'5',paid:'3,100',dues:'1,260',status:'موقوف — مستحقّات'}
+    ];
+    return phead('طلبات حذف الحساب','تُنفَّذ خلال 30 يوماً وفق سياسة البيانات، وتُوقَف عند وجود التزام قائم — الإجراءات حسب الحالة',['FR-ADM-05'])
+      +card(`<div class="note info">قيد المهلة ← إلغاء الحذف أو تمديد · موقوف بحجز ← متابعة الحجز · موقوف بمستحقات ← متابعة/تفعيل بعد السداد · مكتملة ← اطلاع فقط.</div>`
+      +tabs([{t:'قيد المهلة',n:23,on:1},{t:'موقوفة',n:4},{t:'مكتملة',n:186}])
+      +filters(['سبب الإيقاف','تاريخ الطلب'],'ابحث بالاسم أو الجوال…')
+      +table(['العميل','تاريخ الطلب','تاريخ التنفيذ','المتبقّي','حجوزات مكتملة','إجمالي المدفوعات','إجمالي المستحقات','الحالة','الإجراءات'],
+        rows.map(r=>[{v:`${r.name}<span class="sub">${r.phone}</span>`,c:'strong'},r.req,r.exec,r.left,r.done,money(r.paid),r.dues==='—'?'—':money(r.dues),bdg(r.status,r.status.includes('قيد')?'b':'a'),deletionActs(r.name,r.status)]))
+      +pager(27,3));
+  };
+
+  /* —— الحسابات المشبوهة: إجراءات حسب حالة المراجعة —— */
+  const fraudActs=r=>{
+    const name=r.name;
+    const view=`<button class="btn ghost sm" onclick="WafraOps.openCustomerFile('${name}')">اطلاع على الملف</button>`;
+    if(r.status==='مُتجاهَلة') return `${view}<button class="btn ghost sm" onclick="WafraOps.reopenFraud('${name}')">إعادة فتح</button>`;
+    if(r.status==='مؤكّدة') return `${view}<button class="btn danger sm" onclick="WafraOps.freezeFraudAccount('${name}')">تجميد الحساب</button>`;
+    if(r.status==='قيد المراجعة') return `${view}
+      <button class="btn coral sm" onclick="WafraOps.confirmFraud('${name}')">تأكيد الاشتباه</button>
+      <button class="btn ghost sm" onclick="WafraOps.dismissFraud('${name}')">تجاهل</button>
+      <button class="btn danger sm" onclick="WafraOps.freezeFraudAccount('${name}')">تجميد</button>`;
+    return `${view}
+      <button class="btn coral sm" onclick="WafraOps.startFraudReview('${name}')">بدء المراجعة</button>
+      <button class="btn ghost sm" onclick="WafraOps.dismissFraud('${name}')">تجاهل</button>`;
+  };
+  S.fraud=()=>{
+    const rows=[
+      {name:'سلطان ع.',phone:'0551119988',signal:'حسابات متعدّدة بنفس البطاقة',detail:'4 حسابات تستخدم بطاقة تنتهي بـ 4419',severity:'مرتفعة',date:'2026/08/27',status:'جديدة'},
+      {name:'نايف م.',phone:'0538820011',signal:'معدّل إلغاء مرتفع',detail:'9 إلغاءات من 11 حجزاً خلال 30 يوماً',severity:'متوسطة',date:'2026/08/26',status:'قيد المراجعة'},
+      {name:'وليد ح.',phone:'0509934411',signal:'محاولات دفع فاشلة متكرّرة',detail:'14 محاولة فاشلة بـ 6 بطاقات مختلفة',severity:'مرتفعة',date:'2026/08/25',status:'جديدة'},
+      {name:'عبير ط.',phone:'0544772200',signal:'حسابات بنفس الجهاز',detail:'3 حسابات على نفس معرّف الجهاز',severity:'منخفضة',date:'2026/08/23',status:'مُتجاهَلة'}
+    ];
+    const sev=s=>bdg(s,s==='مرتفعة'?'r':s==='متوسطة'?'a':'n');
+    return phead('الحسابات المشبوهة','أنماط تستدعي المراجعة، لا اتهاماً — الإجراءات حسب حالة كل إشارة',['FR-ADM-07'])
+      +card(`<div class="note info">جديدة ← بدء مراجعة أو تجاهل · قيد المراجعة ← تأكيد / تجاهل / تجميد · مؤكّدة ← تجميد · مُتجاهَلة ← إعادة فتح.</div>`
+      +tabs([{t:'جديدة',n:17,on:1},{t:'قيد المراجعة',n:5},{t:'مؤكّدة',n:9},{t:'مُتجاهَلة',n:42}])
+      +filters(['نوع الإشارة','درجة الخطورة','التاريخ'],'ابحث بالاسم أو الجوال أو الجهاز…')
+      +table(['الحساب','نوع الإشارة','التفاصيل','الخطورة','الحالة','تاريخ الكشف','الإجراءات'],
+        rows.map(r=>[{v:`${r.name}<span class="sub">${r.phone}</span>`,c:'strong'},r.signal,r.detail,sev(r.severity),pill(r.status),r.date,fraudActs(r)]))
+      +pager(17,2));
+  };
 
   /* —— تفاصيل الحجز: النموذج المتفق عليه (تبويبات p22) —— */
   S.booking=()=>{
@@ -417,22 +560,31 @@
           `<button class="btn ghost sm" onclick="WafraOps.openBooking('BK-20371')">إطلاع على الحجز</button>`]
       ])}</div>`);
 
-  /* —— الإلغاء: إطلاع + تحويل —— */
-  S.cancellationRequests=()=>phead('طلبات الإلغاء','كل طلب يعرض تفاصيل الحجز كاملة قبل القرار',[],
-    `<button class="btn ghost sm" onclick="WafraOps.exportLocal('طلبات الإلغاء','Excel')">Excel ⤓</button>
-     <button class="btn ghost sm" onclick="WafraOps.exportLocal('طلبات الإلغاء','PDF')">PDF ⤓</button>`)
-    +card(`<div class="filters">${fld('الحالة',`<select class="native-input"><option>كل الحالات</option><option>قيد المراجعة</option><option>معتمد</option><option>مرفوض</option></select>`)}<label class="fsearch">⌕ <input placeholder="اكتب للبحث…"></label></div>
-      <div class="card-b">${table(['رقم الحجز','العميل','المزود','سبب الإلغاء','القيمة','الحالة','الإجراءات'],[
-        ['BK-20417','سارة العتيبي','كي رنت','تغيير خطة السفر',money('290'),pill('قيد المراجعة'),
-          `<button class="btn ghost sm" onclick="WafraOps.openBooking('BK-20417')">إطلاع على الحجز</button>
-           <button class="btn ghost sm" onclick="WafraOps.transferBooking('BK-20417')">تحويل</button>
-           <button class="btn coral sm" onclick="WafraOps.approveRequest('اعتماد')">اعتماد</button>
-           <button class="btn danger sm" onclick="WafraOps.approveRequest('رفض')">رفض</button>`],
-        ['BK-20405','ريم الزهراني','شركة الصحراء','السعر',money('570'),pill('قيد المراجعة'),
-          `<button class="btn ghost sm" onclick="WafraOps.openBooking('BK-20405')">إطلاع على الحجز</button>
-           <button class="btn ghost sm" onclick="WafraOps.transferBooking('BK-20405')">تحويل</button>
-           <button class="btn coral sm" onclick="WafraOps.approveRequest('اعتماد')">اعتماد</button>`]
-      ])}</div>`);
+  /* —— الإلغاء: إجراءات فعّالة حسب الحالة —— */
+  state.cancelRequests=state.cancelRequests||[
+    {id:'BK-20417',customer:'سارة العتيبي',provider:'كي رنت',reason:'تغيير خطة السفر',amount:'290',status:'قيد المراجعة'},
+    {id:'BK-20405',customer:'ريم الزهراني',provider:'شركة الصحراء',reason:'السعر',amount:'570',status:'قيد المراجعة'}
+  ];
+  const cancelActs=r=>{
+    const id=r.id;
+    const view=`<button class="btn ghost sm" onclick="WafraOps.openBooking('${id}')">إطلاع على الحجز</button>`;
+    if(r.status==='معتمد'||r.status==='مرفوض') return `${view}<button class="btn ghost sm" onclick="WafraOps.demoAction('عرض قرار ${id}')">عرض القرار</button>`;
+    return `${view}
+      <button class="btn ghost sm" onclick="WafraOps.transferBooking('${id}')">تحويل</button>
+      <button class="btn coral sm" onclick="WafraOps.decideCancellation('${id}','معتمد')">اعتماد</button>
+      <button class="btn danger sm" onclick="WafraOps.decideCancellation('${id}','مرفوض')">رفض</button>`;
+  };
+  S.cancellationRequests=()=>{
+    const f=window.__cancelFilter||{};
+    const rows=state.cancelRequests.filter(r=>!f.status||r.status===f.status);
+    return phead('طلبات الإلغاء','كل طلب يعرض تفاصيل الحجز كاملة قبل القرار',[],
+      `<button class="btn ghost sm" onclick="WafraOps.exportLocal('طلبات الإلغاء','Excel')">Excel ⤓</button>
+       <button class="btn ghost sm" onclick="WafraOps.exportLocal('طلبات الإلغاء','PDF')">PDF ⤓</button>`)
+      +card(`<div class="filters">${fld('الحالة',`<select id="cancel-status-filter" class="native-input" onchange="window.__cancelFilter={status:this.value||''};render()"><option value="">كل الحالات</option>${['قيد المراجعة','معتمد','مرفوض'].map(x=>`<option value="${x}" ${f.status===x?'selected':''}>${x}</option>`).join('')}</select>`)}<label class="fsearch">⌕ <input placeholder="اكتب للبحث…"></label></div>
+        <div class="card-b">${table(['رقم الحجز','العميل','المزود','سبب الإلغاء','القيمة','الحالة','الإجراءات'],
+          rows.map(r=>[r.id,r.customer,r.provider,r.reason,money(r.amount),
+            pill(r.status,r.status==='معتمد'?'g':r.status==='مرفوض'?'r':'a'),cancelActs(r)]))}</div>`);
+  };
 
   /* تسمية NAV */
   const bookNav=NAV.find(g=>g.g==='الحجوزات');
@@ -440,7 +592,16 @@
     const stuck=bookNav.items.find(i=>i.k==='stuck');
     if(stuck) stuck.t='الحجوزات المتأخرة / المتعثرة';
   }
-  if(window.TITLES) window.TITLES.stuck='الحجوزات المتأخرة / المتعثرة';
+  if(window.TITLES){
+    window.TITLES.stuck='الحجوزات المتأخرة / المتعثرة';
+    window.TITLES.fleetAddons='الإضافات';
+  }
+  const fleetNavAddons=NAV.find(g=>g.g==='إدارة الأسطول');
+  if(fleetNavAddons&&!fleetNavAddons.items.some(x=>x.k==='fleetAddons')){
+    const svcIdx=fleetNavAddons.items.findIndex(x=>x.k==='fleetServices');
+    const addon={k:'fleetAddons',t:'الإضافات',i:'＋'};
+    if(svcIdx>=0) fleetNavAddons.items.splice(svcIdx+1,0,addon); else fleetNavAddons.items.push(addon);
+  }
 
   /* ضمان exportLocal إن لم يُعرَّف */
   if(!WafraOps.exportLocal) WafraOps.exportLocal=(n,f)=>toast(`تم تجهيز تصدير ${n} بصيغة ${f}.`);
