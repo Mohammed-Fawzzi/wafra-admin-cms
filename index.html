@@ -1558,6 +1558,8 @@ M.newMsg = () => modal('رسالة جديدة', `
   padding:12px 18px;border-radius:var(--r-m);box-shadow:var(--sh-l);z-index:120;opacity:0;transform:translateY(10px);
   transition:.22s;font-family:'Expo Arabic','Cairo'}
 .toast.on{opacity:1;transform:none}
+#an-results.an-flash,.an-flash{animation:anFlash 1.1s ease}
+@keyframes anFlash{0%{box-shadow:0 0 0 0 rgba(32,161,110,.45)}40%{box-shadow:0 0 0 6px rgba(32,161,110,.18)}100%{box-shadow:none}}
 .prev-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
 .prev-row:last-child{border-bottom:0}
 .prev-row .k{color:var(--muted);min-width:150px;font-size:12px}
@@ -2596,14 +2598,23 @@ S.roas = () => {
   const stPill = (t, tone) => `<span class="rc-status ${tone}">${t}</span>`;
   const rows = [
     ['Direct / Organic','عضوي','—','6,888','61.3 م ر.س','متفوق','نشطة','ok'],
+    ['عروض الصيف','حملة','9.7 ألف ر.س','1,450','12.73 م ر.س','x87.68','نشطة','ok'],
+    ['الإطلاق الجديد','حملة','27 ألف ر.س','980','1.08 م ر.س','x40.00','نشطة','ok'],
+    ['باقة الشركات','حملة','14 ألف ر.س','620','7.35 م ر.س','x52.51','نشطة','ok'],
     ['عروض نهاية الصيف','حملة','17 ألف ر.س','1,240','28.4 م ر.س','x167.06','نشطة','ok'],
-    ['اطلب من عطار','حملة','12.5 ألف ر.س','860','14.2 م ر.س','x113.60','منتهية','done'],
+    ['سيارات فاخرة بنصف السعر','حملة','22 ألف ر.س','340','2.29 م ر.س','x10.43','نشطة','ok'],
     ['AIRPORT25','كوبون','8.2 ألف ر.س','420','6.1 م ر.س','x74.39','نشطة','ok'],
     ['WELCOME15','كوبون','3.4 ألف ر.س','980','4.8 م ر.س','x141.18','نشطة','ok'],
     ['بانر الرئيسية — الصيف','بانر','9.1 ألف ر.س','310','2.9 م ر.س','x31.87','متوقفة','diff'],
     ['إشعار عودة العملاء','إشعارات','5.6 ألف ر.س','190','1.7 م ر.س','x30.36','مجمدة','ok'],
-    ['بريد نهاية الأسبوع','بريد','4.8 ألف ر.س','156','1.2 م ر.س','x25.00','منتهية','done'],
   ];
+  const acts = (ch, spend, type) => {
+    if(type === 'عضوي' || spend === '—') return `<span class="rc-dash">—</span>`;
+    return `<div class="st-actions roas-acts">
+      <button class="btn sm st-approve" onclick="WafraOps.increaseRoasBudget&&WafraOps.increaseRoasBudget('${ch.replace(/'/g,"\\'")}','${spend.replace(/'/g,"\\'")}')">زيادة الميزانية</button>
+      <button class="btn ghost sm" onclick="WafraOps.transferRoasBudget&&WafraOps.transferRoasBudget('${ch.replace(/'/g,"\\'")}','${spend.replace(/'/g,"\\'")}')">تحويل ميزانية</button>
+    </div>`;
+  };
   return phead('إسناد التحويلات (ROAS)','قياس عائد الإنفاق التسويقي لكل قناة وحملة وكوبون',['FR-MKT-ROAS-01'],
     `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('إسناد التحويلات','Excel')">Excel ⤓</button>
      <button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('إسناد التحويلات','PDF')">PDF</button>`)
@@ -2626,7 +2637,7 @@ S.roas = () => {
     rows.map(([ch,type,spend,book,rev,roas,status,tone])=>[
       {v:ch,c:'strong'}, type, {v:spend,c:'num'}, {v:book,c:'num'}, {v:rev,c:'num'},
       roasPill(roas), stPill(status, tone==='done'?'ok':tone==='diff'?'diff':'ok'),
-      `<span class="rc-dash">—</span>`
+      acts(ch, spend, type)
     ])
   )
   + `<div class="rc-foot">
@@ -2638,11 +2649,12 @@ S.roas = () => {
       ${bars([
         ['عروض نهاية الصيف',92,'#20A16E'],
         ['WELCOME15',78,'#20A16E'],
-        ['اطلب من عطار',71,'#2C68D8'],
+        ['عروض الصيف',71,'#20A16E'],
+        ['باقة الشركات',62,'#2C68D8'],
         ['AIRPORT25',54,'#2C68D8'],
+        ['الإطلاق الجديد',48,'#E8A23A'],
         ['بانر الرئيسية',38,'#E8A23A'],
-        ['إشعار عودة العملاء',36,'#E8A23A'],
-        ['بريد نهاية الأسبوع',30,'#6B5CE7'],
+        ['إشعار عودة العملاء',36,'#6B5CE7'],
       ])}
     </div>`);
 };
@@ -2652,26 +2664,26 @@ S.couponGov = () => {
   const st = (t, tone) => `<span class="cg-status ${tone}">${t}</span>`;
   const acts = (code, kind) => {
     if(kind==='stopped') return `<button class="btn sm st-approve" onclick="WafraOps.toggleCouponGov&&WafraOps.toggleCouponGov('${code}','تفعيل')">تفعيل</button>`;
-    if(kind==='suspect') return `<div class="st-actions">
+    if(kind==='suspect') return `<div class="st-actions cg-acts">
       <button class="btn danger sm" onclick="WafraOps.toggleCouponGov&&WafraOps.toggleCouponGov('${code}','إيقاف')">إيقاف</button>
-      <button class="btn sm" onclick="WafraOps.investigateCoupon&&WafraOps.investigateCoupon('${code}')">تحقيق</button>
+      <button class="btn sm cg-invest" onclick="WafraOps.investigateCoupon&&WafraOps.investigateCoupon('${code}')">تحقيق</button>
     </div>`;
     return `<button class="btn danger sm" onclick="WafraOps.toggleCouponGov&&WafraOps.toggleCouponGov('${code}','إيقاف')">إيقاف</button>`;
   };
   const rows = [
     ['WELCOME15','15%','523','57.5 ألف ر.س','23%','+9.56','متوقف','stopped'],
-    ['VIP20','20%','610','64 ألف ر.س','22%','+6.88','نشط','active'],
+    ['VIP20','20%','141','19.2 ألف ر.س','7%','+6.88','اشتباه سوء استخدام','suspect'],
     ['WEEKEND10','10%','497','33.8 ألف ر.س','13%','+12.74','اشتباه سوء استخدام','suspect'],
     ['AIRPORT25','25 ر.س','851','21 ألف ر.س','8%','+39.16','اشتباه سوء استخدام','suspect'],
     ['SUMMER50','50 ر.س','412','20.6 ألف ر.س','8%','+21','نشط','active'],
   ];
-  return phead('حوكمة الكوبونات','سقف شهري لميزانية الخصومات مع رصد سوء الاستخدام',['FR-CPN-GOV-01'])
+  return phead('حوكمة الكوبونات','سقف شهري لميزانية الخصومات مع رصد سوء الاستخدام وفتح تحقيقات',['FR-CPN-GOV-01'])
   + `<div class="kpis cg-kpis">
       <div class="kpi"><div class="lb"><span class="ic gh-ic blue">👛</span>السقف الشهري</div><div class="vl">260 ألف ر.س</div></div>
       <div class="kpi"><div class="lb"><span class="ic gh-ic blue">⊞</span>المصروف</div><div class="vl">191.3 ألف ر.س</div></div>
       <div class="kpi"><div class="lb"><span class="ic gh-ic green">↻</span>المتبقي</div><div class="vl">68.7 ألف ر.س</div></div>
       <div class="kpi"><div class="lb"><span class="ic gh-ic amber">📊</span>نسبة الاستهلاك</div><div class="vl">74%</div></div>
-      <div class="kpi cg-alert"><div class="lb"><span class="ic gh-ic red">🛡</span>كوبونات مشبوهة</div><div class="vl">2</div></div>
+      <div class="kpi cg-alert"><div class="lb"><span class="ic gh-ic red">🛡</span>كوبونات مشبوهة</div><div class="vl">3</div></div>
     </div>`
   + card(`<div class="rf-toolbar">
       <div class="fsearch">⌕ <input placeholder="بحث..."></div>
@@ -2696,21 +2708,27 @@ S.couponGov = () => {
   + `<div class="rf-foot"><span>5 سجل</span></div>`);
 };
 
-/* ========== 34d. اختبار A/B للبانرات ========== */
+/* ========== 34d. اختبار A/B ========== */
 S.abTest = () => {
   const imp = (v, pos) => `<span class="ab-imp ${pos?'up':'dn'}">${v}</span>`;
+  const conf = (v, ok) => `<span class="ab-conf ${ok?'ok':'lo'}">${v}</span>`;
+  const sig = ok => ok
+    ? `<span class="ab-sig ok">دالة</span>`
+    : `<span class="ab-sig no">غير دالة</span>`;
   const st = (t, tone) => `<span class="ab-status ${tone}">${t}</span>`;
+  /* name, goal, impr, pos, conf%, sigOk, progress, lead, status, tone, adopt */
   const rows = [
-    ['بانر الصفحة الرئيسية','1.92%','3.04%','7.8%','5.6%','+7.1%',1,'النسخة B','نشط','active','B'],
-    ['عرض نهاية الأسبوع','4.10%','3.20%','9.1%','6.4%','-28.2%',0,'النسخة A','نشط','active','A'],
-    ['زر CTA الحجز','2.45%','2.80%','5.2%','8.9%','+11.5%',1,'النسخة B','نشط','active','B'],
-    ['بانر البحث — الصيف','3.10%','2.40%','6.0%','4.1%','-41.7%',0,'النسخة A','فائز A','done',null],
-    ['بانر التوصيل المجاني','1.80%','2.55%','4.3%','6.8%','+8.4%',1,'النسخة B','فائز B','done',null],
+    ['بانر الصفحة الرئيسية','نسبة التحويل','-4.5%',0,'15.6%',0,'7 / 7 يوم','النسخة A','نشط','active','A'],
+    ['عنوان إعلان عروض نهاية الأسبوع','نسبة النقر (CTR)','-32.4%',0,'42.1%',0,'2 / 14 يوم','النسخة A','نشط','active','A'],
+    ['زر CTA الحجز','نسبة التحويل','+11.5%',1,'78.4%',0,'5 / 14 يوم','النسخة B','نشط','active','B'],
+    ['رسالة الاحتفاظ','نسبة النقر (CTR)','-8.2%',0,'61.0%',0,'9 / 14 يوم','النسخة A','نشط','active','A'],
+    ['باقة الشركات — بانر الرئيسية','نسبة التحويل','+73.2%',1,'99.9%',1,'14 / 14 يوم','النسخة B','فائز: B','done','B'],
   ];
-  return phead('اختبار A/B للبانرات','تفعيل نسختين وقياس النقر والتحويل واعتماد الأفضل — قرار مبني على البيانات',['FR-BAN-AB-01'])
+  return phead('اختبار A/B','تفعيل نسختين وقياس النقر والتحويل واعتماد الأفضل — قرار مبني على الدلالة الإحصائية',['FR-BAN-AB-01'])
   + `<div class="kpis ab-kpis">
-      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">📊</span>اختبارات نشطة</div><div class="vl">3</div></div>
-      <div class="kpi"><div class="lb"><span class="ic gh-ic green">✓</span>مكتملة</div><div class="vl">2</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic blue">📊</span>اختبارات نشطة</div><div class="vl">4</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic green">✓</span>مكتملة / فائز معتمد</div><div class="vl">1</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">⌀</span>بانتظار الدلالة (≥95%)</div><div class="vl">3</div></div>
     </div>`
   + card(`<div class="rf-toolbar">
       <div class="fsearch">⌕ <input placeholder="بحث..."></div>
@@ -2720,18 +2738,26 @@ S.abTest = () => {
         <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('اختبار AB','Excel')">Excel ⤓</button>
       </div>
     </div>`
-  + table(['الاختبار','CTR — A','CTR — B','تحويل A','تحويل B','التحسن','المتفوّق','الحالة','إجراءات'],
-    rows.map(([name,cta,ctb,cva,cvb,impr,pos,winner,status,tone,adopt])=>[
+  + table(['الاختبار','الهدف','التحسن','مستوى الثقة','الدلالة','التقدم','المتفوّق','الحالة','إجراءات'],
+    rows.map(([name,goal,impr,pos,cPct,sigOk,prog,lead,status,tone,adopt])=>[
       {v:name,c:'strong'},
-      {v:cta,c:'num'},{v:ctb,c:'num'},{v:cva,c:'num'},{v:cvb,c:'num'},
+      goal,
       imp(impr, !!pos),
-      {v:winner,c:'strong'},
+      conf(cPct, !!sigOk),
+      sig(!!sigOk),
+      {v:prog,c:'num'},
+      {v:lead,c:'strong'},
       st(status, tone),
-      adopt
-        ? `<button class="btn sm st-approve" onclick="WafraOps.adoptAbWinner&&WafraOps.adoptAbWinner('${name}','${adopt}')">اعتماد الفائز (${adopt})</button>`
-        : `<span class="rc-dash">—</span>`
+      `<div class="st-actions ab-acts">
+        <button class="btn sm ab-detail" onclick="WafraOps.viewAbDetails&&WafraOps.viewAbDetails('${name.replace(/'/g,"\\'")}')">تفاصيل</button>
+        <button class="btn sm st-approve" onclick="WafraOps.adoptAbWinner&&WafraOps.adoptAbWinner('${name.replace(/'/g,"\\'")}','${adopt}')">اعتماد الفائز</button>
+      </div>`
     ])
   )
+  + `<div class="ab-foot-note">
+      <span>⚠</span>
+      <div><b>الدلالة الإحصائية:</b> لا يُعتمد فائز إلا إذا بلغ مستوى الثقة ≥ 95% والعينة كافية (≥ 100 نقرة لكل نسخة). وإلا فقد يكون الفرق صدفة بحتة.</div>
+    </div>`
   + `<div class="rf-foot"><span>5 سجل</span></div>`);
 };
 
@@ -2849,23 +2875,31 @@ S.featuredPartners = () => {
 /* ========== 34g. رحلة العميل والاحتفاظ ========== */
 S.journey = () => {
   const daysPill = d => `<span class="jr-idle">${d} يوم</span>`;
+  /* name, city, bookings, last, idleDays, revenue */
   const rows = [
-    ['يوسف الحربي','الخبر','27','21 مايو 2026','237','12.4 ألف ر.س'],
-    ['تركي الغامدي','نجران','26','18 مايو 2026','240','11.8 ألف ر.س'],
-    ['نوف الشمري','جدة','11','02 يونيو 2026','216','4.9 ألف ر.س'],
-    ['أحمد القحطاني','أبها','24','14 مايو 2026','244','10.2 ألف ر.س'],
+    ['يوسف الحربي','الخبر','27','21 مايو 2026','137','12.4 ألف ر.س'],
+    ['تركي الغامدي','نجران','26','18 مايو 2026','140','11.8 ألف ر.س'],
+    ['نوف الشمري','جدة','11','02 يونيو 2026','126','4.9 ألف ر.س'],
+    ['أحمد القحطاني','أبها','24','14 مايو 2026','144','10.2 ألف ر.س'],
     ['سارة العتيبي','الرياض','42','28 أغسطس 2026','38','22.6 ألف ر.س'],
     ['وليد الحربي','الدمام','19','09 يوليو 2026','88','8.1 ألف ر.س'],
     ['ريم الزهراني','المدينة المنورة','8','22 مارس 2026','197','3.4 ألف ر.س'],
     ['ماجد السبيعي','مكة المكرمة','15','11 أغسطس 2026','55','6.7 ألف ر.س'],
   ];
-  return phead('رحلة العميل والاحتفاظ','تتبع التحويل (زيارة ← بحث ← حجز) ومعدل التحويل مع ميزات تسويقية ذكية',['FR-MKT-JR-01'])
+  const acts = (name, book, days) => {
+    const idle = Number(days) >= 60;
+    return `<div class="st-actions jr-acts">
+      ${idle ? `<button type="button" class="btn sm jr-ret" onclick="WafraOps.openRetentionCampaign&&WafraOps.openRetentionCampaign('${name.replace(/'/g,"\\'")}','${book}','${days}')">حملة استرجاع</button>` : ''}
+      <a class="btn ghost sm" href="#customer">اطلاع</a>
+    </div>`;
+  };
+  return phead('رحلة العميل والاحتفاظ','تتبع التحويل (زيارة ← بحث ← حجز) ومعدل التحويل مع حملات استرجاع للعملاء الخاملين',['FR-MKT-JR-01'])
   + `<div class="kpis jr-kpis">
       <div class="kpi"><div class="lb"><span class="ic gh-ic blue">⌕</span>زيارة ← بحث</div><div class="vl">62%</div></div>
       <div class="kpi"><div class="lb"><span class="ic gh-ic green">📆</span>بحث ← حجز</div><div class="vl">19%</div></div>
       <div class="kpi"><div class="lb"><span class="ic gh-ic red">⚠</span>معدل التسرب</div><div class="vl">13.7%</div></div>
       <div class="kpi"><div class="lb"><span class="ic gh-ic blue">📈</span>معدل الاحتفاظ</div><div class="vl">86.3%</div></div>
-      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">👤</span>عملاء متكررون</div><div class="vl">71</div></div>
+      <div class="kpi"><div class="lb"><span class="ic gh-ic amber">👤</span>عملاء خاملون (≥60 يوم)</div><div class="vl">6</div></div>
     </div>`
   + card(cardH('قمع التحويل')+`<div class="card-b jr-funnel">
       <div class="jr-row"><span class="jr-lab">زيارات</span><div class="jr-track"><i class="jr-fill navy" style="width:100%"></i></div><span class="jr-val">(100%) 155,723</span></div>
@@ -2880,7 +2914,7 @@ S.journey = () => {
         <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('رحلة العميل','Excel')">Excel ⤓</button>
       </div>
     </div>`
-  + table(['العميل','المدينة','حجوزات','آخر حجز','أيام العميل','إيرادات','إجراءات'],
+  + table(['العميل','المدينة','حجوزات','آخر حجز','أيام الخمول','إيرادات','إجراءات'],
     rows.map(([name,city,book,last,days,rev])=>[
       {v:name,c:'strong'},
       `<a class="st-link" href="#customer">${city}</a>`,
@@ -2888,7 +2922,7 @@ S.journey = () => {
       last,
       daysPill(days),
       {v:rev,c:'num'},
-      `<a class="btn ghost sm" href="#customer">اطلاع</a>`
+      acts(name, book, days)
     ])
   )
   + `<div class="rc-foot">
@@ -4405,6 +4439,39 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
     switchAnalyticsTab:t=>{window.__analyticsTab=t;render();},
     switchProviderTab:t=>{window.__providerTab=t;render();},
     demoAction:t=>toast(`${t}: تم تنفيذ المثال التجريبي وتحديث البيانات.`),
+    createAnalyticsReport:()=>{
+      openM(modal('إنشاء تقرير تحليلي', `
+        <div class="frow">
+          ${fld('اسم التقرير', `<input id="an-rep-name" class="native-input" value="تقرير البحث والتحليل — ${new Date().toLocaleDateString('ar-SA')}">`)}
+          ${fld('الصيغة', `<select id="an-rep-fmt" class="native-input"><option>Excel</option><option>PDF</option><option>CSV</option></select>`)}
+        </div>
+        <div class="frow">
+          ${fld('النطاق', `<select id="an-rep-scope" class="native-input"><option>البحث والتحليل (الفلاتر الحالية)</option><option>المقارنات</option><option>المؤشرات التشغيلية</option><option>النظرة المالية</option></select>`)}
+          ${fld('التكرار', `<select id="an-rep-freq" class="native-input"><option>مرة واحدة الآن</option><option>يومي</option><option>أسبوعي</option><option>شهري</option></select>`)}
+        </div>
+        ${fld('المستلمون (اختياري)', `<input id="an-rep-to" class="native-input" placeholder="مثال: الإدارة · المالية">`)}
+        ${note('info','حفظ التقرير','يُنشأ التقرير وفق الفلاتر الحالية ويمكن تصديره أو جدولته لاحقاً من التقارير المجدولة.')}
+      `, `<button type="button" class="btn coral" onclick="WafraOps.confirmCreateAnalyticsReport()">إنشاء التقرير</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    confirmCreateAnalyticsReport:()=>{
+      const name=document.getElementById('an-rep-name')?.value?.trim()||'تقرير تحليلي';
+      const fmt=document.getElementById('an-rep-fmt')?.value||'Excel';
+      const freq=document.getElementById('an-rep-freq')?.value||'مرة واحدة الآن';
+      closeM();
+      toast(`تم إنشاء «${name}» بصيغة ${fmt}${freq.includes('مرة')?'':' · '+freq}.`);
+    },
+    runAnalyticsSearch:()=>{
+      window.__analyticsTab='search';
+      window.__analyticsRan=true;
+      const n=28+Math.floor(Math.random()*17);
+      window.__analyticsResultCount=n;
+      toast(`اكتمل تشغيل التحليل — ${n} نتيجة مطابقة للفلاتر.`);
+      render();
+      setTimeout(()=>{
+        const el=document.getElementById('an-results');
+        if(el){ el.scrollIntoView({behavior:'smooth',block:'start'}); el.classList.add('an-flash'); setTimeout(()=>el.classList.remove('an-flash'),1200); }
+      },80);
+    },
     mapCity:t=>toast(`تم عرض تفاصيل ${t}:  ${t==='الرياض'?'1,620':'734'} حجزاً خلال الفترة.`),
     notice:t=>toast(`${t} — تم تنفيذ الإجراء التجريبي.`),
     dynamicRule:()=>toast('تم حفظ قاعدة التسعير الديناميكي.'),
@@ -4420,8 +4487,13 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
   S.analytics=()=>{
     const active=window.__analyticsTab||'search';
     const tabs=[{k:'search',t:'البحث والتحليل'},{k:'compare',t:'المقارنات'},{k:'technical',t:'التحليل الفني'},{k:'operations',t:'المؤشرات التشغيلية'},{k:'financial',t:'النظرة المالية'},{k:'map',t:'الخريطة التفاعلية'},{k:'delivery',t:'خدمة التوصيل'},{k:'scheduled',t:'التقارير المجدولة'},{k:'sla',t:'مراقبة مستوى الخدمة'},{k:'transfer',t:'النقل بين الفروع'}];
-    const quick=`<div class="card-b" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost sm" onclick="WafraOps.demoAction('تصدير CSV')">CSV ⤓</button><button class="btn ghost sm" onclick="WafraOps.demoAction('تصدير Excel')">Excel ⤓</button><button class="btn ghost sm" onclick="WafraOps.demoAction('تصدير PDF')">PDF ⤓</button><button class="btn ghost sm" onclick="WafraOps.demoAction('حفظ التقرير')">حفظ التقرير</button></div>`;
-    const search=`${quick}<div class="card-b"><div class="grid3">${[['الكيانات','المزودون · العملاء · السيارات'],['حالة الحجز','جاري · مكتمل · ملغي'],['المدينة','الرياض · جدة · الخبر']].map(x=>`<div>${fld(x[0],`<select class="native-input"><option>${x[1]}</option><option>الكل</option></select>`)}</div>`).join('')}</div><div style="margin-top:12px"><button class="btn coral" onclick="WafraOps.demoAction('تشغيل التحليل')">تشغيل التحليل</button></div></div>${card(cardH('نتائج البحث','28 نتيجة مطابقة')+tableWith(['الاسم','النوع','المدينة','الحالة','الحجوزات','الإيرادات'],[['شركة الصحراء','مزود','الرياض',status('نشط'),'642',amt('286,400')],['أحمد الشمري','عميل','الرياض',status('نشط'),'14',amt('12,840')],['كامري 2026','سيارة','الرياض',status('متاحة'),'486',amt('92,340')]]))}`;
+    const quick=`<div class="card-b" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" onclick="WafraOps.demoAction('تصدير CSV')">CSV ⤓</button><button type="button" class="btn ghost sm" onclick="WafraOps.demoAction('تصدير Excel')">Excel ⤓</button><button type="button" class="btn ghost sm" onclick="WafraOps.demoAction('تصدير PDF')">PDF ⤓</button><button type="button" class="btn ghost sm" onclick="WafraOps.demoAction('حفظ التقرير')">حفظ التقرير</button></div>`;
+    const ran=!!window.__analyticsRan;
+    const resCount=window.__analyticsResultCount||28;
+    const searchRows=ran
+      ? [['شركة الصحراء','مزود','الرياض',status('نشط'),'642',amt('286,400')],['أحمد الشمري','عميل','الرياض',status('نشط'),'14',amt('12,840')],['كامري 2026','سيارة','الرياض',status('متاحة'),'486',amt('92,340')],['كي رنت','مزود','جدة',status('نشط'),'418',amt('215,600')],['نورة القحطاني','عميل','جدة',status('نشط'),'9',amt('8,120')],['إلنترا 2025','سيارة','جدة',status('متاحة'),'312',amt('71,400')]]
+      : [['شركة الصحراء','مزود','الرياض',status('نشط'),'642',amt('286,400')],['أحمد الشمري','عميل','الرياض',status('نشط'),'14',amt('12,840')],['كامري 2026','سيارة','الرياض',status('متاحة'),'486',amt('92,340')]];
+    const search=`${quick}<div class="card-b"><div class="grid3">${[['الكيانات','المزودون · العملاء · السيارات'],['حالة الحجز','جاري · مكتمل · ملغي'],['المدينة','الرياض · جدة · الخبر']].map(x=>`<div>${fld(x[0],`<select class="native-input"><option>${x[1]}</option><option>الكل</option></select>`)}</div>`).join('')}</div><div style="margin-top:12px"><button type="button" class="btn coral" onclick="WafraOps.runAnalyticsSearch()">تشغيل التحليل</button></div></div><div id="an-results">${card(cardH('نتائج البحث', ran?`${resCount} نتيجة مطابقة بعد التشغيل`:`${resCount} نتيجة مطابقة — اضغط «تشغيل التحليل» للتحديث`)+(ran?`<div class="note ok" style="margin:0 16px 12px"><span>✓</span><div><b>تم تشغيل التحليل</b>عُدّلت النتائج وفق الفلاتر المحددة.</div></div>`:'')+tableWith(['الاسم','النوع','المدينة','الحالة','الحجوزات','الإيرادات'],searchRows))}</div>`;
     const compare=`${quick}<div class="grid2">${card(cardH('مقارنة الفترتين','سبتمبر 2026 مقابل أغسطس 2026')+`<div class="card-b">${tableWith(['المؤشر','سبتمبر','أغسطس','التغير'],[['الإيرادات',amt('3,730,000'),amt('3,420,000'),'▲ 9.1%'],['الحجوزات','4,182','3,906','▲ 7.1%'],['التشغيل','74%','69%','▲ 5%'],['الإلغاء','9.6%','10.8%','▼ 1.2%']])}</div>`)}${card(cardH('البصمة الأدائية')+`<div class="card-b">${bars([['الإيرادات',92,'#293B85'],['الإتاحة',86,'#F04438'],['التشغيل',74,'#EAA631'],['الرضا',89,'#20A16E']])}</div>`)}</div>`;
     const operations=`<div class="card-b">${kpi([k('🚗','إجمالي السيارات','4,194','▲ 2.1%'),k('📍','الفروع النشطة','184','6 تحتاج إتاحة'),k('📅','الحجوزات','4,182','▲ 8.4%'),k('✓','المكتملة','3,540','84.6% من الإجمالي'),k('⏱','متوسط التأكيد','31 د','▼ 4 دقائق'),k('⚠','تجاوزات SLA','59','تحتاج إجراء')])}</div><div class="grid2">${card(cardH('حالة العقود')+`<div class="card-b">${bars([['مفتوح',78,'#2C68D8'],['مغلق',86,'#20A16E'],['ملغي',32,'#F04438'],['متأخر',24,'#EAA631']])}</div>`)}${card(cardH('الالتزام التشغيلي')+`<div class="card-b">${donut([['قبول الحجز',73,'var(--green)','73%'],['استلام العميل',91,'var(--navy)','91%'],['تحديث الإتاحة',89,'var(--green)','89%'],['تأخر الإرجاع',11,'var(--coral)','11%']],'89%','مؤشر الالتزام')}</div>`)}</div>`;
     const financial=`<div class="card-b">${kpi([k('💵','إجمالي الإيرادات','3,730,000','▲ 9.8%'),k('💰','صافي الربح','1,044,000','▲ 11.4%'),k('🏦','عمولات المنصة','447,600','12% من الإيرادات'),k('↩','المستردات','62,940','▼ 4.1%'),k('📄','إجمالي العقود','3,878','▲ 6.2%')])}</div><div class="grid2">${card(cardH('تدفق الإيرادات','أبريل إلى سبتمبر')+`<div class="card-b">${spark([40,61,60,58,63,84],32)}<div style="display:flex;justify-content:space-between;color:var(--muted);font-size:11px"><span>أبريل</span><span>مايو</span><span>يونيو</span><span>يوليو</span><span>أغسطس</span><span>سبتمبر</span></div></div>`)}${card(cardH('توزيع الإيرادات حسب المدينة')+`<div class="card-b">${donut([['الرياض',31,'var(--navy)','1.16M'],['جدة',24,'var(--coral)','895K'],['الخبر',18,'var(--amber)','671K'],['الدمام',13,'var(--green)','485K'],['مكة',14,'#8367C7','522K']],'3.73M','ر.س')}</div>`)}</div>`;
@@ -4431,7 +4503,7 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
     const scheduled=`${quick}${card(cardH('التقارير المجدولة')+tableWith(['التقرير','التكرار','آخر إرسال','المستلمون','الحالة','الإجراء'],[['ملخص الأداء','أسبوعي','الخميس 09:00','الإدارة',status('مفعّل'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل التقرير')">تعديل</button>`],['تقرير التحصيل','شهري','1 سبتمبر 08:00','المالية',status('مفعّل'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('إرسال التقرير')">إرسال الآن</button>`],['جودة الأسطول','يومي','اليوم 07:00','التشغيل',status('مفعّل'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل التقرير')">تعديل</button>`]]))}`;
     const transfer=`${quick}${card(cardH('النقل بين الفروع')+tableWith(['الطلب','السيارة','الفرع المصدر','الفرع المستهدف','المدينة','الحالة','المطلوب','الإجراء'],[['TR-118','كامري 2026','مطار الملك خالد','طريق الملك عبدالعزيز','الرياض',status('قيد المراجعة','a'),'3 سيارات',`<button class="btn coral sm" onclick="WafraOps.demoAction('اعتماد النقل')">اعتماد</button>`],['TR-114','إلنترا 2025','جدة الشمالية','مطار الملك عبدالعزيز','جدة',status('نشط'),'4 سيارات',`<button class="btn ghost sm" onclick="WafraOps.demoAction('عرض النقل')">إطلاع</button>`]]))}`;
     const content={search,compare,technical:compare,operations,financial,map,delivery,scheduled,sla,transfer}[active];
-    return phead('التحليلات','بحث وتحليل بيانات المنصة وتشغيلها وماليتها، مع أمثلة واقعية قابلة للتفاعل',[],`<button class="btn coral" onclick="WafraOps.demoAction('إنشاء تقرير')">＋ إنشاء تقرير</button>`)+card(tabButtons(tabs,active,'WafraOps.switchAnalyticsTab')+content);
+    return phead('التحليلات','بحث وتحليل بيانات المنصة وتشغيلها وماليتها، مع أمثلة واقعية قابلة للتفاعل',[],`<button type="button" class="btn coral" onclick="WafraOps.createAnalyticsReport()">＋ إنشاء تقرير</button>`)+card(tabButtons(tabs,active,'WafraOps.switchAnalyticsTab')+content);
   };
 
   S.vendorFile=()=>{
@@ -4596,11 +4668,176 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
     rejectRefund:id=>{if(confirm(`رفض استرداد ${id}؟`))ping(`تم رفض الاسترداد ${id}.`);},
     settleRecon:id=>{if(confirm(`تسوية فرق المعاملة ${id}؟`))ping(`تم فتح تسوية الفرق لـ ${id}.`);},
     toggleTemplate:(name,action)=>ping(`تم ${action} القالب «${name}».`),
+    openRetentionCampaign:(name,bookings,idleDays)=>{
+      window.__jrCamp={name,bookings,idleDays,incentive:'pct',channel:'push',value:'15'};
+      const first=String(name).split(/\s+/)[0]||name;
+      const msg=`عزيزنا ${name}، اشتقنا لك في وفرا! خصم 15% على إيجارك القادم. احجز الآن قبل انتهاء العرض.`;
+      const seg=(group,opts,cur)=>`<div class="jr-seg" data-group="${group}">${opts.map(([k,l])=>`<button type="button" class="jr-seg-btn ${cur===k?'on':''}" onclick="WafraOps.setRetentionOpt('${group}','${k}')">${l}</button>`).join('')}</div>`;
+      openM(modal(`حملة استرجاع — ${name}`, `
+        <div class="jr-sub">خامل منذ ${idleDays} يوم · ${bookings} حجز سابق</div>
+        ${fld('الحافز', seg('incentive',[['remind','تذكير فقط'],['amount','كوبون مبلغ'],['pct','كوبون نسبة']],'pct'))}
+        <div id="jr-incentive-field">${fld('نسبة الخصم (%)', `<input id="jr-val" class="native-input" type="number" value="15" min="1" max="90" oninput="WafraOps.refreshRetentionMsg()">`)}</div>
+        ${fld('القناة', seg('channel',[['email','بريد'],['sms','SMS'],['push','إشعار']],'push'))}
+        ${fld('نص الرسالة', `<textarea id="jr-msg" class="native-input" rows="4">${msg}</textarea>`)}
+        <div class="jr-coupon-hint"><span>🎟</span><div>سينشأ كوبون خاص بالعميل عند الإرسال.</div></div>
+      `, `<button type="button" class="btn" onclick="WafraOps.sendRetentionCampaign()">إرسال الحملة</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    setRetentionOpt:(group,key)=>{
+      const st=window.__jrCamp||(window.__jrCamp={});
+      st[group]=key;
+      document.querySelectorAll(`.jr-seg[data-group="${group}"] .jr-seg-btn`).forEach(b=>{
+        b.classList.toggle('on', b.textContent.trim()===({remind:'تذكير فقط',amount:'كوبون مبلغ',pct:'كوبون نسبة',email:'بريد',sms:'SMS',push:'إشعار'}[key]));
+      });
+      const field=document.getElementById('jr-incentive-field');
+      if(field && group==='incentive'){
+        if(key==='remind') field.innerHTML=`<div class="jr-remind-note">تذكير بدون خصم — يُرسل النص فقط دون إنشاء كوبون.</div>`;
+        else if(key==='amount') field.innerHTML=fld('مبلغ الخصم (ر.س)', `<input id="jr-val" class="native-input" type="number" value="50" min="1" oninput="WafraOps.refreshRetentionMsg()">`);
+        else field.innerHTML=fld('نسبة الخصم (%)', `<input id="jr-val" class="native-input" type="number" value="15" min="1" max="90" oninput="WafraOps.refreshRetentionMsg()">`);
+        const hint=document.querySelector('.jr-coupon-hint');
+        if(hint) hint.style.display=key==='remind'?'none':'';
+        WafraOps.refreshRetentionMsg();
+      }
+    },
+    refreshRetentionMsg:()=>{
+      const st=window.__jrCamp||{};
+      const name=st.name||'العميل';
+      const ta=document.getElementById('jr-msg');
+      if(!ta) return;
+      const v=document.getElementById('jr-val')?.value||'15';
+      const inc=st.incentive||'pct';
+      if(inc==='remind') ta.value=`عزيزنا ${name}، اشتقنا لك في وفرا! عد إلينا واحجز سيارتك المفضلة اليوم.`;
+      else if(inc==='amount') ta.value=`عزيزنا ${name}، اشتقنا لك في وفرا! خصم ${v} ر.س على إيجارك القادم. احجز الآن قبل انتهاء العرض.`;
+      else ta.value=`عزيزنا ${name}، اشتقنا لك في وفرا! خصم ${v}% على إيجارك القادم. احجز الآن قبل انتهاء العرض.`;
+    },
+    sendRetentionCampaign:()=>{
+      const st=window.__jrCamp||{};
+      const ch={email:'بريد',sms:'SMS',push:'إشعار'}[st.channel||'push']||'إشعار';
+      const inc={remind:'تذكير فقط',amount:'كوبون مبلغ',pct:'كوبون نسبة'}[st.incentive||'pct'];
+      const v=document.getElementById('jr-val')?.value;
+      closeM();
+      ping(`أُرسلت حملة استرجاع لـ «${st.name||'العميل'}» عبر ${ch} · ${inc}${v&&st.incentive!=='remind'?` (${v}${st.incentive==='pct'?'%':' ر.س'})`:''}.`);
+    },
     toggleCouponGov:(code,action)=>ping(`تم ${action} الكوبون ${code}.`),
-    investigateCoupon:code=>ping(`تم فتح تحقيق لسوء استخدام الكوبون ${code}.`),
-    adoptAbWinner:(name,ver)=>{if(confirm(`اعتماد النسخة ${ver} لاختبار «${name}»؟`))ping(`تم اعتماد الفائز ${ver} لـ ${name}.`);},
+    investigateCoupon:code=>{
+      const catalog={
+        VIP20:{disc:'20%',uses:'141',cost:'19.2 ألف ر.س',maxUse:'23 مرة',devices:'20',share:'53%'},
+        WEEKEND10:{disc:'10%',uses:'497',cost:'33.8 ألف ر.س',maxUse:'31 مرة',devices:'48',share:'41%'},
+        AIRPORT25:{disc:'25 ر.س',uses:'851',cost:'21 ألف ر.س',maxUse:'18 مرة',devices:'62',share:'36%'}
+      };
+      const d=catalog[code]||{disc:'—',uses:'—',cost:'—',maxUse:'—',devices:'—',share:'—'};
+      window.__cgCode=code;
+      const chk=(id,label,on)=>`<label class="cg-chk"><input type="checkbox" id="${id}" ${on?'checked':''}><span>${label}</span></label>`;
+      openM(modal(`فتح تحقيق – الكوبون ${code}`, `
+        <div class="cg-sub">خصم ${d.disc} · ${d.uses} استخدام</div>
+        <div class="cg-evid">
+          <b class="cg-evid-t">الأدلة المرصودة</b>
+          <div class="cg-evid-grid">
+            <div><span>إجمالي الاستخدامات</span><strong>${d.uses}</strong></div>
+            <div><span>كلفة الخصم</span><strong>${d.cost}</strong></div>
+            <div><span>أعلى استخدام من عميل واحد</span><strong class="danger">${d.maxUse}</strong></div>
+            <div><span>عدد الأجهزة المميزة</span><strong>${d.devices}</strong></div>
+            <div class="full"><span>معدل المشاركة العامة المقدّر</span><strong class="warn">${d.share}</strong></div>
+          </div>
+        </div>
+        <div class="frow">
+          ${fld('سبب الاشتباه', `<select id="cg-reason" class="native-input">
+            <option selected>استخدام متكرر من حساب/جهاز واحد</option>
+            <option>مشاركة عامة للكود (تسريب)</option>
+            <option>تجاوز سقف الاستخدام لكل عميل</option>
+            <option>أنماط حجز غير طبيعية</option>
+            <option>أخرى</option>
+          </select>`)}
+          ${fld('مستوى الخطورة', `<select id="cg-risk" class="native-input">
+            <option selected>عالية</option>
+            <option>متوسطة</option>
+            <option>منخفضة</option>
+          </select>`)}
+        </div>
+        ${fld('مهلة الحسم (ساعة)', `<input id="cg-sla" class="native-input" type="number" value="48" min="1">`)}
+        ${fld('ملاحظة التحقيق', `<textarea id="cg-note" class="native-input" rows="3" placeholder="تفاصيل الاشتباه والإجراء المطلوب..."></textarea>`)}
+        <div class="cg-opts">
+          ${chk('cg-freeze','تجميد الكوبون مؤقتاً أثناء التحقيق',1)}
+          ${chk('cg-fraud','تحويل الحالة إلى فريق كشف الاحتيال',0)}
+        </div>
+      `, `<button class="btn danger ghost-danger" onclick="WafraOps.confirmInvestigateCoupon()">فتح التحقيق</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    confirmInvestigateCoupon:()=>{
+      const code=window.__cgCode||'الكوبون';
+      const freeze=document.getElementById('cg-freeze')?.checked;
+      const fraud=document.getElementById('cg-fraud')?.checked;
+      const risk=document.getElementById('cg-risk')?.value||'عالية';
+      const sla=document.getElementById('cg-sla')?.value||'48';
+      closeM();
+      ping(`فُتح تحقيق على ${code} · خطورة ${risk} · مهلة ${sla}س${freeze?' · مجمّد مؤقتاً':''}${fraud?' · أُحيل لكشف الاحتيال':''}.`);
+    },
+    viewAbDetails:name=>{
+      const catalog={
+        'بانر الصفحة الرئيسية':{sub:'بانر الرئيسية · الهدف: نسبة التحويل · 50/50 كل العملاء',conf:'15.6%',z:'-0.2',sig:0,prog:'7 / 7 يوم',lead:'A',
+          rows:[['الظهور','33,035','16,705'],['النقرات','757','408'],['CTR','2.29%','2.44%'],['نسبة التحويل','6.7%','6.4%'],['تحويلات مقدّرة','51','26']]},
+        'عنوان إعلان عروض نهاية الأسبوع':{sub:'إعلان · الهدف: نسبة النقر (CTR) · 50/50 كل العملاء',conf:'42.1%',z:'-0.8',sig:0,prog:'2 / 14 يوم',lead:'A',
+          rows:[['الظهور','12,440','12,180'],['النقرات','510','345'],['CTR','4.10%','2.83%'],['نسبة التحويل','9.1%','6.4%'],['تحويلات مقدّرة','46','22']]},
+        'زر CTA الحجز':{sub:'واجهة الحجز · الهدف: نسبة التحويل · 50/50 كل العملاء',conf:'78.4%',z:'1.2',sig:0,prog:'5 / 14 يوم',lead:'B',
+          rows:[['الظهور','18,200','18,050'],['النقرات','446','505'],['CTR','2.45%','2.80%'],['نسبة التحويل','5.2%','8.9%'],['تحويلات مقدّرة','23','45']]},
+        'رسالة الاحتفاظ':{sub:'إشعار · الهدف: نسبة النقر (CTR) · 50/50 عملاء غير نشطين',conf:'61.0%',z:'-0.5',sig:0,prog:'9 / 14 يوم',lead:'A',
+          rows:[['الظهور','9,820','9,640'],['النقرات','285','262'],['CTR','2.90%','2.72%'],['نسبة التحويل','4.1%','3.8%'],['تحويلات مقدّرة','12','10']]},
+        'باقة الشركات — بانر الرئيسية':{sub:'بانر الرئيسية · الهدف: نسبة التحويل · 50/50 كل العملاء',conf:'99.9%',z:'3.8',sig:1,prog:'14 / 14 يوم',lead:'B',
+          rows:[['الظهور','41,200','40,880'],['النقرات','820','1,420'],['CTR','1.99%','3.47%'],['نسبة التحويل','4.8%','8.3%'],['تحويلات مقدّرة','39','118']]}
+      };
+      const d=catalog[name]||catalog['بانر الصفحة الرئيسية'];
+      const sigPill=d.sig?`<span class="ab-sig ok">دالة</span>`:`<span class="ab-sig no">غير دالة</span>`;
+      const alert=d.sig
+        ? note('ok','الدلالة مُحقَّقة',`ثقة ${d.conf} — يمكن اعتماد النسخة ${d.lead} بأمان إحصائي.`)
+        : `<div class="ab-warn"><span>⚠</span><div>لم تبلغ الدلالة بعد (ثقة ${d.conf}). واصل جمع البيانات حتى اكتمال المدة أو ثقة ≥ 95%.</div></div>`;
+      openM(modal(name, `
+        <div class="ab-sub">${d.sub}</div>
+        <div class="ab-detail-kpis">
+          <div class="ab-dk"><span>مستوى الثقة</span><b class="${d.sig?'ok':'lo'}">${d.conf}</b></div>
+          <div class="ab-dk"><span>z-score</span><b dir="ltr">${d.z}</b></div>
+          <div class="ab-dk"><span>الدلالة</span>${sigPill}</div>
+          <div class="ab-dk"><span>التقدم</span><b>${d.prog}</b></div>
+        </div>
+        <div class="ab-cmp-wrap">${table(['المقياس','النسخة A','النسخة B'], d.rows.map(([m,a,b])=>[m,{v:a,c:'num'},{v:b,c:'num'}]))}</div>
+        ${alert}
+      `, `<button class="btn st-approve" onclick="WafraOps.adoptAbWinner('${name.replace(/'/g,"\\'")}','${d.lead}')">اعتماد الفائز (${d.lead})</button><button class="btn ghost" onclick="closeM()">إغلاق</button>`));
+    },
+    adoptAbWinner:(name,ver)=>{
+      closeM();
+      if(confirm(`اعتماد النسخة ${ver} لاختبار «${name}» ونشرها؟`)) ping(`تم اعتماد الفائز ${ver} لـ «${name}» ونشر النسخة.`);
+    },
     confirmClose:t=>{if(confirm(`هل تريد إغلاق البلاغ ${t}؟`))ping(`تم إغلاق البلاغ ${t}.`);},
-    openBooking:t=>{location.hash='#booking';ping(`تم فتح تفاصيل الحجز ${t}.`);}
+    openBooking:t=>{location.hash='#booking';ping(`تم فتح تفاصيل الحجز ${t}.`);},
+    increaseRoasBudget:(ch,spend)=>{
+      window.__roasFrom=ch;
+      openM(modal('زيادة ميزانية القناة', `
+        ${fld('القناة', `<div class="inp"><b>${ch}</b><span style="color:var(--muted);margin-inline-start:8px">· الميزانية الحالية: ${spend}</span></div>`)}
+        ${fld('مبلغ الزيادة (ر.س)', `<input id="roas-inc-amt" class="native-input" type="number" value="5000" min="1">`)}
+        ${note('info','زيادة الميزانية','يُضاف المبلغ إلى ميزانية القناة المختارة فوراً ويُسجَّل الإجراء في سجل التدقيق.')}
+      `, `<button class="btn st-approve" onclick="WafraOps.confirmIncreaseRoas()">تنفيذ الزيادة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    confirmIncreaseRoas:()=>{
+      const ch=window.__roasFrom||'القناة', amt=document.getElementById('roas-inc-amt')?.value||'0';
+      closeM(); ping(`تمت زيادة ميزانية «${ch}» بمبلغ ${Number(amt).toLocaleString('ar-SA')} ر.س.`);
+    },
+    transferRoasBudget:(ch,spend)=>{
+      window.__roasFrom=ch;
+      const dests=[
+        ['عروض الصيف','87.68'],['باقة الشركات','52.51'],['تخفيضات نهاية الأسبوع','41.20'],
+        ['تجربة قيادة مجانية','28.75'],['سيارات فاخرة بنصف السعر','10.43'],['عروض نهاية الصيف','167.06'],
+        ['WELCOME15','141.18'],['AIRPORT25','74.39'],['الإطلاق الجديد','40.00'],['بانر الرئيسية — الصيف','31.87']
+      ].filter(([n])=>n!==ch);
+      const opts=dests.map(([n,r],i)=>`<option value="${n}"${i===0?' selected':''}>${n} (×ROAS ${r})</option>`).join('');
+      openM(modal('تحويل ميزانية بين القنوات', `
+        ${fld('من القناة', `<div class="inp"><b>${ch}</b> — ${spend}</div>`)}
+        ${fld('إلى القناة', `<select id="roas-xfer-to" class="native-input">${opts}</select>`)}
+        ${fld('المبلغ المحوّل (ر.س)', `<input id="roas-xfer-amt" class="native-input" type="number" value="5400" min="1">`)}
+        <div class="roas-xfer-hint"><span>↺</span><div>يُخصم المبلغ من ميزانية القناة المصدر ويُضاف للوجهة — أداة لتحويل الإنفاق من الخاسر إلى الرابح.</div></div>
+      `, `<button class="btn st-approve" onclick="WafraOps.confirmTransferRoas()">تنفيذ التحويل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    confirmTransferRoas:()=>{
+      const from=window.__roasFrom||'المصدر', to=document.getElementById('roas-xfer-to')?.value||'الوجهة';
+      const amt=document.getElementById('roas-xfer-amt')?.value||'0';
+      closeM(); ping(`تم تحويل ${Number(amt).toLocaleString('ar-SA')} ر.س من «${from}» إلى «${to}».`);
+    }
   });
 
   S.bookings=()=>phead('قائمة الحجوزات','البحث برقم الحجز أو المزود أو المدينة أو الفرع أو العميل',[],exports('الحجوزات'))+card(controls([
@@ -4959,28 +5196,132 @@ function pill(value){
   const providers=NAV.find(x=>x.g==='المزوّدون');if(providers&&!providers.items.some(x=>x.k==='providerPerformance'))providers.items.splice(1,0,{k:'providerPerformance',t:'أداء المزودين',i:'◷'});
   state.welcomeCoupon=state.welcomeCoupon||{active:true,code:'WELCOME10',type:'نسبة مئوية',value:'10%',perCustomerLimit:'1',totalLimit:'5,000',start:'01/10/2026',end:'31/12/2026',uses:'1,204'};
   const INTEGRATIONS_CATALOG=[
-    {name:'أبشر / يقين',status:'متصل',tone:'g',checked:'اليوم 12:42',configured:'مهيأة',note:'التحقق من الهوية الوطنية نشط'},
-    {name:'نجم',status:'متصل',tone:'g',checked:'اليوم 12:40',configured:'مهيأة',note:'استعلام الحوادث والمطالبات'},
-    {name:'ساهر',status:'تنبيه',tone:'a',checked:'اليوم 12:38',configured:'مهيأة',note:'تأخير في استجابة المخالفات'},
-    {name:'سداد',status:'متصل',tone:'g',checked:'اليوم 12:41',configured:'مهيأة',note:'آخر تحصيل ناجح قبل 4 دقائق'},
-    {name:'موثوق',status:'متصل',tone:'g',checked:'اليوم 12:37',configured:'مهيأة',note:'التوثيق الإلكتروني للمستندات'},
-    {name:'هيئة النقل',status:'متصل',tone:'g',checked:'اليوم 12:36',configured:'مهيأة',note:'تراخيص النشاط والمركبات'},
-    {name:'الفوترة الإلكترونية',status:'متصل',tone:'g',checked:'اليوم 12:35',configured:'مهيأة',note:'ZATCA · المرحلة الثانية'},
-    {name:'بوابة الدفع (HyperPay)',status:'متصل',tone:'g',checked:'اليوم 12:41',configured:'مهيأة',note:'آخر تحصيل ناجح قبل دقيقتين'},
-    {name:'رسائل SMS',status:'متصل',tone:'g',checked:'اليوم 12:39',configured:'مهيأة',note:'الرصيد 18,420 رسالة'},
-    {name:'الخرائط والمواقع',status:'تنبيه',tone:'a',checked:'اليوم 12:35',configured:'مهيأة',note:'تحتاج مراجعة مفتاح منطقة تبوك'},
-    {name:'البريد الإلكتروني',status:'متصل',tone:'g',checked:'اليوم 12:40',configured:'مهيأة',note:'معدل التسليم 99.4%'}
+    {id:'absher',name:'أبشر / يقين',desc:'التحقق من الهوية',status:'متصل',tone:'g',sync:'11 أكتوبر 2026، 00:59',key:'ABSHER-****-8842',webhook:'https://api.wafra.sa/hooks/absher'},
+    {id:'najm',name:'نجم',desc:'الحوادث والمطالبات',status:'متصل',tone:'g',sync:'11 أكتوبر 2026، 00:59',key:'NAJM-****-1207',webhook:'https://api.wafra.sa/hooks/najm'},
+    {id:'saher',name:'ساهر',desc:'المخالفات المرورية',status:'متصل',tone:'g',sync:'10 أكتوبر 2026، 00:59',key:'SAHER-****-5590',webhook:'https://api.wafra.sa/hooks/saher'},
+    {id:'sadad',name:'سداد',desc:'التحصيل والمدفوعات',status:'متصل',tone:'g',sync:'11 أكتوبر 2026، 00:41',key:'SADAD-****-3310',webhook:'https://api.wafra.sa/hooks/sadad'},
+    {id:'mada',name:'مدى',desc:'بطاقات مدى والمدفوعات',status:'متصل',tone:'g',sync:'11 أكتوبر 2026، 00:40',key:'MADA-****-7721',webhook:'https://api.wafra.sa/hooks/mada'},
+    {id:'mawthooq',name:'موثوق',desc:'التوثيق الإلكتروني للمستندات',status:'غير متصل',tone:'n',sync:'—',key:'—',webhook:''},
+    {id:'tga',name:'هيئة النقل',desc:'تراخيص النشاط والمركبات',status:'متصل',tone:'g',sync:'11 أكتوبر 2026، 00:36',key:'TGA-****-4412',webhook:'https://api.wafra.sa/hooks/tga'},
+    {id:'zatca',name:'الفوترة الإلكترونية',desc:'ZATCA · المرحلة الثانية',status:'خطأ اتصال',tone:'r',sync:'10 أكتوبر 2026، 22:15',key:'ZATCA-****-9088',webhook:'https://api.wafra.sa/hooks/zatca'}
   ];
-  state.integrations=state.integrations||[];
-  INTEGRATIONS_CATALOG.forEach(item=>{if(!state.integrations.some(x=>x.name===item.name))state.integrations.push(item);});
-  if(!state.integrations.length) state.integrations=INTEGRATIONS_CATALOG.slice();
-  save();
-  Object.assign(WafraOps,{saveWelcome:()=>{const c=state.welcomeCoupon;c.active=document.getElementById('wc-active').value==='مفعّل';c.code=document.getElementById('wc-code').value.trim();c.type=document.getElementById('wc-type').value;c.value=document.getElementById('wc-value').value;c.perCustomerLimit=document.getElementById('wc-limit').value;c.totalLimit=document.getElementById('wc-total').value;save();window.__toast('تم حفظ إعداد كوبون الترحيب محلياً.');render();},checkIntegration:n=>{const i=state.integrations.find(x=>x.name===n);if(i){i.status='متصل';i.tone='g';i.checked='الآن';i.note='تم الفحص بنجاح؛ الخدمة تستجيب بشكل طبيعي.';save();render();window.__toast('تم فحص التكامل وتحديث حالته.');}}});
+  /* أعِد كتالوج التصميم إن كانت البيانات القديمة جدولاً بلا بطاقات */
+  if(!state.integrations?.length || !state.integrations[0]?.id){
+    state.integrations=INTEGRATIONS_CATALOG.map(x=>({...x}));
+    save();
+  }else{
+    INTEGRATIONS_CATALOG.forEach(item=>{if(!state.integrations.some(x=>x.id===item.id||x.name===item.name))state.integrations.push({...item});});
+    save();
+  }
+  const findInt=id=>state.integrations.find(x=>x.id===id||x.name===id);
+  const nowSync=()=>new Date().toLocaleString('ar-SA',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  Object.assign(WafraOps,{
+    saveWelcome:()=>{const c=state.welcomeCoupon;c.active=document.getElementById('wc-active').value==='مفعّل';c.code=document.getElementById('wc-code').value.trim();c.type=document.getElementById('wc-type').value;c.value=document.getElementById('wc-value').value;c.perCustomerLimit=document.getElementById('wc-limit').value;c.totalLimit=document.getElementById('wc-total').value;save();window.__toast('تم حفظ إعداد كوبون الترحيب محلياً.');render();},
+    checkIntegration:n=>{const i=findInt(n);if(i){i.status='متصل';i.tone='g';i.sync=nowSync();save();render();window.__toast(`تم فحص «${i.name}» بنجاح.`);}},
+    testIntegration:id=>{const i=findInt(id);if(!i)return;window.__toast(i.tone==='g'?`اختبار «${i.name}» ناجح — زمن الاستجابة 180ms.`:`فشل اختبار «${i.name}» — راجع المفتاح أو الشبكة.`);},
+    syncIntegration:id=>{const i=findInt(id);if(!i)return;if(i.tone==='n'){window.__toast(`لا يمكن مزامنة «${i.name}» وهو غير متصل. فعّله أولاً.`);return;}i.sync=nowSync();if(i.tone==='r'){i.status='متصل';i.tone='g';}save();render();window.__toast(`تمت مزامنة «${i.name}» · ${i.sync}`);},
+    setupIntegration:id=>{
+      const i=findInt(id);if(!i)return;
+      openM(modal(`إعداد — ${i.name}`, `
+        <div class="ig-sub">${i.desc||''}</div>
+        ${fld('مفتاح API', `<input id="ig-key" class="native-input" value="${(i.key&&i.key!=='—')?i.key:''}" placeholder="XXXX-****-0000">`)}
+        ${fld('Webhook', `<input id="ig-hook" class="native-input" value="${i.webhook||''}" placeholder="https://api.wafra.sa/hooks/...">`)}
+        ${fld('بيئة التشغيل', `<select id="ig-env" class="native-input"><option>إنتاج</option><option>تجريبي (Sandbox)</option></select>`)}
+        ${note('info','الأمان','تُخزَّن المفاتيح مشفّرة ولا تُعرض كاملة بعد الحفظ.')}
+      `, `<button type="button" class="btn" onclick="WafraOps.saveIntegrationSetup('${i.id}')">حفظ الإعداد</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveIntegrationSetup:id=>{
+      const i=findInt(id);if(!i)return;
+      const key=document.getElementById('ig-key')?.value?.trim();
+      const hook=document.getElementById('ig-hook')?.value?.trim();
+      if(key) i.key=key.includes('*')?key:key.replace(/^(.{4}).+(.{4})$/,'$1-****-$2');
+      i.webhook=hook||i.webhook;
+      if(i.tone==='n'&&key){i.status='متصل';i.tone='g';i.sync=nowSync();}
+      save();closeM();render();window.__toast(`تم حفظ إعداد «${i.name}».`);
+    },
+    toggleIntegration:id=>{
+      const i=findInt(id);if(!i)return;
+      if(i.tone==='g'||i.tone==='a'||i.tone==='r'){
+        if(!confirm(`تعطيل تكامل «${i.name}»؟`)) return;
+        i.status='معطّل';i.tone='n';save();render();window.__toast(`تم تعطيل «${i.name}».`);
+      }else{
+        i.status='متصل';i.tone='g';i.sync=nowSync();
+        if(!i.key||i.key==='—') i.key=(i.id||'KEY').toUpperCase()+'-****-'+String(1000+Math.floor(Math.random()*9000));
+        save();render();window.__toast(`تم تفعيل «${i.name}».`);
+      }
+    }
+  });
   S.welcomeCoupon=()=>{const c=state.welcomeCoupon;const hist=[['WELCOME10','أحمد الشمري','2026/09/28 14:22','BK-20418','مستخدم','10%'],['WELCOME10','نورة القحطاني','2026/09/27 11:05','BK-20381','مستخدم','10%'],['WELCOME10','وليد الحربي','2026/09/26 09:40','—','مُعيَّن','10%'],['WELCOME10','سارة العتيبي','2026/09/25 16:18','BK-20371','مستخدم','10%'],['WELCOME10','ماجد السبيعي','2026/09/24 08:12','—','منتهي','10%']];return phead('كوبون الترحيب','تعيين كوبون تلقائيًا للعميل الجديد عند التسجيل',[],`<button class="btn ghost" onclick="WafraOps.exportCurrent('سجل-كوبون-الترحيب','Excel')">⤓ تصدير السجل</button>`)+card(cardH('إعداد قاعدة الترحيب','يُطبّق على التسجيلات الجديدة بعد التفعيل')+`<div class="card-b"><div class="grid3">${fld('الحالة',`<select id="wc-active" class="native-input"><option ${c.active?'selected':''}>مفعّل</option><option ${!c.active?'selected':''}>معطّل</option></select>`)}${fld('رمز الكوبون',`<input id="wc-code" class="native-input" value="${c.code}">`)}${fld('نوع الخصم',`<select id="wc-type" class="native-input"><option>${c.type}</option><option>مبلغ ثابت</option></select>`)}</div><div class="grid3">${fld('قيمة الخصم',`<input id="wc-value" class="native-input" value="${c.value}">`)}${fld('حد الاستخدام لكل عميل',`<input id="wc-limit" class="native-input" value="${c.perCustomerLimit}">`)}${fld('الحد الإجمالي للاستخدام',`<input id="wc-total" class="native-input" value="${c.totalLimit}">`)}</div><div class="grid3">${fld('بداية الصلاحية',`<input class="native-input" value="${c.start}">`)}${fld('نهاية الصلاحية',`<input class="native-input" value="${c.end}">`)}<div class="it"><div class="k">استخدامات حتى الآن</div><div class="v">${c.uses} استخدام</div></div></div><div class="note info">يُمنح الكوبون مرة واحدة فقط للعميل الجديد، ولا يجمع مع كوبونات المنصة الأخرى.</div><button class="btn coral" onclick="WafraOps.saveWelcome()">حفظ الإعداد</button></div>`)+card(cardH('سجل كوبونات الترحيب','كل التعيينات والاستخدامات من هذا النوع')+`<div class="filters mkt-filters"><div class="fsearch">⌕<input placeholder="ابحث بالعميل أو رقم الحجز…"></div><button class="btn ghost sm" onclick="WafraOps.exportCurrent('سجل-كوبون-الترحيب','Excel')">تصدير</button></div><div class="card-b">${table(['الكود','العميل','تاريخ ووقت التعيين','الحجز','الحالة','القيمة'],hist.map(r=>[{v:r[0],c:'strong num'},r[1],{v:r[2],c:'num'},{v:r[3],c:'num'},bdg(r[4],r[4]==='مستخدم'?'g':r[4]==='منتهي'?'n':'a'),r[5]]))}</div>`);};
-  S.integrationStatus=()=>{const connected=state.integrations.filter(x=>x.tone==='g').length;const alerts=state.integrations.filter(x=>x.tone!=='g').length;return phead('مركز التكاملات','متابعة اتصال الدفع والرسائل والخرائط والجهات الحكومية',[],`<button class="btn ghost" onclick="render()">↻ تحديث الحالة</button>`)+card(cardH('الخدمات المتصلة','آخر فحص للخدمات وإعداداتها')+`<div class="card-b">${kpi([{i:'✓',l:'خدمات متصلة',v:String(connected),d:'تعمل بشكل طبيعي',t:'up'},{i:'⚠',l:'تنبيهات',v:String(alerts),d:'تحتاج مراجعة',t:'down'},{i:'◷',l:'آخر فحص',v:'الآن',d:'بيانات محلية',t:'up'}])}${table(['الخدمة','الحالة','آخر فحص','التهيئة','الملاحظة','الإجراء'],state.integrations.map(x=>[x.name,`<span class="badge ${x.tone==='g'?'g':'a'}">${x.status}</span>`,x.checked,x.configured,x.note,`<button class="btn ghost sm" onclick="WafraOps.checkIntegration('${x.name}')">إعادة الفحص</button>`]))}</div>`);};
+  S.integrationStatus=()=>{
+    const list=state.integrations;
+    const connected=list.filter(x=>x.tone==='g').length;
+    const errors=list.filter(x=>x.tone==='r'||x.status==='خطأ اتصال').length;
+    const offline=list.filter(x=>x.tone==='n'||x.status==='غير متصل'||x.status==='معطّل').length;
+    const stPill=x=>{
+      if(x.tone==='g') return `<span class="ig-pill on">متصل</span>`;
+      if(x.tone==='r') return `<span class="ig-pill err">خطأ اتصال</span>`;
+      return `<span class="ig-pill off">${x.status||'غير متصل'}</span>`;
+    };
+    const cards=list.map(x=>{
+      const on=x.tone==='g'||x.tone==='a'||x.tone==='r';
+      return `<div class="ig-card ${x.tone}">
+        <div class="ig-card-h">${stPill(x)}<b>${x.name}</b><span class="ig-desc">${x.desc||''}</span></div>
+        <div class="ig-meta">
+          <div><span>آخر مزامنة</span><strong>${x.sync||'—'}</strong></div>
+          <div><span>المفتاح</span><strong class="num">${x.key||'—'}</strong></div>
+        </div>
+        <div class="ig-acts">
+          <button type="button" class="btn ghost sm" onclick="WafraOps.testIntegration('${x.id}')">اختبار</button>
+          <button type="button" class="btn sm ig-sync" onclick="WafraOps.syncIntegration('${x.id}')" ${on?'':'disabled'}>مزامنة</button>
+          <button type="button" class="btn ghost sm" onclick="WafraOps.setupIntegration('${x.id}')">إعداد</button>
+          <button type="button" class="btn sm ${on?'ig-off':'st-approve'}" onclick="WafraOps.toggleIntegration('${x.id}')">${on?'تعطيل':'تفعيل'}</button>
+        </div>
+      </div>`;
+    }).join('');
+    return phead('مركز التكاملات','ربط الجهات الوطنية ومزوّدي الخدمات وإدارة المفاتيح وقنوات Webhook',['FR-ADX-INT-01'],
+      `<button type="button" class="btn ghost" onclick="render()">↻ تحديث الحالة</button>`)
+    + `<div class="kpis ig-kpis">
+        <div class="kpi"><div class="lb"><span class="ic gh-ic green">✓</span>تكاملات متصلة</div><div class="vl">${connected}</div></div>
+        <div class="kpi ig-err"><div class="lb"><span class="ic gh-ic red">⚠</span>أخطاء اتصال</div><div class="vl">${errors}</div></div>
+        <div class="kpi"><div class="lb"><span class="ic gh-ic blue">⇄</span>الإجمالي</div><div class="vl">${list.length}</div></div>
+      </div>`
+    + `<div class="ig-grid">${cards}</div>`
+    + (offline?`<div class="note warn" style="margin-top:14px"><span>⚠</span><div><b>${offline} تكامل غير متصل</b>فعّل الخدمة أو راجع المفتاح من زر «إعداد».</div></div>`:'');
+  };
   render();
 })();
 </script>
+
+<style id="wafra-integrations">
+.ig-kpis{grid-template-columns:repeat(3,minmax(0,280px));justify-content:start;margin-bottom:16px}
+@media(max-width:900px){.ig-kpis{grid-template-columns:1fr 1fr}}
+.ig-err{border-color:#F5C6C6;background:#FFF5F5}
+.ig-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media(max-width:1180px){.ig-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.ig-grid{grid-template-columns:1fr}}
+.ig-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--sh-s);display:flex;flex-direction:column;gap:12px;min-height:210px}
+.ig-card.r{border-color:#F5C6C6}
+.ig-card.n{opacity:.92;background:#FAFBFE}
+.ig-card-h{display:flex;flex-direction:column;gap:4px;position:relative;padding-inline-end:4px}
+.ig-card-h b{font:800 15px Cairo;color:var(--ink);margin-top:4px}
+.ig-desc{font:600 12.5px Cairo;color:var(--muted)}
+.ig-pill{align-self:flex-start;display:inline-flex;padding:3px 10px;border-radius:99px;font:700 11.5px Cairo}
+.ig-pill.on{background:#E8F8F0;color:#148A5A}
+.ig-pill.off{background:#EEF1F6;color:#5A657C}
+.ig-pill.err{background:#FDECEC;color:#C62828}
+.ig-meta{display:grid;gap:8px;padding:10px 12px;border-radius:12px;background:#F7F9FC;border:1px solid #EEF1F7}
+.ig-meta div{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.ig-meta span{font:600 11.5px Cairo;color:var(--muted)}
+.ig-meta strong{font:700 12.5px Cairo;color:var(--ink)}
+.ig-meta strong.num{font-family:Cairo;direction:ltr}
+.ig-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.ig-acts .btn{flex:1 1 auto;justify-content:center;min-width:64px}
+.btn.ig-sync{background:#20A16E;color:#fff;border:0}
+.btn.ig-sync:hover{filter:brightness(.96)}
+.btn.ig-off{background:#fff;color:#C62828;border:1.5px solid #E28B8B}
+.btn.ig-off:hover{background:#FFF5F5}
+.ig-sub{font:600 12.5px Cairo;color:var(--muted);margin:-4px 0 12px}
+</style>
 
 <script>
 /* يطابق اسم مجموعة المزودين في كل صيغة لضمان ظهور شاشة الأداء في القائمة. */
@@ -5577,7 +5918,7 @@ function pill(value){
       <div class="cmp-panel"><div class="cmp-panel-h"><span>مقارنة المؤشرات</span>${legend}</div><div class="cmp-panel-b">${bars(st.a,st.b,A.scores,B.scores)}</div></div>
     </div>`;
 
-    return phead('المقارنات','قارن الأداء جنباً إلى جنب بين أي عدد من الشركات، مدن، مناطق، فروع، أنواع سيارات، أو فترات زمنية',[],`<button class="btn coral" onclick="WafraOps.demoAction('إنشاء تقرير')">＋ إنشاء تقرير</button>`)
+    return phead('المقارنات','قارن الأداء جنباً إلى جنب بين أي عدد من الشركات، مدن، مناطق، فروع، أنواع سيارات، أو فترات زمنية',[],`<button type="button" class="btn coral" onclick="WafraOps.createAnalyticsReport()">＋ إنشاء تقرير</button>`)
       +card(tabbar(active)+`<div class="cmp-wrap" style="padding:14px">${filters}${compareBody}${charts}</div>`);
   };
 })();
@@ -8440,6 +8781,10 @@ function pill(value){
 .roas-loss{border-color:#F3E2B3;background:#FFFBF0}
 .roas-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font:800 12px Cairo;background:#E8F8F0;color:#148A5A;white-space:nowrap}
 .roas-pill.top{background:#EAF0FF;color:#2C68D8}
+.roas-acts{flex-direction:column;align-items:stretch;min-width:132px}
+.roas-acts .btn{white-space:nowrap;justify-content:center}
+.roas-xfer-hint{display:flex;gap:10px;align-items:flex-start;margin-top:4px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#F7F9FC;font:600 12.5px/1.7 Cairo;color:var(--ink-2)}
+.roas-xfer-hint span{flex:0 0 auto;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#E8F8F0;color:#148A5A;font-size:15px}
 .cg-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:1180px){.cg-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:720px){.cg-kpis{grid-template-columns:1fr 1fr}}
@@ -8449,10 +8794,53 @@ function pill(value){
 .cg-status.stopped{background:#FDECEC;color:#C62828}
 .cg-status.suspect{background:#FFF0F0;color:#C62828;border:1px solid #F5C6C6}
 .cg-ret{font:800 13px Cairo;color:#148A5A;direction:ltr;display:inline-block}
-.ab-kpis{grid-template-columns:repeat(2,minmax(180px,240px));justify-content:start}
+.cg-acts{flex-direction:column;align-items:stretch;min-width:100px}
+.cg-acts .btn{justify-content:center}
+.btn.cg-invest{background:var(--navy);color:#fff;border:0}
+.btn.cg-invest:hover{filter:brightness(1.06)}
+.btn.ghost-danger{background:#fff;color:#C62828;border:1.5px solid #E28B8B}
+.btn.ghost-danger:hover{background:#FFF5F5}
+.cg-sub{font:600 12.5px Cairo;color:var(--muted);margin:-4px 0 14px}
+.cg-evid{border:1px solid var(--line);border-radius:12px;background:#FAFBFE;padding:14px 14px 10px;margin-bottom:16px}
+.cg-evid-t{display:block;font:800 13px Cairo;color:var(--navy);margin-bottom:12px}
+.cg-evid-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.cg-evid-grid .full{grid-column:1/-1}
+.cg-evid-grid span{display:block;font:600 11.5px Cairo;color:var(--muted);margin-bottom:3px}
+.cg-evid-grid strong{font:800 15px Cairo;color:var(--ink)}
+.cg-evid-grid strong.danger{color:#C62828}
+.cg-evid-grid strong.warn{color:#C47A00}
+.cg-opts{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.cg-chk{display:flex;align-items:center;gap:10px;font:600 13px Cairo;color:var(--ink);cursor:pointer}
+.cg-chk input{width:16px;height:16px;accent-color:#C62828}
+.ab-kpis{grid-template-columns:repeat(3,minmax(160px,1fr));justify-content:start}
+@media(max-width:900px){.ab-kpis{grid-template-columns:1fr 1fr}}
 .ab-imp{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font:800 12px Cairo;white-space:nowrap;direction:ltr}
 .ab-imp.up{background:#E8F8F0;color:#148A5A}
 .ab-imp.dn{background:#FDECEC;color:#C62828}
+.ab-conf{font:800 13px Cairo;direction:ltr;display:inline-block}
+.ab-conf.ok{color:#148A5A}
+.ab-conf.lo{color:#C62828}
+.ab-sig{display:inline-flex;align-items:center;padding:4px 12px;border-radius:99px;font:700 12px Cairo;white-space:nowrap}
+.ab-sig.ok{background:#E8F8F0;color:#148A5A}
+.ab-sig.no{background:#FFF4DE;color:#9A6B00}
+.ab-acts{flex-direction:column;align-items:stretch;min-width:118px}
+.ab-acts .btn{justify-content:center;white-space:nowrap}
+.btn.ab-detail{background:var(--navy);color:#fff;border:0}
+.btn.ab-detail:hover{filter:brightness(1.06)}
+.ab-foot-note{display:flex;gap:10px;align-items:flex-start;margin:14px 16px 4px;padding:12px 14px;border:1px solid #F3E2B3;border-radius:10px;background:#FFFBF0;font:600 12.5px/1.7 Cairo;color:var(--ink-2)}
+.ab-foot-note span{flex:0 0 auto;color:#9A6B00}
+.ab-foot-note b{color:var(--ink)}
+.ab-sub{font:600 12.5px Cairo;color:var(--muted);margin:-4px 0 14px;line-height:1.6}
+.ab-detail-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+@media(max-width:640px){.ab-detail-kpis{grid-template-columns:1fr 1fr}}
+.ab-dk{border:1px solid var(--line);border-radius:12px;background:#FAFBFE;padding:12px 10px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.ab-dk span{font:700 11.5px Cairo;color:var(--muted)}
+.ab-dk b{font:800 18px Cairo;color:var(--navy)}
+.ab-dk b.ok{color:#148A5A}
+.ab-dk b.lo{color:#C62828}
+.ab-cmp-wrap{margin-bottom:14px}
+.ab-warn{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #F5C6C6;border-radius:10px;background:#FFF5F5;font:600 12.5px/1.7 Cairo;color:#8A2F2F}
+.ab-warn span{flex:0 0 auto}
 .seg-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
 @media(max-width:1400px){.seg-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:800px){.seg-grid{grid-template-columns:1fr 1fr}}
@@ -8532,9 +8920,20 @@ function pill(value){
 .jr-fill.amber{background:#E8A23A}
 .jr-val{font:800 12.5px Cairo;color:var(--ink);direction:ltr;text-align:left}
 .jr-idle{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font:700 12px Cairo;background:#FFF4DE;color:#9A6B00;white-space:nowrap}
+.jr-acts{flex-direction:column;align-items:stretch;min-width:118px}
+.jr-acts .btn{justify-content:center;white-space:nowrap}
+.btn.jr-ret{background:var(--navy);color:#fff;border:0}
+.btn.jr-ret:hover{filter:brightness(1.06)}
+.jr-sub{font:600 12.5px Cairo;color:var(--muted);margin:-4px 0 14px}
+.jr-seg{display:flex;gap:8px;flex-wrap:wrap}
+.jr-seg-btn{border:1px solid var(--line);background:#fff;color:var(--ink-2);border-radius:10px;padding:9px 14px;font:700 12.5px Cairo;cursor:pointer}
+.jr-seg-btn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.jr-coupon-hint{display:flex;gap:10px;align-items:center;margin-top:6px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:#F7F9FC;font:600 12.5px Cairo;color:var(--ink-2)}
+.jr-coupon-hint span{font-size:16px}
+.jr-remind-note{padding:12px 14px;border-radius:10px;background:#FAFBFE;border:1px solid var(--line);font:600 12.5px Cairo;color:var(--muted)}
 .ab-status{display:inline-flex;align-items:center;padding:4px 12px;border-radius:99px;font:700 12px Cairo;white-space:nowrap}
 .ab-status.active{background:#E8F8F0;color:#148A5A}
-.ab-status.done{background:#EAF0FF;color:#2C68D8}
+.ab-status.done{background:#EAF0FF;color:#2C68D8;border:1px solid #C9D7F5}
 .btn.st-xls,.btn.st-pdf{padding:8px 11px;font-size:12px}
 .st-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
 .st-filters .fsearch{flex:1;min-width:220px}
@@ -9766,9 +10165,12 @@ function pill(value){
   document.addEventListener('click', e=>{
     const btn=e.target.closest('button.btn, button.ix-wbtn, button.ix-gbtn, .st-approve, .st-reject');
     if(!btn) return;
+    const label=btn.textContent.replace(/\s+/g,' ').trim();
+    /* لا تعترض أزرار التحليلات/التقارير التي لها معالجات مخصّصة */
+    if(/إنشاء تقرير|تشغيل التحليل|تشغيل الآن|حفظ التقرير|اعتماد الفائز|فتح التحقيق|تنفيذ التحويل|تنفيذ الزيادة|حملة استرجاع|إرسال الحملة/.test(label)) return;
     const oc=btn.getAttribute('onclick')||'';
     if(oc || typeof btn.onclick==='function'){
-      const act=inferAction(btn.textContent);
+      const act=inferAction(label);
       if(act && !act.remove){
         const row=nearestRow(btn);
         if(row) setTimeout(()=>setStatus(row, act.status), 0);
@@ -9777,8 +10179,7 @@ function pill(value){
     }
     if(applyBtnAction(btn)){ e.preventDefault(); e.stopPropagation(); }
     else {
-      const t=btn.textContent.replace(/\s+/g,' ').trim();
-      if(t && !/تصدير|تنزيل|Excel|PDF|CSV|رجوع|إلغاء|إغلاق/.test(t)) toast(t+' — تم التنفيذ');
+      if(label && !/تصدير|تنزيل|Excel|PDF|CSV|رجوع|إلغاء|إغلاق/.test(label)) toast(label+' — تم التنفيذ');
     }
   }, true);
 
