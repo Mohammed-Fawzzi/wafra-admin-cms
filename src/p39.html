@@ -1,5 +1,5 @@
 <style id="wafra-imap">
-/* الخريطة التفاعلية — مطابق لنموذج التصميم */
+/* الخريطة التفاعلية — طبقات + كروت */
 .im-badge{display:inline-flex;align-items:center;gap:6px;background:#F04438;color:#fff;border-radius:99px;padding:4px 12px;font:800 11.5px Cairo;margin-bottom:8px}
 .im-badge i{width:14px;height:14px;border-radius:99px;background:#fff;color:#F04438;display:grid;place-items:center;font-size:9px;font-style:normal;font-weight:900}
 .im-wrap{padding:14px}
@@ -13,14 +13,15 @@
 .im-legend .dot.mid{background:#F0A632}
 .im-legend .dot.hi{background:#F06C6C}
 .im-map{width:100%;height:auto;display:block;min-height:520px;background:linear-gradient(180deg,#F7F9FD,#EEF3FB)}
-.im-map .city{cursor:pointer;transition:opacity .15s}
-.im-map .city:hover{opacity:.92;filter:brightness(1.05)}
+.im-map .city{cursor:pointer;transition:opacity .15s,transform .15s}
+.im-map .city:hover{opacity:.92;filter:brightness(1.06)}
 .im-map .lbl{font-family:Cairo;font-weight:800;font-size:13px;fill:#23386D;pointer-events:none}
 .im-tip{position:absolute;bottom:18px;inset-inline-start:18px;background:#fff;border:1px solid #E4E9F3;border-radius:12px;padding:10px 14px;font:700 12px Cairo;color:#44506A;box-shadow:0 6px 16px rgba(25,42,84,.08);max-width:280px}
-.im-layers{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px 4px;justify-content:flex-start}
-.im-layer{border:1px solid #D7DEEE;background:#fff;color:#3A4663;border-radius:10px;padding:9px 14px;font:800 12.5px Cairo;cursor:pointer}
-.im-layer.on{background:#293B85;border-color:#293B85;color:#fff}
-.im-hint{padding:4px 14px 12px;font:700 12px Cairo;color:#7A869E}
+.im-layers{display:flex;flex-wrap:wrap;gap:8px;padding:14px 14px 6px;justify-content:flex-start}
+.im-layer{border:1px solid #D7DEEE;background:#fff;color:#3A4663;border-radius:12px;padding:10px 16px;font:800 13px Cairo;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.im-layer:hover{border-color:#A9BCEB}
+.im-layer.on{background:#293B85;border-color:#293B85;color:#fff;box-shadow:0 4px 12px rgba(41,59,133,.25)}
+.im-hint{padding:4px 14px 14px;font:700 12.5px Cairo;color:#7A869E}
 .im-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0 14px 14px}
 .im-stat{background:#fff;border:1px solid #E4E9F3;border-radius:14px;padding:16px 18px;box-shadow:0 4px 12px rgba(25,42,84,.04)}
 .im-stat .k{font:700 12.5px Cairo;color:#7A869E;margin-bottom:8px}
@@ -33,42 +34,122 @@
 }
 </style>
 <script>
-/* الخريطة التفاعلية — طبقات متعددة + كروت أسفل. */
+/* الخريطة التفاعلية — تابات الطبقات + كروت تتغير مع الطبقة. */
 (function(){
   const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['financial','النظرة المالية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
   const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
-  const layers=[['demand','كثافة الطلب'],['cars','السيارات'],['trucks','الشاحنات'],['delivery','التوصيل'],['pickup','الاستلام']];
+
+  /* مطابق للتصميم: كثافة الطلب · السيارات · العملاء · التوصيل · الاستلام */
+  const layers=[
+    ['demand','كثافة الطلب'],
+    ['cars','السيارات'],
+    ['customers','العملاء'],
+    ['delivery','التوصيل'],
+    ['pickup','الاستلام']
+  ];
+
   const layerData={
-    demand:{title:'كثافة الطلب',top:{cities:12,points:240,best:'جدة'},cities:[
-      {n:'تبوك',x:168,y:168,r:16,lvl:'low',val:'216'},{n:'حائل',x:300,y:210,r:15,lvl:'low',val:'184'},{n:'بريدة',x:390,y:255,r:16,lvl:'low',val:'268'},
-      {n:'المدينة',x:230,y:250,r:28,lvl:'mid',val:'486'},{n:'الرياض',x:470,y:300,r:46,lvl:'hi',val:'1,620'},{n:'الخبر',x:585,y:255,r:26,lvl:'mid',val:'734'},{n:'الدمام',x:620,y:235,r:22,lvl:'mid',val:'520'}
-    ]},
-    cars:{title:'السيارات',top:{cities:12,points:6494,best:'الرياض'},cities:[
-      {n:'تبوك',x:168,y:168,r:14,lvl:'low',val:'210'},{n:'حائل',x:300,y:210,r:13,lvl:'low',val:'180'},{n:'بريدة',x:390,y:255,r:18,lvl:'mid',val:'320'},
-      {n:'المدينة',x:230,y:250,r:24,lvl:'mid',val:'540'},{n:'الرياض',x:470,y:300,r:48,lvl:'hi',val:'2,140'},{n:'الخبر',x:585,y:255,r:22,lvl:'mid',val:'680'},{n:'الدمام',x:620,y:235,r:20,lvl:'mid',val:'610'}
-    ]},
-    trucks:{title:'الشاحنات',top:{cities:9,points:312,best:'الدمام'},cities:[
-      {n:'تبوك',x:168,y:168,r:12,lvl:'low',val:'18'},{n:'حائل',x:300,y:210,r:11,lvl:'low',val:'14'},{n:'بريدة',x:390,y:255,r:14,lvl:'low',val:'22'},
-      {n:'المدينة',x:230,y:250,r:18,lvl:'mid',val:'36'},{n:'الرياض',x:470,y:300,r:34,lvl:'hi',val:'98'},{n:'الخبر',x:585,y:255,r:28,lvl:'hi',val:'72'},{n:'الدمام',x:620,y:235,r:30,lvl:'hi',val:'84'}
-    ]},
-    delivery:{title:'التوصيل',top:{cities:12,points:240,best:'جدة'},cities:[
-      {n:'تبوك',x:168,y:168,r:14,lvl:'low',val:'16'},{n:'حائل',x:300,y:210,r:13,lvl:'low',val:'12'},{n:'بريدة',x:390,y:255,r:15,lvl:'low',val:'18'},
-      {n:'المدينة',x:230,y:250,r:22,lvl:'mid',val:'28'},{n:'الرياض',x:470,y:300,r:40,lvl:'hi',val:'64'},{n:'الخبر',x:585,y:255,r:24,lvl:'mid',val:'34'},{n:'جدة',x:210,y:290,r:42,lvl:'hi',val:'74'}
-    ]},
-    pickup:{title:'الاستلام',top:{cities:11,points:198,best:'الرياض'},cities:[
-      {n:'تبوك',x:168,y:168,r:13,lvl:'low',val:'14'},{n:'حائل',x:300,y:210,r:12,lvl:'low',val:'11'},{n:'بريدة',x:390,y:255,r:15,lvl:'low',val:'17'},
-      {n:'المدينة',x:230,y:250,r:20,lvl:'mid',val:'26'},{n:'الرياض',x:470,y:300,r:44,lvl:'hi',val:'70'},{n:'الخبر',x:585,y:255,r:22,lvl:'mid',val:'30'},{n:'الدمام',x:620,y:235,r:21,lvl:'mid',val:'28'}
-    ]}
+    demand:{
+      title:'كثافة الطلب',
+      midLabel:'نقاط توصيل نشطة',
+      top:{cities:12,points:240,best:'جدة'},
+      cities:[
+        {n:'تبوك',x:168,y:168,r:16,lvl:'low',val:'216'},
+        {n:'حائل',x:300,y:210,r:15,lvl:'low',val:'184'},
+        {n:'بريدة',x:390,y:255,r:16,lvl:'low',val:'268'},
+        {n:'المدينة',x:230,y:250,r:28,lvl:'mid',val:'486'},
+        {n:'جدة',x:210,y:290,r:48,lvl:'hi',val:'1,840'},
+        {n:'الرياض',x:470,y:300,r:40,lvl:'hi',val:'1,620'},
+        {n:'الخبر',x:585,y:255,r:26,lvl:'mid',val:'734'},
+        {n:'الدمام',x:620,y:235,r:22,lvl:'mid',val:'520'},
+        {n:'أبها',x:280,y:400,r:18,lvl:'mid',val:'312'},
+        {n:'نجران',x:340,y:440,r:14,lvl:'low',val:'148'}
+      ]
+    },
+    cars:{
+      title:'السيارات',
+      midLabel:'إجمالي السيارات',
+      top:{cities:12,points:6494,best:'الرياض'},
+      cities:[
+        {n:'تبوك',x:168,y:168,r:14,lvl:'low',val:'210'},
+        {n:'حائل',x:300,y:210,r:13,lvl:'low',val:'180'},
+        {n:'بريدة',x:390,y:255,r:18,lvl:'mid',val:'320'},
+        {n:'المدينة',x:230,y:250,r:24,lvl:'mid',val:'540'},
+        {n:'جدة',x:210,y:290,r:36,lvl:'hi',val:'1,280'},
+        {n:'الرياض',x:470,y:300,r:48,lvl:'hi',val:'2,140'},
+        {n:'الخبر',x:585,y:255,r:22,lvl:'mid',val:'680'},
+        {n:'الدمام',x:620,y:235,r:20,lvl:'mid',val:'610'},
+        {n:'أبها',x:280,y:400,r:16,lvl:'low',val:'190'}
+      ]
+    },
+    customers:{
+      title:'العملاء',
+      midLabel:'إجمالي العملاء',
+      top:{cities:14,points:48210,best:'الرياض'},
+      cities:[
+        {n:'تبوك',x:168,y:168,r:14,lvl:'low',val:'1,420'},
+        {n:'حائل',x:300,y:210,r:13,lvl:'low',val:'980'},
+        {n:'بريدة',x:390,y:255,r:17,lvl:'mid',val:'2,140'},
+        {n:'المدينة',x:230,y:250,r:26,lvl:'mid',val:'4,860'},
+        {n:'جدة',x:210,y:290,r:42,lvl:'hi',val:'11,200'},
+        {n:'الرياض',x:470,y:300,r:50,lvl:'hi',val:'16,840'},
+        {n:'الخبر',x:585,y:255,r:24,lvl:'mid',val:'5,120'},
+        {n:'الدمام',x:620,y:235,r:22,lvl:'mid',val:'4,560'},
+        {n:'مكة',x:245,y:320,r:30,lvl:'hi',val:'6,200'},
+        {n:'أبها',x:280,y:400,r:15,lvl:'low',val:'1,680'}
+      ]
+    },
+    delivery:{
+      title:'التوصيل',
+      midLabel:'نقاط توصيل نشطة',
+      top:{cities:12,points:240,best:'جدة'},
+      cities:[
+        {n:'تبوك',x:168,y:168,r:14,lvl:'low',val:'16'},
+        {n:'حائل',x:300,y:210,r:13,lvl:'low',val:'12'},
+        {n:'بريدة',x:390,y:255,r:15,lvl:'low',val:'18'},
+        {n:'المدينة',x:230,y:250,r:22,lvl:'mid',val:'28'},
+        {n:'جدة',x:210,y:290,r:44,lvl:'hi',val:'74'},
+        {n:'الرياض',x:470,y:300,r:40,lvl:'hi',val:'64'},
+        {n:'الخبر',x:585,y:255,r:24,lvl:'mid',val:'34'},
+        {n:'الدمام',x:620,y:235,r:20,lvl:'mid',val:'26'},
+        {n:'أبها',x:280,y:400,r:16,lvl:'low',val:'14'}
+      ]
+    },
+    pickup:{
+      title:'الاستلام',
+      midLabel:'نقاط استلام نشطة',
+      top:{cities:11,points:198,best:'الرياض'},
+      cities:[
+        {n:'تبوك',x:168,y:168,r:13,lvl:'low',val:'14'},
+        {n:'حائل',x:300,y:210,r:12,lvl:'low',val:'11'},
+        {n:'بريدة',x:390,y:255,r:15,lvl:'low',val:'17'},
+        {n:'المدينة',x:230,y:250,r:20,lvl:'mid',val:'26'},
+        {n:'جدة',x:210,y:290,r:36,lvl:'hi',val:'52'},
+        {n:'الرياض',x:470,y:300,r:44,lvl:'hi',val:'70'},
+        {n:'الخبر',x:585,y:255,r:22,lvl:'mid',val:'30'},
+        {n:'الدمام',x:620,y:235,r:21,lvl:'mid',val:'28'},
+        {n:'أبها',x:280,y:400,r:14,lvl:'low',val:'12'}
+      ]
+    }
   };
+
   const color={hi:'#F06C6C',mid:'#F0A632',low:'#293B85'};
   const toast=msg=>{
+    if(typeof window.__toast==='function') return window.__toast(msg);
     const old=document.querySelector('.wafra-demo-toast'); old?.remove();
     const el=document.createElement('div'); el.className='toast on wafra-demo-toast'; el.textContent=msg;
     document.body.appendChild(el); setTimeout(()=>el.remove(),2600);
   };
-  const curLayer=()=>window.__imapLayer||'demand';
+  const curLayer=()=>{
+    const k=window.__imapLayer||'demand';
+    return layerData[k]?k:'demand';
+  };
+
   Object.assign(WafraOps,{
-    imapLayer:k=>{window.__imapLayer=k;render();},
+    imapLayer:k=>{
+      window.__imapLayer=k;
+      render();
+    },
     mapCity:n=>{
       const L=layerData[curLayer()]||layerData.demand;
       const c=L.cities.find(x=>x.n===n);
@@ -83,7 +164,7 @@
         ?`<circle cx="${c.x}" cy="${c.y}" r="${c.r}" fill="${fill}" fill-opacity=".9" stroke="#fff" stroke-width="3"/><circle cx="${c.x}" cy="${c.y}" r="4" fill="#fff"/>`
         :`<circle cx="${c.x}" cy="${c.y}" r="${c.r}" fill="${fill}" fill-opacity=".88" stroke="#fff" stroke-width="3"/>`;
       const ly=c.y+c.r+16;
-      return `<g class="city" onclick="WafraOps.mapCity('${c.n}')">${core}<text class="lbl" x="${c.x}" y="${ly}" text-anchor="middle">${c.n}</text></g>`;
+      return `<g class="city" onclick="WafraOps.mapCity('${c.n}')" title="${c.n}: ${c.val}">${core}<text class="lbl" x="${c.x}" y="${ly}" text-anchor="middle">${c.n}</text></g>`;
     }).join('');
     return `<svg class="im-map" viewBox="0 0 760 520" role="img" aria-label="خريطة تفاعلية">
       <defs><filter id="imShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#23386D" flood-opacity=".08"/></filter></defs>
@@ -98,27 +179,35 @@
   S.analytics=()=>{
     const active=window.__analyticsTab||'search';
     if(active!=='map') return baseAnalytics();
+
     const layer=curLayer();
     const L=layerData[layer]||layerData.demand;
-    const layerBar=`<div class="im-layers">${layers.map(([k,t])=>`<button type="button" class="im-layer ${layer===k?'on':''}" onclick="WafraOps.imapLayer('${k}')">${t}</button>`).join('')}</div>
+
+    const layerBar=`<div class="im-layers">${layers.map(([k,t])=>
+      `<button type="button" class="im-layer ${layer===k?'on':''}" onclick="WafraOps.imapLayer('${k}')">${t}</button>`
+    ).join('')}</div>
       <div class="im-hint">حجم الدائرة يعكس قيمة الطبقة المختارة لكل مدينة — مرّر فوق الدائرة للتفاصيل</div>`;
+
     const legend=`<div class="im-legend">
       <h4>الخريطة : ${L.title}</h4>
       <div class="row"><span class="dot hi"></span> كثافة عالية</div>
       <div class="row"><span class="dot mid"></span> متوسطة</div>
       <div class="row"><span class="dot low"></span> منخفضة</div>
     </div>`;
+
     const stats=`<div class="im-stats">
       <div class="im-stat"><div class="k">مدن مغطاة</div><div class="v">${L.top.cities}</div></div>
-      <div class="im-stat"><div class="k">${layer==='cars'?'إجمالي السيارات':layer==='trucks'?'إجمالي الشاحنات':layer==='pickup'?'نقاط استلام نشطة':'نقاط توصيل نشطة'}</div><div class="v">${String(L.top.points).toLocaleString('en-US')}</div></div>
+      <div class="im-stat"><div class="k">${L.midLabel}</div><div class="v">${Number(L.top.points).toLocaleString('en-US')}</div></div>
       <div class="im-stat"><div class="k">أعلى مدينة طلباً</div><div class="v">${L.top.best}</div></div>
     </div>`;
+
     const body=`<div class="im-wrap">
       <div class="im-card">${legend}${saudiMap(L.cities)}<div class="im-tip">اضغط على أي مدينة لعرض تفاصيل ${L.title}</div></div>
       ${layerBar}${stats}
     </div>`;
-    return `<div class="phead"><div><div class="im-badge"><i>✓</i> كل البيانات</div><h1>الخريطة التفاعلية</h1><p>توزيع الشركات والفروع والمركبات والوكلاء ونقاط التوصيل والاستلام وكثافة الطلب عبر المملكة</p></div></div>`
+
+    return `<div class="phead"><div><div class="im-badge"><i>✓</i> كل البيانات</div><h1>الخريطة التفاعلية</h1><p>توزيع الشركات والفروع والمركبات والعملاء ونقاط التوصيل والاستلام وكثافة الطلب عبر المملكة</p></div></div>`
       +card(tabbar(active)+body);
   };
-})();})();
+})();
 </script>

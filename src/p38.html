@@ -1,21 +1,46 @@
 <style id="wafra-operations">
-/* المؤشرات التشغيلية — مطابق لنموذج التصميم */
-.op-wrap{display:flex;flex-direction:column;gap:16px;padding:14px}
-.op-kpis{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:8px}
-.op-kpis.row2{grid-template-columns:repeat(6,minmax(0,1fr));max-width:72%}
-.op-kpi{background:#fff;border:1px solid #E4E9F3;border-radius:12px;padding:12px 10px;box-shadow:0 4px 12px rgba(25,42,84,.04);display:flex;flex-direction:column;gap:6px;min-width:0}
-.op-kpi .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:#EEF2FA;color:var(--navy);font-size:14px}
+/* المؤشرات التشغيلية — تخطيط محسّن */
+.op-wrap{display:flex;flex-direction:column;gap:20px;padding:16px 18px 20px}
+.op-group{display:flex;flex-direction:column;gap:10px}
+.op-group-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px}
+.op-group-h h3{margin:0;font:800 13.5px Cairo;color:var(--ink);display:flex;align-items:center;gap:8px}
+.op-group-h h3::before{content:'';width:4px;height:16px;border-radius:4px;background:var(--navy);display:inline-block}
+.op-group-h .sub{font:600 12px Cairo;color:var(--muted)}
+.op-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
+.op-kpi{background:#fff;border:1px solid #E6EAF3;border-radius:16px;padding:14px 14px 12px;box-shadow:0 6px 16px rgba(25,42,84,.045);display:flex;flex-direction:column;gap:8px;min-width:0;min-height:128px;position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s,transform .15s}
+.op-kpi:hover{border-color:#C8D2E8;box-shadow:0 10px 22px rgba(25,42,84,.08);transform:translateY(-1px)}
+.op-kpi::after{content:'';position:absolute;inset-inline-start:0;top:0;bottom:0;width:3px;background:var(--accent,#293B85);opacity:.85}
+.op-kpi.t-fleet{--accent:#C62828}.op-kpi.t-ok{--accent:#2C68D8}.op-kpi.t-rent{--accent:#C9A227}
+.op-kpi.t-warn{--accent:#D97706}.op-kpi.t-doc{--accent:#3B82C4}.op-kpi.t-open{--accent:#2563EB}
+.op-kpi.t-done{--accent:#1F6B4A}.op-kpi.t-cancel{--accent:#64748B}.op-kpi.t-time{--accent:#0EA5E9}
+.op-kpi.t-people{--accent:#7C3AED}.op-kpi.t-co{--accent:#0369A1}.op-kpi.t-pin{--accent:#DB2777}
+.op-kpi.t-flag{--accent:#E23D3D}.op-kpi.t-ticket{--accent:#B45309}
+.op-kpi .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.op-kpi .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:16px;flex:0 0 auto;background:#EEF2FA;color:var(--navy)}
+.op-kpi .ic.fleet{background:#FDECEC;color:#C62828}
+.op-kpi .ic.ok{background:#EAF0FF;color:#2C68D8}
+.op-kpi .ic.rent{background:#FFF8E6;color:#B8860B}
 .op-kpi .ic.warn{background:#FFF1E8;color:#D97706}
-.op-kpi .ic.danger{background:#FDECEC;color:#E23D3D}
-.op-kpi .l{font:700 11px Cairo;color:var(--muted);line-height:1.35;min-height:28px}
-.op-kpi .v{font:800 18px Cairo;color:var(--ink);letter-spacing:-.02em;line-height:1.1}
-.op-kpi .v small{font-size:12px;font-weight:700;color:var(--muted);margin-inline-start:2px}
-.op-kpi .chg{font:700 11px Cairo;margin-top:2px;display:inline-flex;align-items:center;gap:3px}
-.op-kpi .chg.up{color:#20A16E}
-.op-kpi .chg.dn{color:#E23D3D}
-.op-kpi .chg.fl{color:#7A869E}
+.op-kpi .ic.doc{background:#E8F2FF;color:#3B82C4}
+.op-kpi .ic.open{background:#EAF0FF;color:#2563EB}
+.op-kpi .ic.done{background:#E8F8F0;color:#148A5A}
+.op-kpi .ic.cancel{background:#EEF1F6;color:#5A657C}
+.op-kpi .ic.time{background:#E0F2FE;color:#0284C7}
+.op-kpi .ic.people{background:#F3EEFF;color:#7C3AED}
+.op-kpi .ic.co{background:#E0F2FE;color:#0369A1}
+.op-kpi .ic.pin{background:#FCE7F3;color:#DB2777}
+.op-kpi .ic.flag{background:#FDECEC;color:#E23D3D}
+.op-kpi .ic.ticket{background:#FFF4DE;color:#B45309}
+.op-kpi .l{font:700 12.5px Cairo;color:#5A657C;line-height:1.35;flex:1}
+.op-kpi .v{font:800 22px Cairo;color:var(--ink);letter-spacing:-.02em;line-height:1.15;direction:ltr;text-align:right}
+.op-kpi .v small{font-size:12px;font-weight:700;color:var(--muted);margin-inline-start:3px}
+.op-kpi .chg{margin-top:auto;display:inline-flex;align-items:center;gap:6px;font:700 11.5px Cairo;width:fit-content;padding:4px 9px;border-radius:99px;background:#F4F6FA;color:#5A657C}
+.op-kpi .chg.up{background:#E8F8F0;color:#148A5A}
+.op-kpi .chg.dn{background:#FDECEC;color:#C62828}
+.op-kpi .chg.fl{background:#EEF1F6;color:#5A657C}
+.op-kpi .chg .lbl{font-weight:600;color:inherit;opacity:.75;font-size:10.5px}
 .op-grid{display:grid;grid-template-columns:1.05fr 1.2fr;gap:14px}
-.op-panel{background:#fff;border:1px solid #E4E9F3;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.04)}
+.op-panel{background:#fff;border:1px solid #E6EAF3;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.04)}
 .op-panel-h{padding:14px 16px;border-bottom:1px solid #EEF1F7;font:800 14px Cairo;color:var(--ink)}
 .op-panel-b{padding:12px 14px 16px}
 .op-panel-b svg{width:100%;height:auto;display:block}
@@ -23,30 +48,39 @@
 .op-gauge{text-align:center}
 .op-gauge .nm{font:700 11.5px Cairo;color:var(--muted);margin-top:2px;line-height:1.4;min-height:32px;display:flex;align-items:flex-start;justify-content:center}
 @media(max-width:1200px){
-  .op-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
-  .op-kpis.row2{max-width:100%;grid-template-columns:repeat(6,minmax(0,1fr))}
+  .op-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
   .op-grid{grid-template-columns:1fr}
   .op-gauges{grid-template-columns:repeat(3,1fr)}
 }
 @media(max-width:700px){
-  .op-kpis,.op-kpis.row2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .op-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .op-gauges{grid-template-columns:repeat(2,1fr)}
+  .op-kpi{min-height:118px;padding:12px}
+  .op-kpi .v{font-size:20px}
 }
 </style>
 <script>
-/* المؤشرات التشغيلية — واجهة مطابقة لنموذج التصميم. */
+/* المؤشرات التشغيلية — واجهة محسّنة. */
 (function(){
   const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['financial','النظرة المالية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
   const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
   const C={navy:'#293B85',blue:'#2C68D8',green:'#20A16E',red:'#E23D3D',amber:'#EAA631',ink:'#1E2A44',muted:'#7A869E',line:'#E4E9F3'};
 
-  const kpiCard=(ic,label,value,chg,tone)=>{
-    const cls=tone==='danger'?'danger':tone==='warn'?'warn':'';
+  const kpiCard=(ic,label,value,chg,tone,icCls)=>{
     const dir=chg&&chg.t==='dn'?'dn':chg&&chg.t==='fl'?'fl':'up';
     const arrow=dir==='dn'?'▼':dir==='fl'?'●':'▲';
-    const chgHtml=chg?`<div class="chg ${dir}">${arrow} ${chg.p} <span style="color:#7A869E;font-weight:600">مقارنة بالفترة السابقة</span></div>`:'';
-    return `<div class="op-kpi"><div class="ic ${cls}">${ic}</div><div class="l">${label}</div><div class="v">${value}</div>${chgHtml}</div>`;
+    const chgHtml=chg?`<div class="chg ${dir}"><span>${arrow} ${chg.p}</span><span class="lbl">مقارنة بالفترة السابقة</span></div>`:'';
+    return `<div class="op-kpi ${tone||''}">
+      <div class="top"><div class="l">${label}</div><div class="ic ${icCls||''}">${ic}</div></div>
+      <div class="v">${value}</div>
+      ${chgHtml}
+    </div>`;
   };
+
+  const group=(title,hint,cards)=>`<div class="op-group">
+    <div class="op-group-h"><h3>${title}</h3>${hint?`<span class="sub">${hint}</span>`:''}</div>
+    <div class="op-kpis">${cards}</div>
+  </div>`;
 
   const contractBars=()=>{
     const items=[['مفتوح',3705,C.blue],['مغلق',4120,C.green],['ملغي',1707,C.red],['منتهي',4200,C.navy],['متأخر',1300,C.amber]];
@@ -83,27 +117,33 @@
     const active=window.__analyticsTab||'search';
     if(active!=='operations') return baseAnalytics();
 
-    const row1=[
-      kpiCard('🚗','أسطول المركبات','6,494',{p:'3.2%',t:'up'}),
-      kpiCard('✓','المتاحة','920',{p:'1.8%',t:'up'}),
-      kpiCard('🔑','المؤجرة','3,806',{p:'4.6%',t:'up'}),
-      kpiCard('⚠','المتعطلة','871',{p:'2.1%',t:'dn'},'warn'),
-      kpiCard('📄','إجمالي العقود','14,926',{p:'6.4%',t:'up'}),
-      kpiCard('◉','العقود المفتوحة','3,705',{p:'2.9%',t:'up'}),
-      kpiCard('▣','العقود المغلقة','8,230',{p:'5.1%',t:'up'}),
-      kpiCard('✕','العقود الملغاة','1,707',{p:'1.4%',t:'dn'}),
-      kpiCard('◷','متوسط مدة الإيجار','22.5 <small>يوم</small>',{p:'0.8%',t:'up'}),
-      kpiCard('🚚','متوسط وقت التسليم','31 <small>د</small>',{p:'3.5%',t:'dn'}),
-      kpiCard('⏱','متوسط وقت الاستجابة','61 <small>د</small>',{p:'2.2%',t:'dn'})
+    const fleet=[
+      kpiCard('🚗','أسطول المركبات','6,494',{p:'3.2%',t:'up'},'t-fleet','fleet'),
+      kpiCard('✓','المتاحة','920',{p:'1.8%',t:'up'},'t-ok','ok'),
+      kpiCard('🔑','المؤجرة','3,806',{p:'4.6%',t:'up'},'t-rent','rent'),
+      kpiCard('⚠','المتعطلة','871',{p:'2.1%',t:'dn'},'t-warn','warn')
     ].join('');
 
-    const row2=[
-      kpiCard('👤','عدد العملاء','520',{p:'4.1%',t:'up'}),
-      kpiCard('👥','عدد المستخدمين','64',{p:'1.6%',t:'up'}),
-      kpiCard('🏢','عدد الشركات','28',{p:'7.4%',t:'up'}),
-      kpiCard('📍','عدد الفروع','242',{p:'2.5%',t:'up'}),
-      kpiCard('⚑','عدد الشكاوى','779',{p:'5.8%',t:'dn'},'danger'),
-      kpiCard('🎫','عدد التذاكر','310',{p:'3.3%',t:'dn'},'warn')
+    const contracts=[
+      kpiCard('📄','إجمالي العقود','14,926',{p:'6.4%',t:'up'},'t-doc','doc'),
+      kpiCard('◉','العقود المفتوحة','3,705',{p:'2.9%',t:'up'},'t-open','open'),
+      kpiCard('▣','العقود المغلقة','8,230',{p:'5.1%',t:'up'},'t-done','done'),
+      kpiCard('✕','العقود الملغاة','1,707',{p:'1.4%',t:'dn'},'t-cancel','cancel')
+    ].join('');
+
+    const times=[
+      kpiCard('◷','متوسط مدة الإيجار','22.5 <small>يوم</small>',{p:'0.8%',t:'up'},'t-time','time'),
+      kpiCard('🚚','متوسط وقت التسليم','31 <small>د</small>',{p:'3.5%',t:'dn'},'t-warn','warn'),
+      kpiCard('⏱','متوسط وقت الاستجابة','61 <small>د</small>',{p:'2.2%',t:'dn'},'t-time','time')
+    ].join('');
+
+    const network=[
+      kpiCard('👤','عدد العملاء','520',{p:'4.1%',t:'up'},'t-people','people'),
+      kpiCard('👥','عدد المستخدمين','64',{p:'1.6%',t:'up'},'t-people','people'),
+      kpiCard('🏢','عدد الشركات','28',{p:'7.4%',t:'up'},'t-co','co'),
+      kpiCard('📍','عدد الفروع','242',{p:'2.5%',t:'up'},'t-pin','pin'),
+      kpiCard('⚑','عدد الشكاوى','779',{p:'5.8%',t:'dn'},'t-flag','flag'),
+      kpiCard('🎫','عدد التذاكر','310',{p:'3.3%',t:'dn'},'t-ticket','ticket')
     ].join('');
 
     const gauges=`<div class="op-gauges">
@@ -115,8 +155,10 @@
     </div>`;
 
     const body=`<div class="op-wrap">
-      <div class="op-kpis">${row1}</div>
-      <div class="op-kpis row2">${row2}</div>
+      ${group('الأسطول','حالة المركبات',fleet)}
+      ${group('العقود','حجم العقود وحالاتها',contracts)}
+      ${group('الأوقات التشغيلية','مدة الإيجار والاستجابة',times)}
+      ${group('الشبكة والدعم','العملاء · الفروع · التذاكر',network)}
       <div class="op-grid">
         <div class="op-panel"><div class="op-panel-h">حالة العقود</div><div class="op-panel-b">${contractBars()}</div></div>
         <div class="op-panel"><div class="op-panel-h">المعدلات التشغيلية</div><div class="op-panel-b">${gauges}</div></div>
