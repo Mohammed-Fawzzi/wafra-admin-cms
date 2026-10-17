@@ -1,23 +1,42 @@
 <script>
-/* التظلمات واعتراضات الرسوم — أزرار فعّالة + طلب معلومات بشاشة مستقلة. */
+/* التظلمات واعتراضات الرسوم — إصدار القرار + سجلات التاريخ. */
 (function(){
   const state=window.WAFRA_DATA||(window.WAFRA_DATA={});
   const save=()=>{try{localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));}catch(e){}};
   const toast=msg=>{if(typeof window.__toast==='function')window.__toast(msg);else if(WafraOps.demoAction)WafraOps.demoAction(msg);};
   const dlg=(t,b,f)=>`<div class="modal"><div class="modal-h"><h3>${t}</h3><span class="x" onclick="closeM()">✕</span></div><div class="modal-b">${b}</div><div class="modal-f">${f||'<button class="btn ghost" onclick="closeM()">إغلاق</button>'}</div></div>`;
   const val=id=>document.getElementById(id)?.value?.trim()||'';
+  const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const escAttr=s=>String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 
   state.disputesList=state.disputesList||[
     {id:'DP-441',booking:'BK-20418',customer:'أحمد الشمري',provider:'شركة الصحراء',subject:'مبلغ التأمين',amount:'1,850 ر.س',status:'مفتوح',detail:'صور التسليم توضح عدم وجود ضرر قبل بدء الحجز.',replies:[{at:'اليوم 10:20',who:'النظام',txt:'تم استلام التظلم.'},{at:'اليوم 11:05',who:'الإدارة',txt:'طُلب رد من المزود خلال 48 ساعة.'}]},
-    {id:'DP-428',booking:'BK-20396',customer:'وليد الحربي',provider:'مسار',subject:'رسوم تأخير',amount:'240 ر.س',status:'معلق',detail:'يطلب العميل مراجعة وقت الإرجاع المثبت في النظام.',replies:[{at:'أمس 16:40',who:'العميل',txt:'أُرجعت السيارة في الموعد حسب التطبيق.'}]}
+    {id:'DP-428',booking:'BK-20396',customer:'وليد الحربي',provider:'مسار',subject:'رسوم تأخير',amount:'240 ر.س',status:'معلق',detail:'يطلب العميل مراجعة وقت الإرجاع المثبت في النظام.',replies:[{at:'أمس 16:40',who:'العميل',txt:'أُرجعت السيارة في الموعد حسب التطبيق.'}]},
+    {id:'DS-3001',booking:'BK-20350',customer:'عبدالله الغامدي',provider:'شركة المستقبل لتأجير السيارات',subject:'رفض استرداد',amount:'570 ر.س',status:'مفتوح',detail:'التظلّم: رفض استرداد — بين عبدالله الغامدي وشركة المستقبل لتأجير السيارات.',replies:[{at:'اليوم 09:00',who:'النظام',txt:'تم فتح ملف التظلم.'}]}
+  ];
+  state.disputeHistory=state.disputeHistory||[
+    {when:'2026/09/28 14:20',id:'DP-410',action:'إصدار قرار: لصالح العميل',by:'إدارة · سارة العتيبي',detail:'استرداد كامل مبلغ التأمين'},
+    {when:'2026/09/26 11:05',id:'DP-402',action:'طلب رد من المزود',by:'إدارة · محمد الصغير',detail:'مهلة 48 ساعة'},
+    {when:'2026/09/24 16:40',id:'DP-398',action:'إصدار قرار: لصالح المزود',by:'إدارة · سارة العتيبي',detail:'رفض التظلم بعد مراجعة الصور'},
+    {when:'2026/09/22 09:12',id:'DP-391',action:'إصدار قرار: تسوية جزئية',by:'إدارة · محمد الصغير',detail:'استرداد 50% من الرسوم'},
+    {when:'2026/09/20 13:30',id:'DP-385',action:'إغلاق التظلم',by:'النظام',detail:'انتهت المهلة دون رد العميل'}
   ];
   state.objections=state.objections||[
     {id:'OB-118',booking:'BK-20418',customer:'أحمد الشمري',provider:'شركة الصحراء',amount:'1,850 ر.س',reason:'رسوم تأمين',status:'مفتوحة',detail:'يعترض العميل على خصم مبلغ التأمين رغم عدم وجود أضرار موثّقة.'},
     {id:'OB-112',booking:'BK-20396',customer:'وليد الحربي',provider:'مسار',amount:'240 ر.س',reason:'رسوم تأخير',status:'بانتظار قرار',detail:'يطلب مراجعة وقت الإرجاع المسجّل في النظام.'},
     {id:'OB-104',booking:'BK-20371',customer:'سلمان العنزي',provider:'كي رنت',amount:'110 ر.س',reason:'رسوم تنظيف',status:'مغلقة',detail:'أُغلق بعد تقديم صور التسليم من المزود.'}
   ];
+  state.objectionHistory=state.objectionHistory||[
+    {when:'2026/09/27 15:10',id:'OB-104',action:'قبول وإغلاق',by:'إدارة · محمد الصغير',detail:'استرداد كامل · رسوم تنظيف'},
+    {when:'2026/09/25 10:40',id:'OB-112',action:'طلب معلومات من العميل',by:'إدارة · سارة العتيبي',detail:'إثبات وقت الإرجاع'},
+    {when:'2026/09/23 12:00',id:'OB-098',action:'رفض الاعتراض',by:'إدارة · محمد الصغير',detail:'صور التسليم تؤكد الضرر'},
+    {when:'2026/09/21 09:25',id:'OB-090',action:'قبول جزئي',by:'إدارة · سارة العتيبي',detail:'استرداد 50% من الرسوم'},
+    {when:'2026/09/18 16:05',id:'OB-084',action:'فتح الاعتراض',by:'النظام',detail:'اعتراض تلقائي من تطبيق العميل'}
+  ];
 
   Object.assign(WafraOps,{
+    disputesTab:t=>{window.__disputesTab=t;render();},
+    objectionsTab:t=>{window.__objectionsTab=t;render();},
     openDispute:id=>{
       const d=state.disputesList.find(x=>x.id===id); if(!d) return;
       openM(dlg(`تفاصيل التظلم ${d.id}`,
@@ -32,7 +51,8 @@
         <h4 style="margin:14px 0 8px">تفاصيل التظلم</h4><p>${d.detail}</p>`,
         `<button class="btn ghost" onclick="closeM();WafraOps.openBooking('${d.booking}')">فتح الحجز</button>
          <button class="btn ghost" onclick="closeM();WafraOps.showDisputeReplies('${d.id}')">عرض الردود</button>
-         <button class="btn coral" onclick="closeM();WafraOps.requestDisputeReply('${d.id}')">طلب رد</button>`
+         <button class="btn coral" onclick="closeM();WafraOps.issueDisputeDecision('${d.id}')">إصدار القرار</button>
+         <button class="btn ghost" onclick="closeM();WafraOps.requestDisputeReply('${d.id}')">طلب رد</button>`
       ));
     },
     showDisputeReplies:id=>{
@@ -59,9 +79,43 @@
         d.replies=d.replies||[];
         d.replies.push({at:'الآن',who:'الإدارة',txt:`طلب رد (${val('dsp-reply-party')} · ${val('dsp-reply-sla')}): ${msg}`});
         if(d.status==='مفتوح') d.status='معلق';
+        state.disputeHistory=state.disputeHistory||[];
+        state.disputeHistory.unshift({when:new Date().toLocaleString('ar-SA'),id,action:`طلب رد من ${val('dsp-reply-party')}`,by:'الإدارة',detail:msg});
         save();
       }
       closeM(); render(); toast(`تم إرسال طلب الرد لـ ${id}.`);
+    },
+    issueDisputeDecision:id=>{
+      const d=state.disputesList.find(x=>x.id===id); if(!d) return;
+      const summary=`التظلّم: ${d.subject} — بين ${d.customer} و${d.provider}.`;
+      openM(dlg(`إصدار قرار في التظلّم<br><span class="sub" style="font:700 13px Cairo;color:var(--muted)">${safe(d.id)}</span>`,
+        `<div style="background:#F5F7FB;border:1px solid #E4E9F3;border-radius:10px;padding:12px 14px;margin-bottom:14px;font:600 13px Cairo;color:var(--ink)">${safe(summary)}</div>
+         ${fld('القرار',`<select id="dsp-decision" class="native-input">
+           <option>لصالح العميل</option>
+           <option>لصالح المزود</option>
+           <option>تسوية جزئية</option>
+           <option>رفض التظلم</option>
+         </select>`)}
+         ${fld('حيثيات القرار',`<textarea id="dsp-decision-note" class="native-input" rows="4" placeholder="اكتب حيثيات القرار بالتفصيل…"></textarea>`)}
+         <div class="note info" style="margin-top:12px">🔔 قناة الإبلاغ: إشعار داخل التطبيق + بريد إلكتروني + SMS — <span style="color:#148A5A;font-weight:800">يُرسل فوراً</span> (الوضع التلقائي).</div>`,
+        `<button class="btn coral" onclick="WafraOps.saveDisputeDecision('${escAttr(id)}')">تأكيد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    saveDisputeDecision:id=>{
+      const decision=val('dsp-decision')||'لصالح العميل';
+      const note=val('dsp-decision-note');
+      if(!note){toast('اكتب حيثيات القرار أولاً.');return;}
+      const d=state.disputesList.find(x=>x.id===id);
+      if(d){
+        d.status='مغلق';
+        d.decision=decision;
+        d.decisionNote=note;
+        d.replies=d.replies||[];
+        d.replies.push({at:'الآن',who:'الإدارة',txt:`قرار: ${decision} — ${note}`});
+      }
+      state.disputeHistory=state.disputeHistory||[];
+      state.disputeHistory.unshift({when:new Date().toLocaleString('ar-SA'),id,action:`إصدار قرار: ${decision}`,by:'الإدارة',detail:note});
+      save(); closeM(); render(); toast(`تم إصدار القرار لـ ${id}: ${decision}.`);
     },
 
     openObjection:id=>{
@@ -110,6 +164,8 @@
       const a=state.objections.find(x=>x.id===id); if(!a) return;
       a.infoRequest=`من ${val('obj-info-from')} · ${val('obj-info-type')} · مهلة ${val('obj-info-sla')}: ${detail}`;
       a.status='بانتظار قرار';
+      state.objectionHistory=state.objectionHistory||[];
+      state.objectionHistory.unshift({when:new Date().toLocaleString('ar-SA'),id,action:`طلب معلومات من ${val('obj-info-from')}`,by:'الإدارة',detail});
       save(); closeM(); render();
       toast(`تم إرسال طلب المعلومات لـ ${id}.`);
     },
@@ -126,41 +182,64 @@
       if(status==='مغلقة'&&!note){toast('اكتب ملخص القرار أولاً.');return;}
       a.status=status;
       a.note=note+(val('obj-resolve-refund')?` · ${val('obj-resolve-refund')}`:'');
+      state.objectionHistory=state.objectionHistory||[];
+      state.objectionHistory.unshift({when:new Date().toLocaleString('ar-SA'),id,action:status==='مغلقة'?'قبول وإغلاق':status,by:'الإدارة',detail:a.note});
       save(); closeM(); render(); toast('تم تحديث حالة الاعتراض.');
     }
   });
 
   const disputeActs=d=>{
     const view=`<button class="btn ghost sm" onclick="WafraOps.openDispute('${d.id}')">إطلاع</button>`;
+    const decide=`<button class="btn coral sm" onclick="WafraOps.issueDisputeDecision('${d.id}')">إصدار القرار</button>`;
     if(d.status==='مغلق') return `${view}<button class="btn ghost sm" onclick="WafraOps.showDisputeReplies('${d.id}')">عرض الردود</button>`;
-    if(d.status==='معلق') return `${view}<button class="btn ghost sm" onclick="WafraOps.requestDisputeReply('${d.id}')">طلب رد</button>`;
-    return `${view}<button class="btn ghost sm" onclick="WafraOps.showDisputeReplies('${d.id}')">عرض الردود</button>`;
+    if(d.status==='معلق') return `${view}<button class="btn ghost sm" onclick="WafraOps.requestDisputeReply('${d.id}')">طلب رد</button> ${decide}`;
+    return `${view}<button class="btn ghost sm" onclick="WafraOps.showDisputeReplies('${d.id}')">عرض الردود</button> ${decide}`;
   };
 
   S.disputes=()=>{
+    const tab=window.__disputesTab||'list';
     const f=window.__disputeFilter||{};
     const rows=state.disputesList.filter(d=>!f.status||d.status===f.status);
-    return phead('قائمة التظلمات','البحث برقم الحجز أو المزود أو رقم العميل مع ردود التظلم',[],
+    const hist=state.disputeHistory||[];
+    const tabBtn=(k,t,n)=>`<button class="tab ${tab===k?'on':''}" onclick="WafraOps.disputesTab('${k}')">${t}${n!=null?` <span class="sub">(${n})</span>`:''}</button>`;
+    let body='';
+    if(tab==='history'){
+      body=`<div class="note info">سجل كل الإجراءات على التظلمات: إصدار قرارات، طلبات رد، وإغلاق.</div>`
+        +table(['التاريخ','رقم التظلم','الإجراء','بواسطة','التفاصيل'],
+          hist.map(h=>[h.when,h.id,{v:h.action,c:'strong'},h.by,h.detail]));
+    }else{
+      body=`<div class="filters">${fld('الحالة',`<select class="native-input" onchange="window.__disputeFilter={status:this.value||''};render()"><option value="">كل الحالات</option>${['مفتوح','معلق','مغلق'].map(x=>`<option value="${x}" ${f.status===x?'selected':''}>${x}</option>`).join('')}</select>`)}<label class="fsearch">⌕ <input placeholder="اكتب للبحث…"></label></div>
+        <div class="card-b" style="padding:0">${table(['رقم التظلم','رقم الحجز','العميل','المزود','الموضوع','الحالة','الإجراءات'],
+          rows.map(d=>[d.id,d.booking,d.customer,d.provider,d.subject,pill(d.status,d.status==='مفتوح'?'r':d.status==='معلق'?'a':'n'),disputeActs(d)]))}</div>`;
+    }
+    return phead('قائمة التظلمات','البحث برقم الحجز أو المزود أو رقم العميل مع ردود التظلم وإصدار القرار',[],
       `<button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('قائمة التظلمات','Excel')">Excel ⤓</button>
        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('قائمة التظلمات','PDF')">PDF ⤓</button>`)
-      +card(`<div class="filters">${fld('الحالة',`<select class="native-input" onchange="window.__disputeFilter={status:this.value||''};render()"><option value="">كل الحالات</option>${['مفتوح','معلق','مغلق'].map(x=>`<option value="${x}" ${f.status===x?'selected':''}>${x}</option>`).join('')}</select>`)}<label class="fsearch">⌕ <input placeholder="اكتب للبحث…"></label></div>
-        <div class="card-b">${table(['رقم التظلم','رقم الحجز','العميل','المزود','الموضوع','الحالة','الإجراءات'],
-          rows.map(d=>[d.id,d.booking,d.customer,d.provider,d.subject,pill(d.status,d.status==='مفتوح'?'r':d.status==='معلق'?'a':'n'),disputeActs(d)]))}</div>`);
+      +card(`<div class="tabs">${tabBtn('list','قائمة التظلمات',rows.length)}${tabBtn('history','سجل التظلمات',hist.length)}</div>
+        <div class="card-b">${body}</div>`);
   };
 
   S.objections=()=>{
     const active=window.__objectionsTab||'الكل';
-    const items=state.objections.filter(x=>active==='الكل'||x.status===active);
+    const isHistory=active==='السجل';
+    const items=isHistory?[]:state.objections.filter(x=>active==='الكل'||x.status===active);
+    const hist=state.objectionHistory||[];
     const tone=s=>s==='مغلقة'?'g':s==='بانتظار قرار'?'a':'r';
-    return phead('اعتراضات الرسوم والغرامات','مراجعة الاعتراضات وقراراتها — طلب المعلومات يظهر شاشة مستقلة',[],
-      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('اعتراضات-الرسوم','Excel')">Excel ⤓</button>`)
-      +card(`<div class="tabs">${['الكل','مفتوحة','بانتظار قرار','مغلقة'].map(x=>`<button class="tab ${active===x?'on':''}" onclick="WafraOps.objectionsTab('${x}')">${x}</button>`).join('')}</div>
-        <div class="filters"><label class="fsearch">⌕ <input placeholder="ابحث برقم الاعتراض أو الحجز"></label></div>
-        <div class="card-b">${table(['الاعتراض','الحجز','العميل','المزود','المبلغ','السبب','الحالة','الإجراء'],
+    let body='';
+    if(isHistory){
+      body=`<div class="note info">سجل الاعتراضات: فتح، طلب معلومات، قبول، رفض، وإغلاق.</div>`
+        +table(['التاريخ','رقم الاعتراض','الإجراء','بواسطة','التفاصيل'],
+          hist.map(h=>[h.when,h.id,{v:h.action,c:'strong'},h.by,h.detail]));
+    }else{
+      body=`<div class="filters"><label class="fsearch">⌕ <input placeholder="ابحث برقم الاعتراض أو الحجز"></label></div>
+        ${table(['الاعتراض','الحجز','العميل','المزود','المبلغ','السبب','الحالة','الإجراء'],
           items.map(x=>[x.id,x.booking,x.customer,x.provider,x.amount,x.reason,pill(x.status,tone(x.status)),
-            `<button class="btn ghost sm" onclick="WafraOps.openObjection('${x.id}')">استعراض</button>`]))}</div>`);
+            `<button class="btn ghost sm" onclick="WafraOps.openObjection('${x.id}')">استعراض</button>`]))}`;
+    }
+    return phead('اعتراضات الرسوم والغرامات','مراجعة الاعتراضات وقراراتها مع سجل كامل للإجراءات',[],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('اعتراضات-الرسوم','Excel')">Excel ⤓</button>`)
+      +card(`<div class="tabs">${['الكل','مفتوحة','بانتظار قرار','مغلقة','السجل'].map(x=>`<button class="tab ${active===x?'on':''}" onclick="WafraOps.objectionsTab('${x}')">${x}${x==='السجل'?` <span class="sub">(${hist.length})</span>`:''}</button>`).join('')}</div>
+        <div class="card-b">${body}</div>`);
   };
-
-  if(!WafraOps.objectionsTab) WafraOps.objectionsTab=t=>{window.__objectionsTab=t;render();};
 })();
 </script>

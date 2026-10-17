@@ -22,6 +22,10 @@
   };
   const dlg=(t,b,f)=>`<div class="modal"><div class="modal-h"><h3>${t}</h3><span class="x" onclick="closeM()">✕</span></div><div class="modal-b">${b}</div><div class="modal-f">${f||'<button class="btn ghost" onclick="closeM()">إغلاق</button>'}</div></div>`;
   const val=id=>document.getElementById(id)?.value?.trim()||'';
+  const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const escAttr=s=>String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const prev=(k,v)=>`<div class="prev-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const persist=()=>{try{localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));}catch(e){}};
   const providers=['شركة الصحراء','كي رنت','مسار'];
   const branchesByProvider={
     'شركة الصحراء':['مطار الملك خالد','طريق الملك عبدالعزيز'],
@@ -35,17 +39,48 @@
     {name:'تسليم بين المدن',desc:'استلام وتسليم في مدينتين مختلفتين',fee:'180',branches:42,status:'مفعلة'}
   ];
   state.fleetAddons=state.fleetAddons||[
-    {name:'كرسي أطفال',desc:'مقعد أطفال مناسب للعمر والوزن',fee:'35',unit:'يوم',branches:156,status:'مفعلة'},
-    {name:'سائق إضافي',desc:'إضافة سائق مرخّص على العقد',fee:'50',unit:'يوم',branches:142,status:'مفعلة'},
-    {name:'جهاز GPS',desc:'تتبع وملاحة أثناء التأجير',fee:'25',unit:'يوم',branches:98,status:'مفعلة'},
-    {name:'تأمين شامل إضافي',desc:'تغطية موسّعة فوق التأمين الأساسي',fee:'80',unit:'يوم',branches:120,status:'مفعلة'}
+    {name:'كرسي أطفال',desc:'مقعد أطفال مناسب للعمر والوزن',fee:'35',unit:'يوم',rental:'',branches:156,status:'مفعلة'},
+    {name:'سائق إضافي',desc:'إضافة سائق مرخّص على العقد',fee:'50',unit:'يوم',rental:'',branches:142,status:'مفعلة'},
+    {name:'جهاز GPS',desc:'تتبع وملاحة أثناء التأجير',fee:'25',unit:'يوم',rental:'يومي',branches:98,status:'مفعلة'},
+    {name:'تأمين شامل إضافي',desc:'تغطية موسّعة فوق التأمين الأساسي',fee:'80',unit:'يوم',rental:'',branches:120,status:'مفعلة'}
   ];
+  (state.fleetAddons||[]).forEach(a=>{ if(a.rental===undefined) a.rental=''; });
   state.fleetCategories=state.fleetCategories||[
     {name:'اقتصادية',desc:'استهلاك منخفض وحجم صغير',models:96,cars:1204,status:'مفعلة'},
     {name:'صغيرة',desc:'مدينة وحجم مدمج',models:72,cars:864,status:'مفعلة'},
     {name:'فاخرة',desc:'تجهيزات راقية',models:42,cars:188,status:'مفعلة'},
     {name:'عائلية',desc:'مساحة أكبر للعائلات',models:34,cars:214,status:'مفعلة'}
   ];
+  state.fleetMakes=state.fleetMakes||[
+    {name:'تويوتا',country:'اليابان',models:48,cars:'1,142'},
+    {name:'هيونداي',country:'كوريا الجنوبية',models:36,cars:'864'},
+    {name:'كيا',country:'كوريا الجنوبية',models:32,cars:'712'},
+    {name:'إم جي',country:'الصين',models:24,cars:'386'}
+  ];
+  state.fleetModels=state.fleetModels||[
+    {name:'كامري',make:'تويوتا',image:'صورة مضافة',cat:'سيدان',specs:'5 ركاب · أوتوماتيك · بنزين'},
+    {name:'إلنترا',make:'هيونداي',image:'صورة مضافة',cat:'اقتصادية',specs:'5 ركاب · أوتوماتيك · بنزين'},
+    {name:'K5',make:'كيا',image:'صورة مضافة',cat:'سيدان',specs:'5 ركاب · أوتوماتيك · بنزين'},
+    {name:'أكسنت',make:'هيونداي',image:'صورة مضافة',cat:'اقتصادية',specs:'5 ركاب · أوتوماتيك · بنزين'}
+  ];
+  state.modelRequests=state.modelRequests||[
+    {id:'MR-118',make:'كيا',model:'سيلتوس',provider:'كي رنت',status:'قيد المراجعة'},
+    {id:'MR-116',make:'إم جي',model:'MG 5',provider:'مسار',status:'بانتظار صورة'},
+    {id:'MR-114',make:'تويوتا',model:'كامري هايبرد',provider:'درب الخليج',status:'مكرر'}
+  ];
+  state.dynamicRules=state.dynamicRules||[
+    {car:'هيونداي أكسنت 2025',when:'>=',util:80,adj:'زيادة',pct:5,status:'مفعلة'},
+    {car:'هيونداي أكسنت 2025',when:'<=',util:55,adj:'تخفيض',pct:10,status:'مفعلة'},
+    {car:'تويوتا كامري 2026',when:'>=',util:85,adj:'زيادة',pct:8,status:'مفعلة'}
+  ];
+  state.qualityReports=state.qualityReports||[
+    {id:'Q-91',car:'كامري 2026',provider:'شركة الصحراء',branch:'مطار الملك خالد',plate:'ر هـ ب 2749',note:'صورة المركبة غير محدثة',level:'عالي',date:'28 سبتمبر',status:'مفتوح'},
+    {id:'Q-88',car:'K5 2026',provider:'مسار',branch:'الخبر التشغيلي',plate:'د ط ل 8812',note:'تأخر تحديث الإتاحة',level:'متوسط',date:'27 سبتمبر',status:'قيد المعالجة'},
+    {id:'Q-81',car:'إلنترا 2025',provider:'كي رنت',branch:'جدة الشمالية',plate:'ب ن ج 4410',note:'عدم اكتمال صور الفحص',level:'منخفض',date:'25 سبتمبر',status:'مفتوح'}
+  ];
+  const rentalLabel=r=>r&&r.trim()?r:'كل أنواع التأجير';
+  const utilRuleText=r=>r.when==='>='?`عند وصول التشغيل إلى ${r.util}% أو أكثر`:`عند وصول التشغيل إلى ${r.util}% أو أقل`;
+  const adjRuleText=r=>`${r.adj} ${r.pct}%`;
 
   const detailTabs=active=>`<div class="tabs">${['الملخص','تفاصيل الحجز','الخط الزمني','الاستلام','الإرجاع','المحادثة','الفاتورة','سجل الإجراءات'].map(t=>`<button class="tab ${active===t?'on':''}" onclick="WafraOps.bookingTab('${t}')">${t}</button>`).join('')}</div>`;
 
@@ -140,12 +175,15 @@
     },
 
     /* —— الإضافات الاختيارية أثناء الحجز —— */
-    addFleetAddon:()=>{
-      openM(dlg('تعريف إضافة جديدة وتفعيلها',
-        `${fld('اسم الإضافة',`<input id="addon-name" class="native-input" placeholder="مثال: كرسي أطفال">`)}
-         ${fld('الوصف',`<input id="addon-desc" class="native-input" placeholder="وصف مختصر يظهر للعميل">`)}
-         <div class="frow">${fld('الرسوم الافتراضية (ر.س)',`<input id="addon-fee" class="native-input" type="number" value="35">`)}
-         ${fld('وحدة التسعير',`<select id="addon-unit" class="native-input"><option>يوم</option><option>حجز</option></select>`)}</div>
+    addFleetAddon:(editIdx)=>{
+      const a=(editIdx!=null)?(state.fleetAddons||[])[editIdx]:null;
+      window.__addonEdit=editIdx!=null?editIdx:null;
+      openM(dlg(a?'تعديل الإضافة':'تعريف إضافة جديدة وتفعيلها',
+        `${fld('اسم الإضافة',`<input id="addon-name" class="native-input" value="${safe(a?.name||'')}" placeholder="مثال: كرسي أطفال">`)}
+         ${fld('الوصف',`<input id="addon-desc" class="native-input" value="${safe(a?.desc||'')}" placeholder="وصف مختصر يظهر للعميل">`)}
+         <div class="frow">${fld('الرسوم الافتراضية (ر.س)',`<input id="addon-fee" class="native-input" type="number" value="${safe(a?.fee||'35')}">`)}
+         ${fld('وحدة التسعير',`<select id="addon-unit" class="native-input"><option ${(!a||a.unit==='يوم')?'selected':''}>يوم</option><option ${a?.unit==='حجز'?'selected':''}>حجز</option></select>`)}</div>
+         ${fld('نوع التأجير',`<select id="addon-rental" class="native-input"><option value="" ${!a?.rental?'selected':''}>بدون اختيار — كل أنواع التأجير</option><option value="يومي" ${a?.rental==='يومي'?'selected':''}>يومي</option><option value="أسبوعي" ${a?.rental==='أسبوعي'?'selected':''}>أسبوعي</option><option value="شهري" ${a?.rental==='شهري'?'selected':''}>شهري</option></select>`,'اتركه بدون اختيار لتفعيل الإضافة على التأجير اليومي والأسبوعي والشهري معاً.')}
          ${fld('نطاق التفعيل',`<select id="addon-scope" class="native-input" onchange="WafraOps.addonScopeChange()"><option value="all">كل المزودين / كل الفروع</option><option value="providers">مزودين محددين</option><option value="branches">فروع محددة</option></select>`)}
          <div id="addon-providers-wrap" style="display:none;margin-top:8px">
            <div style="font:700 12px Cairo;margin-bottom:6px">اختر المزودين</div>
@@ -155,7 +193,14 @@
            <div style="font:700 12px Cairo;margin-bottom:6px">اختر الفروع</div>
            ${allBranches.map(b=>`<label style="display:block;margin:6px 0;font:600 12px Cairo"><input type="checkbox" class="addon-br" value="${b}"> ${b}</label>`).join('')}
          </div>`,
-        `<button class="btn coral" onclick="WafraOps.saveFleetAddon()">حفظ وتفعيل الإضافة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+        `<button class="btn coral" onclick="WafraOps.saveFleetAddon()">${a?'حفظ التعديل':'حفظ وتفعيل الإضافة'}</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    editFleetAddon:i=>WafraOps.addFleetAddon(i),
+    viewFleetAddon:i=>{
+      const a=(state.fleetAddons||[])[i]; if(!a)return;
+      openM(dlg(`استعراض: ${safe(a.name)}`,
+        `${prev('الإضافة',safe(a.name))}${prev('الوصف',safe(a.desc))}${prev('الرسوم',`${a.fee} ر.س / ${a.unit||'يوم'}`)}${prev('نوع التأجير',rentalLabel(a.rental))}${prev('الفروع المفعّلة',String(a.branches))}${prev('الحالة',a.status||'مفعلة')}`,
+        `<button class="btn coral" onclick="closeM();WafraOps.editFleetAddon(${i})">تعديل</button><button class="btn ghost" onclick="closeM()">إغلاق</button>`));
     },
     addonScopeChange:()=>{
       const s=val('addon-scope');
@@ -179,10 +224,147 @@
         if(!sel.length){toast('اختر فرعاً واحداً على الأقل.');return;}
         count=sel.length; label=sel.join(' · ');
       }
+      const payload={name,desc:val('addon-desc')||'—',fee:val('addon-fee')||'0',unit:val('addon-unit')||'يوم',rental:val('addon-rental')||'',branches:count,status:'مفعلة'};
       state.fleetAddons=state.fleetAddons||[];
-      state.fleetAddons.unshift({name,desc:val('addon-desc')||'—',fee:val('addon-fee')||'0',unit:val('addon-unit')||'يوم',branches:count,status:'مفعلة'});
-      closeM(); render(); toast(`تم تفعيل «${name}» على ${count} فرع (${label}).`);
+      const edit=window.__addonEdit;
+      if(edit!=null&&state.fleetAddons[edit]){
+        payload.branches=state.fleetAddons[edit].branches||count;
+        state.fleetAddons[edit]=payload;
+        window.__addonEdit=null;
+        persist(); closeM(); render(); toast(`تم حفظ تعديل «${name}».`);
+        return;
+      }
+      state.fleetAddons.unshift(payload);
+      persist(); closeM(); render(); toast(`تم تفعيل «${name}» على ${count} فرع (${label}).`);
     },
+
+    /* —— الماركات والموديلات —— */
+    switchMakeTab:tab=>{window.__makeTab=tab;render();},
+    editMake:name=>{
+      const m=(state.fleetMakes||[]).find(x=>x.name===name); if(!m)return;
+      openM(dlg(`تعديل ماركة: ${safe(m.name)}`,
+        `${fld('اسم الماركة',`<input id="make-name" class="native-input" value="${safe(m.name)}">`)}
+         ${fld('بلد المنشأ',`<input id="make-country" class="native-input" value="${safe(m.country)}">`)}
+         <div class="frow">${fld('عدد الموديلات',`<input id="make-models" class="native-input" type="number" value="${m.models}">`)}
+         ${fld('عدد السيارات',`<input id="make-cars" class="native-input" value="${safe(m.cars)}">`)}</div>`,
+        `<button class="btn coral" onclick="WafraOps.saveMake('${escAttr(name)}')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveMake:old=>{
+      const m=(state.fleetMakes||[]).find(x=>x.name===old); if(!m)return;
+      const n=val('make-name'); if(!n){toast('أدخل اسم الماركة.');return;}
+      Object.assign(m,{name:n,country:val('make-country')||m.country,models:Number(val('make-models')||m.models),cars:val('make-cars')||m.cars});
+      persist(); closeM(); render(); toast('تم حفظ الماركة.');
+    },
+    editModel:name=>{
+      const m=(state.fleetModels||[]).find(x=>x.name===name); if(!m)return;
+      openM(dlg(`تعديل موديل: ${safe(m.name)}`,
+        `${fld('اسم الموديل',`<input id="mdl-name" class="native-input" value="${safe(m.name)}">`)}
+         ${fld('الماركة',`<select id="mdl-make" class="native-input">${(state.fleetMakes||[]).map(x=>`<option ${x.name===m.make?'selected':''}>${x.name}</option>`).join('')}</select>`)}
+         <div class="frow">${fld('الفئة',`<select id="mdl-cat" class="native-input">${['اقتصادية','سيدان','دفع رباعي','فاخرة'].map(x=>`<option ${x===m.cat?'selected':''}>${x}</option>`).join('')}</select>`)}
+         ${fld('الصورة',`<select id="mdl-image" class="native-input"><option ${m.image==='صورة مضافة'?'selected':''}>صورة مضافة</option><option ${m.image!=='صورة مضافة'?'selected':''}>بانتظار صورة</option></select>`)}</div>
+         ${fld('المواصفات',`<input id="mdl-specs" class="native-input" value="${safe(m.specs)}">`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveModel('${escAttr(name)}')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveModel:old=>{
+      const m=(state.fleetModels||[]).find(x=>x.name===old); if(!m)return;
+      const n=val('mdl-name'); if(!n){toast('أدخل اسم الموديل.');return;}
+      Object.assign(m,{name:n,make:val('mdl-make')||m.make,cat:val('mdl-cat')||m.cat,image:val('mdl-image')||m.image,specs:val('mdl-specs')||m.specs});
+      persist(); closeM(); render(); toast('تم حفظ الموديل.');
+    },
+    requestAction:status=>{
+      const txt={review:'تم تحويل الطلب للمراجعة مع قائمة تحقق.',docs:'تم إرسال طلب صورة/وثائق للمزود.',approved:'تم اعتماد الطلب وإضافته للمرجع.',rejected:'تم رفض الطلب مع تسجيل السبب.'}[status]||'تم تسجيل الإجراء.';
+      openM(dlg('إجراء على طلب الإضافة',
+        `<div class="note info">${txt}</div>${fld('ملاحظة للإجراء',`<textarea id="req-note" class="native-input" rows="3" placeholder="ملاحظة داخلية…">تمت مراجعة الطلب وتوثيق القرار.</textarea>`)}`,
+        `<button class="btn coral" onclick="closeM();WafraOps.__toastReq&&WafraOps.__toastReq();">تأكيد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+      WafraOps.__toastReq=()=>toast('تم حفظ إجراء طلب الإضافة.');
+    },
+
+    /* —— بلاغ جودة + تعديل سيارة متاحة —— */
+    openQualityReport:car=>{
+      openM(dlg('بلاغ جودة',
+        `<div class="sub" style="margin:-4px 0 12px;font:700 13px Cairo;color:var(--navy)">${safe(car)}</div>
+         ${fld('نوع البلاغ',`<select id="qr-type" class="native-input"><option>شكوى نظافة</option><option>صور غير مطابقة</option><option>بيانات ناقصة</option><option>مخالفة تشغيل</option><option>تلف / عطل</option></select>`)}
+         ${fld('الخطورة',`<select id="qr-level" class="native-input"><option>عالية</option><option>متوسطة</option><option>منخفضة</option></select>`)}
+         ${fld('مهلة المعالجة',`<select id="qr-sla" class="native-input"><option>24 ساعة</option><option>48 ساعة</option><option>72 ساعة</option><option>أسبوع</option></select>`)}
+         ${fld('وصف المشكلة',`<textarea id="qr-note" class="native-input" rows="3" placeholder="تفاصيل ما يحتاج معالجة من المزود…"></textarea>`)}
+         <label style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;font:600 12.5px Cairo"><input type="checkbox" id="qr-hide" checked> إخفاء السيارة من البحث حتى المعالجة (تُطبّق عند الخطورة العالية)</label>`,
+        `<button class="btn coral" onclick="WafraOps.saveQualityReport('${escAttr(car)}')">تأكيد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveQualityReport:car=>{
+      const note=val('qr-note')||val('qr-type');
+      state.qualityReports=state.qualityReports||[];
+      state.qualityReports.unshift({
+        id:'Q-'+String(100+state.qualityReports.length),
+        car, provider:'—', branch:'—', plate:'—',
+        note:`${val('qr-type')}: ${note}`,
+        level:val('qr-level')==='عالية'?'عالي':(val('qr-level')==='متوسطة'?'متوسط':'منخفض'),
+        date:'اليوم', status:'مفتوح'
+      });
+      persist(); closeM(); toast(`تم تسجيل بلاغ جودة على ${car}.`);
+    },
+    editAvailableVehicle:(id,name)=>{
+      openM(dlg(`تعديل سيارة: ${safe(name)}`,
+        `${fld('اسم السيارة',`<input id="av-name" class="native-input" value="${safe(name)}">`)}
+         ${fld('حالة المركبة',`<select id="av-status" class="native-input"><option>متاحة للحجز</option><option>موقفة</option><option>إتاحتها صفر</option></select>`)}
+         <div class="frow">${fld('المتاح',`<input id="av-avail" class="native-input" type="number" value="1">`)}
+         ${fld('إجمالي الأسطول',`<input id="av-total" class="native-input" type="number" value="1">`)}</div>
+         ${fld('ملاحظة',`<textarea id="av-note" class="native-input" rows="2" placeholder="ملاحظة تشغيلية اختيارية"></textarea>`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveAvailableVehicle('${escAttr(id)}','${escAttr(name)}')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveAvailableVehicle:(id,name)=>{
+      closeM(); toast(`تم حفظ تعديلات ${val('av-name')||name}.`);
+      if(typeof WafraOps.toggleVehicle==='function'&&val('av-status')==='موقفة'){/* حالة توضيحية */}
+      render();
+    },
+
+    /* —— مراقبة جودة الأسطول —— */
+    viewQualityReport:id=>{
+      const r=(state.qualityReports||[]).find(x=>x.id===id); if(!r)return;
+      openM(dlg(`بلاغ ${r.id}`,
+        `${prev('السيارة',safe(r.car))}${prev('المزود',safe(r.provider))}${prev('الفرع',safe(r.branch))}${prev('رقم اللوحة',safe(r.plate))}
+         ${prev('الملاحظة',safe(r.note))}${prev('مستوى الخطورة',r.level)}${prev('التاريخ',r.date)}${prev('الحالة',r.status)}`,
+        `<button class="btn coral" onclick="closeM();WafraOps.requestResponse&&WafraOps.requestResponse('معالجة ${r.id}')">معالجة</button><button class="btn ghost" onclick="closeM()">إغلاق</button>`));
+    },
+
+    /* —— التسعير الديناميكي (مرتبط بنسبة التشغيل) —— */
+    addDynamicRule:(editIdx)=>{
+      const r=(editIdx!=null)?(state.dynamicRules||[])[editIdx]:null;
+      window.__dynEdit=editIdx!=null?editIdx:null;
+      openM(dlg(r?'تعديل قاعدة تسعير ديناميكي':'إضافة قاعدة تسعير ديناميكي',
+        `<div class="note info">يُربط السعر بنسبة التشغيل: عند تجاوز حد أعلى يرتفع السعر، وعند انخفاض التشغيل ينخفض السعر تلقائياً.</div>
+         ${fld('السيارة / الموديل',`<input id="dyn-car" class="native-input" value="${safe(r?.car||'هيونداي أكسنت 2025')}" placeholder="مثال: هيونداي أكسنت 2025">`)}
+         <div class="frow">${fld('شرط التشغيل',`<select id="dyn-when" class="native-input"><option value=">=" ${( !r||r.when==='>=')?'selected':''}>عند الوصول إلى % أو أكثر</option><option value="<=" ${r?.when==='<='?'selected':''}>عند الوصول إلى % أو أقل</option></select>`)}
+         ${fld('نسبة التشغيل %',`<input id="dyn-util" class="native-input" type="number" value="${r?.util??80}">`)}</div>
+         <div class="frow">${fld('نوع التعديل',`<select id="dyn-adj" class="native-input"><option ${(!r||r.adj==='زيادة')?'selected':''}>زيادة</option><option ${r?.adj==='تخفيض'?'selected':''}>تخفيض</option></select>`)}
+         ${fld('نسبة تعديل السعر %',`<input id="dyn-pct" class="native-input" type="number" value="${r?.pct??5}">`)}</div>
+         ${fld('الحالة',`<select id="dyn-status" class="native-input"><option ${(!r||r.status==='مفعلة')?'selected':''}>مفعلة</option><option ${r?.status==='موقوفة'?'selected':''}>موقوفة</option></select>`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveDynamicRule()">حفظ القاعدة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    editDynamicRule:i=>WafraOps.addDynamicRule(i),
+    saveDynamicRule:()=>{
+      const car=val('dyn-car'); if(!car){toast('حدد السيارة أو الموديل.');return;}
+      const payload={car,when:val('dyn-when')||'>=',util:Number(val('dyn-util')||0),adj:val('dyn-adj')||'زيادة',pct:Number(val('dyn-pct')||0),status:val('dyn-status')||'مفعلة'};
+      state.dynamicRules=state.dynamicRules||[];
+      const edit=window.__dynEdit;
+      if(edit!=null&&state.dynamicRules[edit]) state.dynamicRules[edit]=payload;
+      else state.dynamicRules.unshift(payload);
+      window.__dynEdit=null;
+      persist(); closeM(); render(); toast('تم حفظ قاعدة التسعير الديناميكي.');
+    },
+    dynamicRule:()=>WafraOps.addDynamicRule(),
+    editPrice:car=>{
+      openM(dlg('تعديل تسعير '+safe(car),
+        `<div class="frow">${fld('السعر اليومي',`<input id="price-day" class="native-input" value="190">`)}${fld('السعر الأسبوعي',`<input id="price-week" class="native-input" value="1,140">`)}</div>
+         ${fld('السعر الشهري',`<input id="price-month" class="native-input" value="4,200">`)}
+         <div class="note info">يُسجَّل التعديل في سجل السيارة ويظهر فوراً في شاشة المزود.</div>`,
+        `<button class="btn coral" onclick="closeM();WafraOps.__toastPrice&&WafraOps.__toastPrice()">حفظ التسعير</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+      WafraOps.__toastPrice=()=>toast('تم حفظ تسعير السيارة.');
+    },
+    closeQuality:()=>{
+      const n=document.querySelectorAll('.wafra-check:checked').length;
+      toast(n?`تم إغلاق ${n} بلاغات بعد التأكيد.`:'اختر بلاغاً واحداً على الأقل أولاً.');
+    },
+    requestResponse:t=>toast(`${t}: تم فتح نموذج الرد وإضافته لسجل الإجراء.`),
 
     /* —— إضافة عميل حسب النوع —— */
     addUser:()=>{
@@ -261,6 +443,77 @@
       const p=val('xfer-provider')||'مزود', b=val('xfer-branch')||'فرع';
       closeM(); toast(`تم تحويل الحجز ${id} إلى ${p} · ${b}.`);
     },
+    /* —— إجراءات تفاصيل الحجز (نوافذ فعلية) —— */
+    bookingAction:t=>{
+      const id=window.__bookingId||'BK-20418';
+      if(/تحديث الحالة/.test(t)) return WafraOps.updateBookingStatus(id);
+      if(/تعديل/.test(t)) return WafraOps.editBooking(id);
+      if(/تمديد/.test(t)) return WafraOps.extendBooking(id);
+      if(/تحويل/.test(t)) return WafraOps.transferBooking(id);
+      if(/استرداد/.test(t)) return WafraOps.openBookingRefund(id);
+      if(/إلغاء/.test(t)) return WafraOps.openBookingCancel(id);
+      toast(`${t} — تم تسجيل الإجراء على الحجز.`);
+    },
+    updateBookingStatus:id=>{
+      openM(dlg(`تحديث حالة الحجز ${id}`,
+        `${fld('الحالة الحالية',`<input class="native-input" value="جاري" disabled>`)}
+         ${fld('الحالة الجديدة',`<select id="bk-status" class="native-input"><option>جاري</option><option>تم التسليم</option><option>قيد الاستخدام</option><option>بانتظار الفحص</option><option>مكتمل</option><option>متأخر</option><option>ملغي</option></select>`)}
+         ${fld('ملاحظة',`<textarea id="bk-status-note" class="native-input" rows="2" placeholder="سبب تحديث الحالة (اختياري)"></textarea>`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveBookingStatus('${escAttr(id)}')">حفظ الحالة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveBookingStatus:id=>{
+      const st=val('bk-status')||'جاري';
+      closeM(); toast(`تم تحديث حالة الحجز ${id} إلى «${st}».`);
+    },
+    editBooking:id=>{
+      openM(dlg(`تعديل الحجز ${id}`,
+        `<div class="frow">${fld('تاريخ الاستلام',`<input id="bk-from" class="native-input" type="datetime-local" value="2026-09-25T10:00">`)}
+         ${fld('تاريخ التسليم',`<input id="bk-to" class="native-input" type="datetime-local" value="2026-09-28T10:00">`)}</div>
+         <div class="frow">${fld('نوع الخدمة',`<select id="bk-svc" class="native-input"><option>استلام من الفرع</option><option>توصيل</option><option>تسليم بين المدن</option></select>`)}
+         ${fld('الفرع',`<select id="bk-branch" class="native-input"><option>مطار الملك خالد — الرياض</option><option>جدة الشمالية</option><option>الخبر التشغيلي</option></select>`)}</div>
+         ${fld('ملاحظة التعديل',`<textarea id="bk-edit-note" class="native-input" rows="2" placeholder="يُسجَّل في سجل الإجراءات"></textarea>`)}
+         <div class="note info">بعد فتح العقد لا يمكن إضافة التأمين الشامل أو الكيلومتر المفتوح.</div>`,
+        `<button class="btn coral" onclick="WafraOps.saveBookingEdit('${escAttr(id)}')">حفظ التعديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveBookingEdit:id=>{closeM(); toast(`تم حفظ تعديلات الحجز ${id}.`);},
+    extendBooking:id=>{
+      openM(dlg(`تمديد الحجز ${id}`,
+        `${fld('مدة التمديد',`<select id="bk-ext-days" class="native-input"><option value="1">يوم واحد</option><option value="2" selected>يومان</option><option value="3">3 أيام</option><option value="7">أسبوع</option></select>`)}
+         <div class="frow">${fld('القيمة الإضافية (ر.س)',`<input id="bk-ext-fee" class="native-input" type="number" value="380">`)}
+         ${fld('تاريخ التسليم الجديد',`<input id="bk-ext-to" class="native-input" type="date" value="2026-09-30">`)}</div>
+         ${fld('ملاحظة',`<textarea id="bk-ext-note" class="native-input" rows="2" placeholder="ملاحظة اختيارية"></textarea>`)}
+         <div class="note info">يُرسل رابط سداد التمديد للعميل ويظهر في سجل التمديد.</div>`,
+        `<button class="btn coral" onclick="WafraOps.saveBookingExtend('${escAttr(id)}')">تأكيد التمديد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveBookingExtend:id=>{
+      const d=val('bk-ext-days')||'1', fee=val('bk-ext-fee')||'0';
+      closeM(); toast(`تم تجهيز تمديد ${id} لمدة ${d} يوم — قيمة ${fee} ر.س.`);
+    },
+    openBookingRefund:id=>{
+      openM(dlg('استرداد مبلغ',
+        `<div class="frow">${fld('المبلغ (فارغ=كامل القيمة)',`<input id="bk-ref-amt" class="native-input" type="number" min="0" step="0.01" placeholder="المبلغ (فارغ=كامل القيمة)">`)}
+         ${fld('سبب الاسترداد',`<input id="bk-ref-reason" class="native-input" placeholder="سبب الاسترداد">`)}</div>
+         <div class="note info">اترك المبلغ فارغاً لاسترداد كامل قيمة الحجز (${id}).</div>`,
+        `<button class="btn coral" onclick="WafraOps.saveBookingRefund('${escAttr(id)}')">إنشاء استرداد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveBookingRefund:id=>{
+      const amt=val('bk-ref-amt'), reason=val('bk-ref-reason');
+      if(!reason){toast('اكتب سبب الاسترداد.');return;}
+      closeM(); toast(`تم إنشاء استرداد ${amt?amt+' ر.س':'كامل القيمة'} للحجز ${id}.`);
+    },
+    openBookingCancel:id=>{
+      openM(dlg('<span style="color:var(--red-ink,#C62828)">إلغاء إداري</span>',
+        `${fld('سبب الإلغاء',`<input id="bk-cancel-reason" class="native-input" placeholder="سبب الإلغاء">`)}
+         <label style="display:flex;gap:8px;align-items:center;margin:12px 0;font:600 13px Cairo"><input type="checkbox" id="bk-cancel-refund" checked> استرداد كامل القيمة للعميل تلقائياً</label>
+         <div class="note warn">الحجز ${safe(id)} — الإلغاء الإداري يُسجَّل في التدقيق ويُشعر العميل والمزود فوراً.</div>`,
+        `<button class="btn danger" onclick="WafraOps.saveBookingCancel('${escAttr(id)}')">إلغاء الحجز إدارياً</button><button class="btn ghost" onclick="closeM()">تراجع</button>`));
+    },
+    saveBookingCancel:id=>{
+      const reason=val('bk-cancel-reason');
+      if(!reason){toast('اكتب سبب الإلغاء.');return;}
+      const refund=document.getElementById('bk-cancel-refund')?.checked;
+      closeM(); toast(`تم إلغاء الحجز ${id} إدارياً${refund?' مع استرداد كامل القيمة':''}.`);
+    },
     decideCancellation:(id,decision)=>{
       const title=decision==='معتمد'?'اعتماد إلغاء الحجز':'رفض طلب الإلغاء';
       openM(dlg(`${title} — ${id}`,
@@ -325,7 +578,36 @@
            <button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل ${x.name}')">تعديل</button>`]))}</div>`);
   };
 
-  /* —— السيارات المتاحة: نفس التصميم + عمود أعداد المتاح —— */
+  /* —— الماركات والموديلات —— */
+  S.fleetMakesModels=()=>{
+    const active=window.__makeTab||'makes';
+    const tabs=[{k:'makes',t:'الماركات'},{k:'models',t:'الموديلات'},{k:'requests',t:'طلبات الإضافة'}];
+    const tabBar=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">${tabs.map(x=>`<button class="btn ${active===x.k?'coral':'ghost'} sm" onclick="WafraOps.switchMakeTab('${x.k}')">${x.t}</button>`).join('')}</div>`;
+    let content='';
+    if(active==='makes'){
+      content=table(['الماركة','بلد المنشأ','الموديلات','السيارات','الإجراء'],
+        (state.fleetMakes||[]).map(m=>[m.name,m.country,String(m.models),m.cars,
+          `<button class="btn ghost sm" onclick="WafraOps.editMake('${escAttr(m.name)}')">تعديل</button>`]));
+    }else if(active==='models'){
+      content=table(['الموديل','الماركة','الصورة','الفئة','المواصفات','الإجراء'],
+        (state.fleetModels||[]).map(m=>[m.name,m.make,m.image,m.cat,m.specs,
+          `<button class="btn ghost sm" onclick="WafraOps.editModel('${escAttr(m.name)}')">تعديل</button>`]));
+    }else{
+      content=table(['الطلب','الماركة','الموديل','المزود','الحالة','الإجراءات'],
+        (state.modelRequests||[]).map(r=>[r.id,r.make,r.model,r.provider,bdg(r.status,r.status==='قيد المراجعة'||r.status==='بانتظار صورة'?'a':'n'),
+          r.status==='قيد المراجعة'
+            ?`<button class="btn ghost sm" onclick="WafraOps.requestAction('review')">مراجعة</button>`
+            :r.status==='بانتظار صورة'
+              ?`<button class="btn ghost sm" onclick="WafraOps.requestAction('docs')">طلب صورة</button>`
+              :`<button class="btn ghost sm" onclick="WafraOps.requestAction('rejected')">دمج أو رفض</button>`]));
+    }
+    return phead('الماركات والموديلات','الماركة هي الشركة المصنّعة، والموديل هو المركبة التابعة لها',[],
+      `<button class="btn coral" onclick="openM(M.newModel())">＋ إضافة موديل</button>`)
+      +card(tabBar+content);
+  };
+  S.models=S.fleetMakesModels;
+
+  /* —— السيارات المتاحة —— */
   S.fleetAvailable=()=>{
     const s=JSON.parse(localStorage.getItem('wafra-ops-v1')||'{}');
     const states=s.vehicleStates||{sunny:'موقفة',k5:'موقفة'};
@@ -336,43 +618,87 @@
       ['sunny','صني 2024','الوسام كار · مكة المركزي','اقتصادية','صني',8,18]
     ];
     return phead('السيارات المتاحة','تفعيل المركبة وإتاحتها يظهران كحالة واحدة واضحة',[],
-      `<button class="btn ghost" onclick="WafraOps.bulkAvailability()">تحديث جماعي للإتاحة</button>`)
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('السيارات-المتاحة','Excel')">⤓ تصدير</button>
+       <button class="btn ghost" onclick="WafraOps.bulkAvailability()">تحديث جماعي للإتاحة</button>`)
       +card(`<div class="filters" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
         ${fld('المزودون',`<select class="native-input"><option>كل المزودين</option>${providers.map(p=>`<option>${p}</option>`).join('')}</select>`)}
         ${fld('النوع',`<select class="native-input"><option>كل الأنواع</option><option>سيدان</option><option>اقتصادية</option></select>`)}
         ${fld('الموديل',`<select class="native-input"><option>كل الموديلات</option><option>كامري</option><option>إلنترا</option><option>K5</option></select>`)}
         ${fld('حالة المركبة',`<select class="native-input"><option>كل الحالات</option><option>متاحة للحجز</option><option>موقفة</option><option>إتاحتها صفر</option></select>`)}
-      </div>`+table(['السيارة','المزود / الفرع','النوع','الموديل','المتاح','إجمالي الأسطول','حالة المركبة','الإجراء'],
+      </div>`+table(['السيارة','المزود / الفرع','النوع','الموديل','المتاح','إجمالي الأسطول','حالة المركبة','الإجراءات'],
         cars.map(x=>{
           const stopped=states[x[0]]==='موقفة'||x[5]===0;
           const st=x[5]===0?'إتاحتها صفر':(stopped?'موقفة':'متاحة للحجز');
           return [x[1],x[2],x[3],x[4],String(x[5]),String(x[6]),bdg(st,stopped?'r':'g'),
-            `<button class="btn ghost sm" onclick="WafraOps.toggleVehicle('${x[0]}')">${stopped?'تفعيل':'إيقاف'}</button>`];
+            `<button class="btn ghost sm" onclick="WafraOps.openQualityReport('${escAttr(x[1])}')">بلاغ جودة</button>
+             <button class="btn ghost sm" onclick="WafraOps.editAvailableVehicle('${x[0]}','${escAttr(x[1])}')">تعديل</button>
+             <button class="btn ghost sm" onclick="WafraOps.toggleVehicle('${x[0]}')">${stopped?'تفعيل':'إيقاف'}</button>`];
         })));
   };
 
-  /* —— التسعير: نفس التصميم + تحديث جماعي الكل/مزود —— */
+  /* —— التسعير —— */
   S.fleetPricing=()=>phead('التسعير','أسعار يومية وأسبوعية وشهرية، مع تعديل فردي أو جماعي',[],
-    `<button class="btn coral" onclick="WafraOps.bulkPriceUpdate()">تعديل جماعي للأسعار</button>`)
+    `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('التسعير','Excel')">⤓ تصدير</button>
+     <button class="btn coral" onclick="WafraOps.bulkPriceUpdate()">تعديل جماعي للأسعار</button>`)
     +card(table(['السيارة','المزود','يومي','أسبوعي','شهري','آخر تحديث','الإجراء'],[
       ['كامري 2026','شركة الصحراء',money('190'),money('1,140'),money('4,200'),'اليوم',`<button class="btn ghost sm" onclick="WafraOps.editPrice('كامري 2026')">تعديل</button>`],
       ['إلنترا 2025','كي رنت',money('145'),money('870'),money('3,220'),'أمس',`<button class="btn ghost sm" onclick="WafraOps.editPrice('إلنترا 2025')">تعديل</button>`],
       ['K5 2026','مسار',money('170'),money('1,020'),money('3,780'),'أمس',`<button class="btn ghost sm" onclick="WafraOps.editPrice('K5 2026')">تعديل</button>`]
     ]));
 
-  /* —— الخدمات: نفس التصميم + إضافة/تفعيل على الفروع —— */
+  /* —— الخدمات —— */
   S.fleetServices=()=>phead('الخدمات','تعريف الخدمات التي يختار منها المزود والفرع',[],
     `<button class="btn coral" onclick="WafraOps.addFleetService()">＋ إضافة خدمة وتفعيلها</button>`)
     +card(table(['الخدمة','الوصف','الرسوم الافتراضية','الفروع المفعّلة','الحالة','الإجراءات'],
       state.fleetServices.map(s=>[s.name,s.desc,money(s.fee),String(s.branches),bdg(s.status,'g'),
         `<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل خدمة ${s.name}')">✎</button>`])));
 
-  /* —— الإضافات: خيارات اختيارية أثناء الحجز (كرسي أطفال، سائق إضافي…) —— */
+  /* —— الإضافات —— */
   S.fleetAddons=()=>phead('الإضافات','تعريف الإضافات الاختيارية التي تظهر للعميل أثناء الحجز',[],
-    `<button class="btn coral" onclick="WafraOps.addFleetAddon()">＋ إضافة وتفعيلها</button>`)
-    +card(table(['الإضافة','الوصف','الرسوم الافتراضية','الفروع المفعّلة','الحالة','الإجراءات'],
-      (state.fleetAddons||[]).map(a=>[a.name,a.desc,{v:`${a.fee} ر.س${a.unit?` / ${a.unit}`:''}`,c:'num'},String(a.branches),bdg(a.status,'g'),
-        `<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل إضافة ${a.name}')">✎</button>`])));
+    `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('الإضافات','Excel')">⤓ تصدير</button>
+     <button class="btn coral" onclick="WafraOps.addFleetAddon()">＋ إضافة وتفعيلها</button>`)
+    +card(table(['الإضافة','الوصف','الرسوم الافتراضية','نوع التأجير','الفروع المفعّلة','الحالة','الإجراءات'],
+      (state.fleetAddons||[]).map((a,i)=>[a.name,a.desc,{v:`${a.fee} ر.س${a.unit?` / ${a.unit}`:''}`,c:'num'},rentalLabel(a.rental),String(a.branches),bdg(a.status,'g'),
+        `<button class="btn ghost sm" onclick="WafraOps.viewFleetAddon(${i})">استعراض</button>
+         <button class="btn ghost sm" onclick="WafraOps.editFleetAddon(${i})">تعديل</button>`])));
+
+  /* —— التسعير الديناميكي: ربط السعر بنسبة التشغيل —— */
+  S.fleetDynamic=()=>phead('التسعير الديناميكي','ربط السعر بنسبة التشغيل — يرتفع السعر تلقائياً عند ارتفاع التشغيل وينخفض عند انخفاضه',[],
+    `<button class="btn coral" onclick="WafraOps.addDynamicRule()">＋ إضافة قاعدة</button>`)
+    +note('info','مفهوم التسعير الديناميكي','مثال: عند وصول هيونداي أكسنت 2025 إلى تشغيل 80% يرتفع السعر 5%، وعند انخفاض التشغيل إلى 55% ينخفض السعر 10%.')
+    +card(`<div class="filters" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${fld('الموديل',`<select class="native-input"><option>كل الموديلات</option><option>أكسنت 2025</option><option>كامري 2026</option></select>`)}
+        ${fld('الحالة',`<select class="native-input"><option>كل الحالات</option><option>مفعلة</option><option>موقوفة</option></select>`)}
+        ${fld('نوع التعديل',`<select class="native-input"><option>الكل</option><option>زيادة</option><option>تخفيض</option></select>`)}
+      </div>`+table(['السيارة','شرط التشغيل','تعديل السعر','الحالة','الإجراء'],
+        (state.dynamicRules||[]).map((r,i)=>[
+          r.car,
+          utilRuleText(r),
+          adjRuleText(r),
+          pill(r.status,r.status==='مفعلة'?'g':'n'),
+          `<button class="btn ghost sm" onclick="WafraOps.editDynamicRule(${i})">تعديل</button>`
+        ])));
+
+  /* —— مراقبة جودة الأسطول —— */
+  S.fleetQuality=()=>{
+    const rows=state.qualityReports||[];
+    return phead('مراقبة جودة الأسطول','متابعة البلاغات ومخاطر جودة المركبات',[],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('مراقبة-جودة-الأسطول','Excel')">⤓ تصدير</button>
+       <button class="btn coral" onclick="WafraOps.closeQuality&&WafraOps.closeQuality()">إغلاق البلاغات المحددة</button>`)
+      +`<div class="card-b">${kpi([{i:'◷',l:'البلاغات المفتوحة',v:String(rows.filter(r=>r.status!=='مغلق').length),d:'تحتاج متابعة',t:'up'},{i:'⚠',l:'عالية الخطورة',v:String(rows.filter(r=>r.level==='عالي').length),d:'تحتاج معالجة فورية',t:'up'}])}</div>`
+      +card(`<div class="filters">${fld('المستوى',`<select class="native-input"><option>كل المستويات</option><option>عالي</option><option>متوسط</option><option>منخفض</option></select>`)}${fld('الحالة',`<select class="native-input"><option>كل الحالات</option><option>مفتوح</option><option>قيد المعالجة</option><option>مغلق</option></select>`)}</div>
+        <div class="card-b">${table(['تحديد','السيارة','المزود','الفرع','رقم اللوحة','الملاحظة','مستوى الخطورة','التاريخ','الحالة','الإجراءات'],
+          rows.map(r=>[
+            `<input aria-label="تحديد ${r.id}" type="checkbox" class="wafra-check">`,
+            r.car,r.provider,r.branch,r.plate,r.note,
+            pill(r.level,r.level==='عالي'?'r':r.level==='متوسط'?'a':'g'),
+            r.date,
+            pill(r.status),
+            `<button class="btn ghost sm" onclick="WafraOps.viewQualityReport('${r.id}')">إطلاع</button>
+             <button class="btn ghost sm" onclick="WafraOps.requestResponse&&WafraOps.requestResponse('معالجة ${r.id}')">معالجة</button>`
+          ]))}</div>`);
+  };
+  S.fleetReview=S.fleetQuality;
 
   /* —— العملاء: نفس تصميم القائمة + كروت المميزين + نموذج حسب النوع —— */
   S.users=()=>{
@@ -403,10 +729,10 @@
            <button class="btn ghost sm" onclick="WafraOps.editUser('${u.id}')">تعديل</button>`]))}</div>`);
   };
 
-  /* —— طلبات الحذف: إجراءات حسب الحالة —— */
+  /* —— طلبات الحذف: إجراءات حسب الحالة + سجل + حسابات محذوفة —— */
   const deletionActs=(name,status)=>{
     const view=`<button class="btn ghost sm" onclick="WafraOps.openCustomerFile('${name}')">اطلاع على الملف</button>`;
-    if(status.includes('مكتمل')) return view;
+    if(status.includes('مكتمل')||status.includes('محذوف')) return view;
     if(status.includes('حجز')) return `${view}
       <button class="btn ghost sm" onclick="WafraOps.followActiveBooking('${name}')">متابعة الحجز</button>`;
     if(status.includes('مستحق')) return `${view}
@@ -416,20 +742,59 @@
       <button class="btn ghost sm" onclick="WafraOps.extendDeletionGrace('${name}')">تمديد المهلة</button>
       <button class="btn coral sm" onclick="WafraOps.reactivateAccount('${name}')">إلغاء الحذف وتفعيل</button>`;
   };
+  Object.assign(WafraOps,{
+    deletionTab:t=>{window.__deletionTab=t;render();}
+  });
   S.deletions=()=>{
-    const rows=[
+    const active=window.__deletionTab||'pending';
+    const pending=[
       {name:'ماجد السبيعي',phone:'0551002233',req:'2026/08/02',exec:'2026/09/01',left:'4 أيام',done:'12',paid:'8,420',dues:'—',status:'قيد المهلة'},
       {name:'ريم الزهراني',phone:'0533447788',req:'2026/08/11',exec:'2026/09/10',left:'13 يوماً',done:'7',paid:'4,180',dues:'—',status:'قيد المهلة'},
       {name:'تركي العنزي',phone:'0509911223',req:'2026/07/28',exec:'—',left:'—',done:'19',paid:'14,260',dues:'840',status:'موقوف — حجز جارٍ'},
       {name:'هند الشهري',phone:'0566330099',req:'2026/07/19',exec:'—',left:'—',done:'5',paid:'3,100',dues:'1,260',status:'موقوف — مستحقّات'}
     ];
-    return phead('طلبات حذف الحساب','تُنفَّذ خلال 30 يوماً وفق سياسة البيانات، وتُوقَف عند وجود التزام قائم — الإجراءات حسب الحالة',['FR-ADM-05'])
-      +card(`<div class="note info">قيد المهلة ← إلغاء الحذف أو تمديد · موقوف بحجز ← متابعة الحجز · موقوف بمستحقات ← متابعة/تفعيل بعد السداد · مكتملة ← اطلاع فقط.</div>`
-      +tabs([{t:'قيد المهلة',n:23,on:1},{t:'موقوفة',n:4},{t:'مكتملة',n:186}])
-      +filters(['سبب الإيقاف','تاريخ الطلب'],'ابحث بالاسم أو الجوال…')
-      +table(['العميل','تاريخ الطلب','تاريخ التنفيذ','المتبقّي','حجوزات مكتملة','إجمالي المدفوعات','إجمالي المستحقات','الحالة','الإجراءات'],
-        rows.map(r=>[{v:`${r.name}<span class="sub">${r.phone}</span>`,c:'strong'},r.req,r.exec,r.left,r.done,money(r.paid),r.dues==='—'?'—':money(r.dues),bdg(r.status,r.status.includes('قيد')?'b':'a'),deletionActs(r.name,r.status)]))
-      +pager(27,3));
+    const history=[
+      {when:'2026/09/12 14:20',actor:'إدارة · محمد الصغير',action:'تنفيذ الحذف النهائي',account:'فهد الحربي',detail:'انتهت المهلة دون التزام قائم'},
+      {when:'2026/09/10 09:05',actor:'إدارة · سارة العتيبي',action:'إلغاء طلب الحذف وتفعيل',account:'نورة القحطاني',detail:'طلب العميل إيقاف الحذف'},
+      {when:'2026/09/08 16:40',actor:'النظام',action:'إيقاف التنفيذ — حجز جارٍ',account:'تركي العنزي',detail:'BK-20418 لا يزال نشطاً'},
+      {when:'2026/09/05 11:12',actor:'إدارة · محمد الصغير',action:'تمديد المهلة 7 أيام',account:'ماجد السبيعي',detail:'بانتظار مراجعة المستندات'},
+      {when:'2026/09/01 08:00',actor:'النظام',action:'تنفيذ الحذف النهائي',account:'خالد الدوسري',detail:'حذف تلقائي بعد انتهاء المهلة'},
+      {when:'2026/08/28 13:30',actor:'إدارة · سارة العتيبي',action:'تفعيل بعد السداد',account:'هند الشهري',detail:'تم سداد 1,260 ر.س'}
+    ];
+    const deleted=[
+      {name:'فهد الحربي',phone:'0501234567',req:'2026/08/01',deletedAt:'2026/09/12',reason:'طلب العميل',bookings:'14',paid:'6,240',retention:'حتى 2027/09/12'},
+      {name:'خالد الدوسري',phone:'0556677889',req:'2026/07/15',deletedAt:'2026/09/01',reason:'طلب العميل',bookings:'8',paid:'3,890',retention:'حتى 2027/09/01'},
+      {name:'أمل المطيري',phone:'0532211445',req:'2026/06/20',deletedAt:'2026/08/20',reason:'طلب العميل',bookings:'3',paid:'1,120',retention:'حتى 2027/08/20'},
+      {name:'سعود العتيبي',phone:'0547788990',req:'2026/06/02',deletedAt:'2026/08/05',reason:'مخالفة شروط',bookings:'21',paid:'18,400',retention:'حتى 2027/08/05'}
+    ];
+    const tabBtn=(k,t,n)=>`<button class="tab ${active===k?'on':''}" onclick="WafraOps.deletionTab('${k}')">${t}${n!=null?` <span class="sub">(${n})</span>`:''}</button>`;
+    let body='';
+    if(active==='history'){
+      body=`<div class="note info">سجل كل الإجراءات على طلبات الحذف: تنفيذ، إلغاء، تمديد، إيقاف بسبب التزام.</div>`
+        +table(['التاريخ','الإجراء','الحساب','بواسطة','التفاصيل'],
+          history.map(h=>[h.when,{v:h.action,c:'strong'},h.account,h.actor,h.detail]))
+        +pager(history.length,1);
+    }else if(active==='deleted'){
+      body=`<div class="note warn">الحسابات المحذوفة مؤرشفة وفق سياسة الاحتفاظ — لا تظهر في البحث العام.</div>`
+        +filters(['سبب الحذف','تاريخ الحذف'],'ابحث بالاسم أو الجوال…')
+        +table(['العميل','تاريخ الطلب','تاريخ الحذف','سبب الحذف','حجوزات مكتملة','إجمالي المدفوعات','مدة الاحتفاظ','الإجراءات'],
+          deleted.map(r=>[{v:`${r.name}<span class="sub">${r.phone}</span>`,c:'strong'},r.req,r.deletedAt,r.reason,r.bookings,money(r.paid),r.retention,
+            `<button class="btn ghost sm" onclick="WafraOps.openCustomerFile('${escAttr(r.name)}')">اطلاع على الأرشيف</button>`]))
+        +pager(deleted.length,1);
+    }else{
+      body=`<div class="note info">قيد المهلة ← إلغاء الحذف أو تمديد · موقوف بحجز ← متابعة الحجز · موقوف بمستحقات ← متابعة/تفعيل بعد السداد.</div>`
+        +filters(['سبب الإيقاف','تاريخ الطلب'],'ابحث بالاسم أو الجوال…')
+        +table(['العميل','تاريخ الطلب','تاريخ التنفيذ','المتبقّي','حجوزات مكتملة','إجمالي المدفوعات','إجمالي المستحقات','الحالة','الإجراءات'],
+          pending.map(r=>[{v:`${r.name}<span class="sub">${r.phone}</span>`,c:'strong'},r.req,r.exec,r.left,r.done,money(r.paid),r.dues==='—'?'—':money(r.dues),bdg(r.status,r.status.includes('قيد')?'b':'a'),deletionActs(r.name,r.status)]))
+        +pager(27,3);
+    }
+    return phead('طلبات حذف الحساب','تُنفَّذ خلال 30 يوماً وفق سياسة البيانات، وتُوقَف عند وجود التزام قائم',['FR-ADM-05'],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('طلبات-الحذف','Excel')">⤓ تصدير</button>`)
+      +card(`<div class="tabs">
+        ${tabBtn('pending','الطلبات النشطة',pending.length)}
+        ${tabBtn('history','السجل / التاريخ',history.length)}
+        ${tabBtn('deleted','الحسابات المحذوفة',deleted.length)}
+      </div><div class="card-b">${body}</div>`);
   };
 
   /* —— الحسابات المشبوهة: إجراءات حسب حالة المراجعة —— */
@@ -479,8 +844,10 @@
       <div class="bk-side"><h4>ملخص سريع</h4>
         <div class="sub">الاستلام: 25 سبتمبر 10:00 ص<br>التسليم: 28 سبتمبر 10:00 ص<br>المدة: 3 أيام<br>الخدمة: استلام من الفرع<br>التأمين: أساسي</div>
         <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
-          <button class="btn coral sm" onclick="WafraOps.bookingAction('تمديد الحجز')">تمديد</button>
+          <button class="btn coral sm" onclick="WafraOps.extendBooking('${id}')">تمديد</button>
           <button class="btn ghost sm" onclick="WafraOps.transferBooking('${id}')">تحويل</button>
+          <button class="btn ghost sm" onclick="WafraOps.openBookingRefund('${id}')">استرداد</button>
+          <button class="btn danger sm" onclick="WafraOps.openBookingCancel('${id}')">إلغاء</button>
           <button class="btn ghost sm" onclick="WafraOps.sendPayLink('${id}')">رابط سداد</button>
         </div>
       </div></div>`,
@@ -498,11 +865,29 @@
     }[active];
     return phead(`الحجز ${id}`,'كل بيانات الحجز وسجل إجراءاته وفق النموذج المعتمد',[],
       `<a class="btn ghost" href="#bookings">‹ رجوع للقائمة</a>
-       <button class="btn ghost" onclick="WafraOps.bookingAction('تحديث الحالة')">تحديث الحالة</button>
-       <button class="btn ghost" onclick="WafraOps.bookingAction('تعديل الحجز')">تعديل</button>
-       <button class="btn ghost" onclick="WafraOps.bookingAction('تمديد الحجز')">تمديد</button>
-       <button class="btn ghost" onclick="WafraOps.transferBooking('${id}')">تحويل</button>`)
+       <button class="btn ghost" onclick="WafraOps.updateBookingStatus('${id}')">تحديث الحالة</button>
+       <button class="btn ghost" onclick="WafraOps.editBooking('${id}')">تعديل</button>
+       <button class="btn ghost" onclick="WafraOps.extendBooking('${id}')">تمديد</button>
+       <button class="btn ghost" onclick="WafraOps.transferBooking('${id}')">تحويل</button>
+       <button class="btn ghost" onclick="WafraOps.openBookingRefund('${id}')">استرداد</button>
+       <button class="btn danger" onclick="WafraOps.openBookingCancel('${id}')">إلغاء</button>`)
       +card(detailTabs(active)+`<div class="card-b">${content||''}</div>`);
+  };
+
+  /* —— خريطة الحجوزات + تصدير —— */
+  S.bookingMap=()=>{
+    const cities=[
+      {name:'الرياض',count:1620,available:428,active:184,x:57,y:72,tone:'#F06C6C'},
+      {name:'جدة',count:1105,available:312,active:126,x:23,y:78,tone:'#20A16E'},
+      {name:'الخبر',count:734,available:186,active:82,x:74,y:54,tone:'#EAA631'},
+      {name:'الدمام',count:612,available:164,active:68,x:78,y:49,tone:'#EAA631'},
+      {name:'تبوك',count:216,available:74,active:21,x:20,y:32,tone:'#5267A9'},
+      {name:'حائل',count:184,available:61,active:16,x:39,y:45,tone:'#5267A9'}
+    ];
+    const mapCard=`<div class="card-b"><div class="map-canvas" style="background:linear-gradient(135deg,#F4F7FF,#E1EAFF)"><svg viewBox="0 0 900 390" width="100%" height="390" style="position:absolute;inset:0"><path d="M95 245 L235 88 L392 112 L530 200 L670 220 L785 322 L665 352 L492 331 L356 358 L188 322 Z" fill="#DCE6FF" stroke="#A9BCEB" stroke-width="3"/></svg>${cities.map(c=>`<button class="map-point" style="inset-inline-start:${c.x}%;top:${c.y}%;background:${c.tone};width:${Math.min(68,25+Math.round(c.count/45))}px;height:${Math.min(68,25+Math.round(c.count/45))}px" onclick="WafraOps.mapCity&&WafraOps.mapCity('${c.name}')" title="${c.name}: ${c.count} حجزاً">${c.count>999?(c.count/1000).toFixed(1)+'K':c.count}</button><span style="position:absolute;inset-inline-start:${c.x}%;top:calc(${c.y}% - 44px);transform:translateX(-50%);z-index:2;font-weight:800;color:#23386D;white-space:nowrap">${c.name}</span>`).join('')}<div style="position:absolute;top:14px;inset-inline-start:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px;z-index:3;font-size:11px;line-height:1.8"><b>حالة النقاط</b><br><span style="color:#F06C6C">●</span> ضغط حجوزات مرتفع<br><span style="color:#EAA631">●</span> يحتاج متابعة إتاحة<br><span style="color:#20A16E">●</span> أداء مستقر</div></div><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">${cities.map(c=>`<button class="btn ghost sm" onclick="WafraOps.mapCity&&WafraOps.mapCity('${c.name}')">${c.name} · ${c.count} حجز</button>`).join('')}</div>${table(['المدينة','الحجوزات النشطة','السيارات المتاحة','متوسط الاستجابة','الحالة'],cities.map(c=>[c.name,c.active,c.available,'34 دقيقة',c.count>1000?bdg('ضغط مرتفع','r'):c.available<180?bdg('متابعة الإتاحة','a'):bdg('مستقر','g')]))}</div>`;
+    return phead('خريطة الحجوزات','متابعة التوزيع والإتاحة حسب المدينة والموقع',[],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('خريطة-الحجوزات','Excel')">⤓ تصدير</button>`)
+      +card(cardH('الحجوزات النشطة','اضغط على أي مدينة لاستعراض ملخصها')+`<div id="resource-bookingMap">${mapCard}</div>`);
   };
 
   /* —— قائمة الحجوزات: نفس التصميم + فتح التفاصيل بالنموذج المعتمد —— */
@@ -595,12 +980,35 @@
   if(window.TITLES){
     window.TITLES.stuck='الحجوزات المتأخرة / المتعثرة';
     window.TITLES.fleetAddons='الإضافات';
+    window.TITLES.fleetMakesModels='الماركات والموديلات';
+    window.TITLES.fleetAvailable='السيارات المتاحة';
+    window.TITLES.fleetPricing='التسعير';
+    window.TITLES.fleetDynamic='التسعير الديناميكي';
+    window.TITLES.fleetQuality='مراقبة جودة الأسطول';
+    window.TITLES.fleetReview='مراقبة جودة الأسطول';
+    window.TITLES.deletions='طلبات الحذف';
+    window.TITLES.customerLoyalty='ولاء وتصنيف العملاء';
+    window.TITLES.bookingMap='خريطة الحجوزات';
   }
   const fleetNavAddons=NAV.find(g=>g.g==='إدارة الأسطول');
   if(fleetNavAddons&&!fleetNavAddons.items.some(x=>x.k==='fleetAddons')){
     const svcIdx=fleetNavAddons.items.findIndex(x=>x.k==='fleetServices');
     const addon={k:'fleetAddons',t:'الإضافات',i:'＋'};
     if(svcIdx>=0) fleetNavAddons.items.splice(svcIdx+1,0,addon); else fleetNavAddons.items.push(addon);
+  }
+  /* ولاء وتصنيف العملاء تحت قائمة العملاء (وليس التقارير فقط) */
+  const customerNavLoyalty=NAV.find(g=>g.g==='العملاء');
+  if(customerNavLoyalty){
+    if(!customerNavLoyalty.items.some(x=>x.k==='customerLoyalty')){
+      const after=customerNavLoyalty.items.findIndex(x=>x.k==='deletions'||x.k==='fraud'||x.k==='ratingManage');
+      const item={k:'customerLoyalty',t:'ولاء وتصنيف العملاء',i:'★'};
+      if(after>=0) customerNavLoyalty.items.splice(after,0,item);
+      else customerNavLoyalty.items.push(item);
+    }else{
+      const ly=customerNavLoyalty.items.find(x=>x.k==='customerLoyalty');
+      if(ly) ly.t='ولاء وتصنيف العملاء';
+    }
+    if(typeof renderNav==='function') renderNav();
   }
 
   /* ضمان exportLocal إن لم يُعرَّف */

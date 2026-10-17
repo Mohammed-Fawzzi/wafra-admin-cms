@@ -288,7 +288,7 @@
       +`<div class="ix-wrap">
         <div class="ix-kpis c4">${kpi('🛡','موثوق',String(cnt('موثوق')))}${kpi('👤','عادي',String(cnt('عادي')))}${kpi('⚠','مراقب',String(cnt('مراقب')))}${kpi('🛡','عالي المخاطر',String(cnt('عالي المخاطر')))}</div>
         ${tools('بحث بالاسم...',sel('lySeg',SEG_OPTS,'كل الشرائح'))}
-        <div class="ix-panel"><div class="ix-panel-b">${table(['العميل','المدينة','الحجوزات','درجة الولاء','الشريحة','الرصيد المطلوب','التأمين',''],rows.map(r=>[...r,`<button type="button" class="ix-wbtn" onclick='WafraOps.openLoyaltySegment(${JSON.stringify(r[0])})'>تعديل الشريحة</button>`]))}${foot(520,44)}</div></div>
+        <div class="ix-panel"><div class="ix-panel-b">${table(['العميل','المدينة','الحجوزات','درجة الولاء','الشريحة','الوديعة المطلوبة','التأمين','الإجراءات'],rows.map(r=>[...r,`<button type="button" class="ix-wbtn" onclick='WafraOps.openLoyaltySegment(${JSON.stringify(r[0])})'>تعديل الشريحة</button>`]))}${foot(520,44)}</div></div>
       </div>`;
   };
 

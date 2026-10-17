@@ -45,6 +45,11 @@
 .sa-hbar .pc{font-size:11.5px;font-weight:700;color:var(--muted);text-align:end}
 .sa-table-wrap{overflow:auto}
 .sa-table-wrap table{min-width:720px}
+.sa-extra-filters{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.sa-extra{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:#F7F9FC;border:1px solid #E4E9F3;border-radius:10px;padding:8px 10px}
+.sa-extra span{font:600 12.5px Cairo;color:#44506A}
+.sa-extra b{font:800 12.5px Cairo;color:var(--ink)}
+.sa-extra .sa-x{margin-inline-start:auto;border:0;background:#FDECEC;color:#C40202;border-radius:8px;font:800 12px Cairo;cursor:pointer;padding:5px 10px}
 @media(max-width:1100px){
   .sa-grid{grid-template-columns:1fr}
   .sa-stats{grid-template-columns:repeat(2,1fr)}
@@ -227,7 +232,7 @@
 
   const SA_KEY='wafra-sa-engine-v1';
   const loadSaved=()=>{try{return JSON.parse(localStorage.getItem(SA_KEY)||'{}')||{};}catch(e){return{};}};
-  const persist=s=>{try{localStorage.setItem(SA_KEY,JSON.stringify({tab:s.tab,field:s.field,op:s.op,value:s.value}));}catch(e){}};
+  const persist=s=>{try{localStorage.setItem(SA_KEY,JSON.stringify({tab:s.tab,field:s.field,op:s.op,value:s.value,extraFilters:s.extraFilters||[]}));}catch(e){}};
   const state=()=>{
     if(!window.__saEngine){
       const saved=loadSaved();
@@ -235,26 +240,79 @@
         tab:saved.tab&&(saved.tab in datasets)?saved.tab:'companies',
         field:saved.field||'',
         op:saved.op||'يحتوي',
-        value:saved.value||''
+        value:saved.value||'',
+        extraFilters:Array.isArray(saved.extraFilters)?saved.extraFilters:[]
       };
     }
+    if(!Array.isArray(window.__saEngine.extraFilters)) window.__saEngine.extraFilters=[];
     return window.__saEngine;
   };
   const cellStr=c=>(c&&typeof c==='object'&&'v' in c)?String(c.v):String(c??'');
   const notice=msg=>(typeof window.__toast==='function'?window.__toast:typeof toast==='function'?toast:console.log)(msg);
+  const saValueInput=(tab,field,id,value)=>{
+    const freeText=/(سعر|قيمة العقد|تاريخ|بريد|جوال|هوية|رقم الشركة|رقم الهوية)/.test(field);
+    const hinted=((valueHints[tab]||{})[field])||[];
+    const forceSelect=(tab==='cars'||tab==='contracts')&&!freeText;
+    const opts=hinted.length?hinted:(forceSelect?[]:null);
+    const v=(value||'').replace(/"/g,'&quot;');
+    if(opts&&opts.length){
+      return `<select id="${id}" class="native-input"><option value="">اختر القيمة</option>${opts.filter(x=>x!=='—').map(x=>`<option value="${String(x).replace(/"/g,'&quot;')}" ${x===value?'selected':''}>${x}</option>`).join('')}</select>`;
+    }
+    return `<input id="${id}" class="native-input" value="${v}" placeholder="القيمة">`;
+  };
+  const rowHay=r=>r.map(cellStr).join(' ');
+  const matchFilter=(hay,f)=>{
+    const v=(f.value||'').trim();
+    if(!v) return true;
+    if(f.op==='يساوي') return hay.includes(v);
+    if(f.op==='يبدأ بـ') return hay.split(/[\s·,]+/).some(p=>p.startsWith(v))||hay.startsWith(v);
+    return hay.includes(v);
+  };
   const hbars=items=>{
     const max=Math.max(...items.map(x=>x[1]),1);
     return `<div class="sa-hbar">${items.map(x=>`<div class="row"><span class="nm">${x[0]}</span><span class="track"><i style="width:${Math.round(x[1]/max*100)}%;background:${x[2]||'var(--navy)'}"></i></span><span class="pc">${x[1]}</span></div>`).join('')}</div>`;
   };
 
   Object.assign(WafraOps,{
-    saTab:k=>{const s=state();s.tab=k;s.field='';s.value='';persist(s);render();},
+    saTab:k=>{const s=state();s.tab=k;s.field='';s.value='';s.extraFilters=[];persist(s);render();},
     saFieldChange:()=>{const s=state();s.field=document.getElementById('sa-field')?.value||'';s.value='';persist(s);render();},
     saRun:()=>{const s=state();s.field=document.getElementById('sa-field')?.value||'';s.op=document.getElementById('sa-op')?.value||'يحتوي';s.value=document.getElementById('sa-value')?.value||'';persist(s);render();notice('تم تشغيل البحث والتحليل على النتائج الحالية.');},
-    saClear:()=>{const s=state();s.field='';s.op='يحتوي';s.value='';persist(s);render();notice('تم مسح الفلاتر.');},
+    saClear:()=>{const s=state();s.field='';s.op='يحتوي';s.value='';s.extraFilters=[];persist(s);render();notice('تم مسح الفلاتر.');},
     saSave:()=>{persist(state());notice('تم حفظ التبويب والاستعلام.');},
     saChip:t=>{const s=state();s.value=t||'';persist(s);render();notice('تم تطبيق الاستعلام.');},
-    saAddFilter:()=>notice('تمت إضافة صف فلتر جديد للجلسة الحالية.'),
+    saNewFilterField:()=>{
+      const s=state();
+      const tab=(s.tab in datasets)?s.tab:'companies';
+      const field=document.getElementById('sa-new-field')?.value||(fields[tab]||[])[0];
+      const wrap=document.getElementById('sa-new-value-wrap');
+      if(wrap) wrap.innerHTML=fld('القيمة', saValueInput(tab,field,'sa-new-value',''));
+    },
+    saAddFilter:()=>{
+      const s=state();
+      const tab=(s.tab in datasets)?s.tab:'companies';
+      const fieldOpts=fields[tab]||fields.companies;
+      const field=fieldOpts[0];
+      openM(modal('إضافة فلتر', `
+        ${fld('الحقل', `<select id="sa-new-field" class="native-input" onchange="WafraOps.saNewFilterField()">${fieldOpts.map(f=>`<option>${f}</option>`).join('')}</select>`)}
+        ${fld('العملية', `<select id="sa-new-op" class="native-input">${ops.map(o=>`<option>${o}</option>`).join('')}</select>`)}
+        <div id="sa-new-value-wrap">${fld('القيمة', saValueInput(tab,field,'sa-new-value',''))}</div>
+        ${note('info','فلاتر متعددة','يُطبَّق الفلتر الجديد مع الفلاتر الحالية عند تشغيل التحليل.')}
+      `, `<button type="button" class="btn coral" onclick="WafraOps.saConfirmAddFilter()">إضافة الفلتر</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saConfirmAddFilter:()=>{
+      const s=state();
+      const field=document.getElementById('sa-new-field')?.value||'';
+      const op=document.getElementById('sa-new-op')?.value||'يحتوي';
+      const value=(document.getElementById('sa-new-value')?.value||'').trim();
+      if(!value){notice('أدخل قيمة للفلتر أولاً.');return;}
+      s.extraFilters.push({id:Date.now(),field,op,value});
+      persist(s); closeM(); render(); notice(`تمت إضافة الفلتر: ${field} ${op} ${value}`);
+    },
+    saRemoveFilter:id=>{
+      const s=state();
+      s.extraFilters=(s.extraFilters||[]).filter(x=>String(x.id)!==String(id));
+      persist(s); render(); notice('تم حذف الفلتر.');
+    },
     goSearchAnalysis:()=>{
       const key='searchAnalysis';
       const cur=(location.hash.replace(/^#/,'').split('?')[0])||'dashboard';
@@ -284,8 +342,11 @@
       const fieldOpts=fields[tab]||fields.companies;
       const field=fieldOpts.includes(s.field)?s.field:fieldOpts[0];
       s.field=field;
-      const q=(s.value||'').trim();
-      const filtered=(!q)?data.rows:data.rows.filter(r=>r.map(cellStr).join(' ').includes(q));
+      const allFilters=[{field,op:s.op||'يحتوي',value:s.value},...(s.extraFilters||[])];
+      const filtered=data.rows.filter(r=>{
+        const hay=rowHay(r);
+        return allFilters.every(f=>matchFilter(hay,f));
+      });
       const tabBar=`<div class="sa-tabs">${tabs.map(t=>`<button type="button" class="sa-tab ${tab===t.k?'on':''}" onclick="WafraOps.saTab('${t.k}')"><span class="ic">${t.i}</span>${t.t}</button>`).join('')}</div>`;
       const freeText=/(سعر|قيمة العقد|تاريخ|بريد|جوال|هوية|رقم الشركة|رقم الهوية)/.test(field);
       const hinted=((valueHints[tab]||{})[field])||[];
@@ -300,7 +361,9 @@
         ${valueControl}
         <button type="button" class="sa-btn primary" onclick="WafraOps.saRun()">⌕ تحليل البحث</button>
         <button type="button" class="sa-btn" onclick="WafraOps.saAddFilter()">＋ إضافة فلتر</button>
-      </div><div class="sa-actions">
+      </div>
+      ${(s.extraFilters||[]).length?`<div class="sa-extra-filters">${s.extraFilters.map(f=>`<div class="sa-extra"><span>${f.field}</span><b>${f.op}</b><span>${f.value}</span><button type="button" class="sa-x" onclick="WafraOps.saRemoveFilter('${f.id}')">إزالة</button></div>`).join('')}</div>`:''}
+      <div class="sa-actions">
         <button type="button" class="sa-btn ghost" onclick="WafraOps.saClear()">مسح الكل</button>
         <button type="button" class="sa-btn ghost" onclick="WafraOps.saSave()">حفظ الاستعلام</button>
         <div class="grow"></div>

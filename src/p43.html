@@ -11,13 +11,17 @@
   };
   const dlg=(t,b,f)=>`<div class="modal"><div class="modal-h"><h3>${t}</h3><span class="x" onclick="closeM()">✕</span></div><div class="modal-b">${b}</div><div class="modal-f">${f||'<button class="btn ghost" onclick="closeM()">إغلاق</button>'}</div></div>`;
   const val=id=>document.getElementById(id)?.value?.trim()||'';
+  const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const escAttr=s=>String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const fmt=n=>Number(n||0).toLocaleString('en-US');
   const today=()=>{
     const d=new Date();
     const months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
+  const prev=(k,v)=>`<div class="prev-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
 
-  const DEFAULT_REGIONS=['المنطقة الوسطى','المنطقة الغربية','المنطقة الشرقية','المنطقة الشمالية','المنطقة الجنوبية'];
+  const DEFAULT_REGIONS=['المنطقة الوسطى','المنطقة الغربية','المنطقة الشرقية','المنطقة الشمالية','المنطقة الجنوبية','منطقة مكة المكرمة','منطقة المدينة المنورة','منطقة القصيم','منطقة عسير'];
   state.areas=state.areas||{regions:[],cities:[]};
   /* ترحيل المدن القديمة من نص إلى كائن {name,region} */
   if(Array.isArray(state.areas.cities)){
@@ -42,7 +46,6 @@
     const extra=state.areas.regions.map(r=>typeof r==='string'?r:r.name);
     return [...DEFAULT_REGIONS,...extra.filter(x=>!DEFAULT_REGIONS.includes(x))];
   };
-
   const parseCities=raw=>(raw||'').split(/[،,\n]+/).map(s=>s.trim()).filter(Boolean);
   const branchCountByCity=city=>(state.branches||[]).filter(b=>b.city===city).length;
   const citiesOfRegion=regionName=>{
@@ -55,6 +58,127 @@
     return [...new Set([...seeded,...fromCities])];
   };
 
+  /* إحصاءات جغرافية للعرض (مزودون / فروع / سيارات / حجوزات) */
+  const CITY_STATS={
+    'الرياض':{providers:21,branches:58,cars:2140,bookings:1842},
+    'الخرج':{providers:3,branches:6,cars:180,bookings:96},
+    'جدة':{providers:14,branches:41,cars:1680,bookings:1204},
+    'مكة':{providers:8,branches:18,cars:640,bookings:520},
+    'مكة المكرمة':{providers:8,branches:18,cars:640,bookings:520},
+    'الدمام':{providers:7,branches:16,cars:520,bookings:412},
+    'الخبر':{providers:9,branches:19,cars:820,bookings:480},
+    'تبوك':{providers:4,branches:8,cars:210,bookings:142},
+    'حائل':{providers:2,branches:4,cars:96,bookings:58},
+    'أبها':{providers:3,branches:7,cars:188,bookings:124},
+    'جازان':{providers:2,branches:5,cars:120,bookings:86},
+    'المدينة':{providers:5,branches:12,cars:360,bookings:268},
+    'القصيم':{providers:3,branches:6,cars:150,bookings:98}
+  };
+  const cityStats=name=>{
+    const seed=CITY_STATS[name];
+    const liveBranches=branchCountByCity(name);
+    if(seed){
+      return {
+        providers:seed.providers,
+        branches:Math.max(seed.branches,liveBranches),
+        cars:seed.cars,
+        bookings:seed.bookings
+      };
+    }
+    const branches=Math.max(liveBranches,0);
+    return {
+      providers:branches?Math.max(1,Math.round(branches/3)):0,
+      branches,
+      cars:branches*28,
+      bookings:branches*22
+    };
+  };
+  const sumStats=list=>list.reduce((a,c)=>{
+    const s=cityStats(c);
+    a.providers+=s.providers; a.branches+=s.branches; a.cars+=s.cars; a.bookings+=s.bookings;
+    return a;
+  },{providers:0,branches:0,cars:0,bookings:0});
+
+  const regionsBase=[
+    {name:'المنطقة الوسطى',cities:['الرياض','الخرج'],status:'نشط'},
+    {name:'المنطقة الغربية',cities:['جدة'],status:'نشط'},
+    {name:'المنطقة الشرقية',cities:['الدمام','الخبر'],status:'نشط'},
+    {name:'المنطقة الشمالية',cities:['تبوك','حائل'],status:'نشط'},
+    {name:'المنطقة الجنوبية',cities:['جازان'],status:'نشط'},
+    {name:'منطقة مكة المكرمة',cities:['مكة'],status:'نشط'},
+    {name:'منطقة المدينة المنورة',cities:['المدينة'],status:'نشط'},
+    {name:'منطقة القصيم',cities:['القصيم'],status:'نشط'},
+    {name:'منطقة عسير',cities:['أبها'],status:'نشط'}
+  ];
+  const citiesBase=[
+    {name:'الرياض',region:'المنطقة الوسطى',status:'نشط'},
+    {name:'الخرج',region:'المنطقة الوسطى',status:'نشط'},
+    {name:'جدة',region:'المنطقة الغربية',status:'نشط'},
+    {name:'مكة',region:'منطقة مكة المكرمة',status:'نشط'},
+    {name:'الدمام',region:'المنطقة الشرقية',status:'نشط'},
+    {name:'الخبر',region:'المنطقة الشرقية',status:'نشط'},
+    {name:'تبوك',region:'المنطقة الشمالية',status:'نشط'},
+    {name:'حائل',region:'المنطقة الشمالية',status:'نشط'},
+    {name:'أبها',region:'منطقة عسير',status:'نشط'},
+    {name:'جازان',region:'المنطقة الجنوبية',status:'نشط'},
+    {name:'المدينة',region:'منطقة المدينة المنورة',status:'نشط'},
+    {name:'القصيم',region:'منطقة القصيم',status:'نشط'}
+  ];
+
+  const buildRegions=()=>{
+    const customRegions=(state.areas.regions||[]).map(r=>({
+      name:typeof r==='string'?r:r.name,
+      cities:typeof r==='string'?citiesOfRegion(typeof r==='string'?r:r.name):(r.cities||citiesOfRegion(r.name)),
+      status:(typeof r==='object'&&r.status)||'نشط'
+    }));
+    const byName=new Map(regionsBase.map(r=>[r.name,{...r,cities:[...r.cities]}]));
+    customRegions.forEach(r=>{
+      if(byName.has(r.name)){
+        const cur=byName.get(r.name);
+        cur.cities=[...new Set([...(r.cities||[]),...cur.cities])];
+        cur.status=r.status||cur.status;
+      }else byName.set(r.name,r);
+    });
+    return [...byName.values()];
+  };
+  const buildCities=()=>{
+    const known=new Set();
+    const list=[];
+    citiesBase.forEach(c=>{known.add(c.name); list.push({...c});});
+    (state.areas.cities||[]).forEach(c=>{
+      const row={
+        name:typeof c==='string'?c:c.name,
+        region:typeof c==='string'?'—':(c.region||'—'),
+        status:(typeof c==='object'&&c.status)||'نشط'
+      };
+      if(known.has(row.name)){
+        const i=list.findIndex(x=>x.name===row.name);
+        if(i>=0){ list[i].region=row.region||list[i].region; list[i].status=row.status||list[i].status; }
+      }else{ known.add(row.name); list.push(row); }
+    });
+    return list;
+  };
+  const upsertRegion=(name,cities,status)=>{
+    state.areas=state.areas||{regions:[],cities:[]};
+    const i=(state.areas.regions||[]).findIndex(r=>(typeof r==='string'?r:r.name)===name);
+    const row={name,cities,status:status||'نشط'};
+    if(i>=0) state.areas.regions[i]=row; else state.areas.regions.push(row);
+    cities.forEach(city=>{
+      const exists=state.areas.cities.some(c=>(typeof c==='string'?c:c.name)===city);
+      if(!exists) state.areas.cities.push({name:city,region:name,status:'نشط'});
+      else{
+        const c=state.areas.cities.find(x=>(typeof x==='string'?x:x.name)===city);
+        if(c&&typeof c==='object') c.region=name;
+      }
+    });
+  };
+  const upsertCity=(name,region,status)=>{
+    state.areas=state.areas||{regions:[],cities:[]};
+    const i=(state.areas.cities||[]).findIndex(c=>(typeof c==='string'?c:c.name)===name);
+    const row={name,region:region||'المنطقة الوسطى',status:status||'نشط'};
+    if(i>=0) state.areas.cities[i]=row; else state.areas.cities.push(row);
+  };
+
   Object.assign(WafraOps,{
     areasTab:t=>{window.__areasTab=t;render();},
     addArea:t=>{
@@ -63,7 +187,7 @@
           `${fld('اسم المنطقة',`<input id="area-name" class="native-input" placeholder="مثال: المنطقة الوسطى">`)}
            ${fld('المدن التابعة',`<textarea id="area-cities" class="native-input" rows="3" placeholder="الرياض، الخرج، القصيم"></textarea>`,'اكتب أسماء المدن مفصولة بفاصلة. تظهر في عمود المدن بالجدول.')}
            ${fld('الحالة',`<select id="area-status" class="native-input"><option>نشط</option><option>غير نشط</option></select>`)}
-           <div class="note info">عدد الفروع لا يُدخل يدوياً — يُحسب تلقائياً من الفروع المسجّلة في مدن هذه المنطقة.</div>`,
+           <div class="note info">عدد الفروع والسيارات والحجوزات يُحسب من بيانات المدن التابعة.</div>`,
           `<button class="btn coral" onclick="WafraOps.saveArea('regions')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
         ));
         return;
@@ -72,29 +196,89 @@
         `${fld('اسم المدينة',`<input id="area-name" class="native-input" placeholder="مثال: القصيم">`)}
          ${fld('المنطقة التابعة لها',`<select id="area-region" class="native-input">${regionOptions().map(r=>`<option>${r}</option>`).join('')}</select>`,'حدد المنطقة الإدارية التي تتبعها هذه المدينة.')}
          ${fld('الحالة',`<select id="area-status" class="native-input"><option>نشط</option><option>غير نشط</option></select>`)}
-         <div class="note info">عدد الفروع لا يُدخل يدوياً — يُحسب تلقائياً عند إضافة فروع لهذه المدينة من شاشة الفروع.</div>`,
+         <div class="note info">عدد الفروع يُحسب تلقائياً عند إضافة فروع لهذه المدينة من شاشة الفروع.</div>`,
         `<button class="btn coral" onclick="WafraOps.saveArea('cities')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
       ));
     },
     saveArea:t=>{
       const n=val('area-name');
       if(!n){toast('اكتب الاسم أولاً.');return;}
-      state.areas=state.areas||{regions:[],cities:[]};
+      if(t==='regions') upsertRegion(n,parseCities(val('area-cities')),val('area-status')||'نشط');
+      else upsertCity(n,val('area-region')||'المنطقة الوسطى',val('area-status')||'نشط');
+      save(); closeM(); render(); toast('تم الحفظ بنجاح.');
+    },
+    viewArea:(t,name)=>{
+      if(t==='regions'){
+        const regions=buildRegions();
+        const r=regions.find(x=>x.name===name);
+        if(!r)return;
+        const citiesList=(r.cities&&r.cities.length)?r.cities:citiesOfRegion(r.name);
+        const s=sumStats(citiesList);
+        openM(dlg(`استعراض ${safe(r.name)}`,
+          `${prev('المنطقة',safe(r.name))}
+           ${prev('المدن التابعة',citiesList.length?citiesList.map(safe).join(' · '):'—')}
+           ${prev('المزودون',fmt(s.providers))}
+           ${prev('الفروع',fmt(s.branches))}
+           ${prev('السيارات',fmt(s.cars))}
+           ${prev('الحجوزات',fmt(s.bookings))}
+           ${prev('الحالة',r.status||'نشط')}`,
+          `<button class="btn coral" onclick="closeM();WafraOps.editArea('regions','${escAttr(r.name)}')">تعديل</button><button class="btn ghost" onclick="closeM()">إغلاق</button>`
+        ));
+        return;
+      }
+      const cities=buildCities();
+      const c=cities.find(x=>x.name===name);
+      if(!c)return;
+      const s=cityStats(c.name);
+      openM(dlg(`استعراض ${safe(c.name)}`,
+        `${prev('المدينة',safe(c.name))}
+         ${prev('المنطقة',safe(c.region))}
+         ${prev('المزودون',fmt(s.providers))}
+         ${prev('الفروع',fmt(s.branches))}
+         ${prev('السيارات',fmt(s.cars))}
+         ${prev('الحجوزات',fmt(s.bookings))}
+         ${prev('الحالة',c.status||'نشط')}`,
+        `<button class="btn coral" onclick="closeM();WafraOps.editArea('cities','${escAttr(c.name)}')">تعديل</button><button class="btn ghost" onclick="closeM()">إغلاق</button>`
+      ));
+    },
+    editArea:(t,name)=>{
+      if(t==='regions'){
+        const regions=buildRegions();
+        const r=regions.find(x=>x.name===name);
+        if(!r)return;
+        const citiesList=(r.cities&&r.cities.length)?r.cities:citiesOfRegion(r.name);
+        openM(dlg(`تعديل منطقة: ${safe(r.name)}`,
+          `${fld('اسم المنطقة',`<input id="area-name" class="native-input" value="${safe(r.name)}">`)}
+           ${fld('المدن التابعة',`<textarea id="area-cities" class="native-input" rows="3">${safe(citiesList.join('، '))}</textarea>`)}
+           ${fld('الحالة',`<select id="area-status" class="native-input"><option ${(!r.status||r.status==='نشط')?'selected':''}>نشط</option><option ${r.status==='غير نشط'?'selected':''}>غير نشط</option></select>`)}`,
+          `<button class="btn coral" onclick="WafraOps.updateArea('regions','${escAttr(r.name)}')">حفظ التعديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+        ));
+        return;
+      }
+      const cities=buildCities();
+      const c=cities.find(x=>x.name===name);
+      if(!c)return;
+      openM(dlg(`تعديل مدينة: ${safe(c.name)}`,
+        `${fld('اسم المدينة',`<input id="area-name" class="native-input" value="${safe(c.name)}">`)}
+         ${fld('المنطقة التابعة لها',`<select id="area-region" class="native-input">${regionOptions().map(r=>`<option ${r===c.region?'selected':''}>${r}</option>`).join('')}</select>`)}
+         ${fld('الحالة',`<select id="area-status" class="native-input"><option ${(!c.status||c.status==='نشط')?'selected':''}>نشط</option><option ${c.status==='غير نشط'?'selected':''}>غير نشط</option></select>`)}`,
+        `<button class="btn coral" onclick="WafraOps.updateArea('cities','${escAttr(c.name)}')">حفظ التعديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
+    updateArea:(t,oldName)=>{
+      const n=val('area-name');
+      if(!n){toast('اكتب الاسم أولاً.');return;}
       if(t==='regions'){
         const cities=parseCities(val('area-cities'));
-        state.areas.regions.push({name:n,cities,status:val('area-status')||'نشط'});
-        cities.forEach(city=>{
-          const exists=state.areas.cities.some(c=>(typeof c==='string'?c:c.name)===city);
-          if(!exists) state.areas.cities.push({name:city,region:n,status:'نشط'});
-          else{
-            const row=state.areas.cities.find(c=>(typeof c==='string'?c:c.name)===city);
-            if(row&&typeof row==='object') row.region=n;
-          }
-        });
+        const i=(state.areas.regions||[]).findIndex(r=>(typeof r==='string'?r:r.name)===oldName);
+        if(i>=0) state.areas.regions.splice(i,1);
+        upsertRegion(n,cities,val('area-status')||'نشط');
       }else{
-        state.areas.cities.push({name:n,region:val('area-region')||'المنطقة الوسطى',status:val('area-status')||'نشط'});
+        const i=(state.areas.cities||[]).findIndex(c=>(typeof c==='string'?c:c.name)===oldName);
+        if(i>=0) state.areas.cities.splice(i,1);
+        upsertCity(n,val('area-region')||'المنطقة الوسطى',val('area-status')||'نشط');
       }
-      save(); closeM(); render(); toast('تم الحفظ بنجاح.');
+      save(); closeM(); render(); toast('تم حفظ التعديل.');
     },
     openBranchForm:id=>{
       window.__branchEdit=id||'';
@@ -129,6 +313,7 @@
       toast(edit?'تم حفظ تعديلات الفرع.':'تم إضافة الفرع بنجاح.');
     },
     addFee:()=>{
+      window.__feeEdit=null;
       openM(dlg('إضافة رسوم تسليم بين المدن',
         `<div class="frow">${fld('المزود',`<select id="fee-provider" class="native-input"><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}
          ${fld('الرسوم (ر.س)',`<input id="op-fee" class="native-input" value="150" type="number">`,'تظهر للعميل قبل الدفع وتضاف إلى إجمالي الحجز.')}</div>
@@ -138,17 +323,41 @@
         `<button class="btn coral" onclick="WafraOps.saveFee()">إضافة الرسوم</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
       ));
     },
+    editFee:i=>{
+      const f=(state.fees||[])[i];
+      if(!f)return;
+      window.__feeEdit=i;
+      const cities=['الرياض','جدة','الدمام','الخبر','مكة المكرمة','المدينة'];
+      const providers=['شركة الصحراء','كي رنت','مسار'];
+      openM(dlg('تعديل رسوم التسليم بين المدن',
+        `<div class="frow">${fld('المزود',`<select id="fee-provider" class="native-input">${providers.map(p=>`<option ${p===f.provider?'selected':''}>${p}</option>`).join('')}</select>`)}
+         ${fld('الرسوم (ر.س)',`<input id="op-fee" class="native-input" value="${safe(f.amount)}" type="number">`,'تظهر للعميل قبل الدفع وتضاف إلى إجمالي الحجز.')}</div>
+         <div class="frow">${fld('مدينة الاستلام',`<select id="fee-from" class="native-input">${cities.map(c=>`<option ${c===f.from?'selected':''}>${c}</option>`).join('')}</select>`)}
+         ${fld('مدينة التسليم',`<select id="fee-to" class="native-input">${cities.map(c=>`<option ${c===f.to?'selected':''}>${c}</option>`).join('')}</select>`)}</div>
+         ${fld('الحالة',`<select id="fee-status" class="native-input"><option ${f.status==='نشطة'?'selected':''}>نشطة</option><option ${f.status!=='نشطة'?'selected':''}>غير نشطة</option></select>`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveFee()">حفظ التعديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
+      ));
+    },
     saveFee:()=>{
       const amount=val('op-fee')||'0';
       state.fees=state.fees||[];
-      state.fees.unshift({
+      const payload={
         provider:val('fee-provider')||'شركة الصحراء',
         from:val('fee-from')||'الرياض',
         to:val('fee-to')||'الدمام',
         amount,
         status:val('fee-status')||'نشطة',
         added:today()
-      });
+      };
+      const edit=window.__feeEdit;
+      if(edit!=null&&state.fees[edit]){
+        payload.added=state.fees[edit].added||payload.added;
+        state.fees[edit]=payload;
+        window.__feeEdit=null;
+        save(); closeM(); render(); toast('تم حفظ تعديل الرسوم.');
+        return;
+      }
+      state.fees.unshift(payload);
       save(); closeM(); render(); toast('تم إضافة الرسوم.');
     }
   });
@@ -157,45 +366,52 @@
   S.branchAreas=()=>{
     const active=window.__areasTab||'regions';
     state.areas=state.areas||{regions:[],cities:[]};
-    const regionsBase=[
-      {name:'المنطقة الوسطى',cities:['الرياض','الخرج'],status:'نشط'},
-      {name:'المنطقة الغربية',cities:['جدة','مكة'],status:'نشط'},
-      {name:'المنطقة الشرقية',cities:['الدمام','الخبر'],status:'نشط'},
-      {name:'المنطقة الشمالية',cities:['تبوك','حائل'],status:'نشط'},
-      {name:'المنطقة الجنوبية',cities:['أبها','جازان'],status:'نشط'}
-    ];
-    const customRegions=(state.areas.regions||[]).map(r=>({
-      name:typeof r==='string'?r:r.name,
-      cities:typeof r==='string'?citiesOfRegion(typeof r==='string'?r:r.name):(r.cities||citiesOfRegion(r.name)),
-      status:(typeof r==='object'&&r.status)||'نشط'
-    }));
-    const regions=[...regionsBase,...customRegions.filter(r=>!regionsBase.some(b=>b.name===r.name))];
-    const knownCityNames=new Set();
-    const citiesBase=[
-      {name:'الرياض',region:'المنطقة الوسطى',status:'نشط'},
-      {name:'جدة',region:'المنطقة الغربية',status:'نشط'},
-      {name:'الخبر',region:'المنطقة الشرقية',status:'نشط'}
-    ];
-    citiesBase.forEach(c=>knownCityNames.add(c.name));
-    const customCities=(state.areas.cities||[]).map(c=>({
-      name:typeof c==='string'?c:c.name,
-      region:typeof c==='string'?'—':(c.region||'—'),
-      status:(typeof c==='object'&&c.status)||'نشط'
-    })).filter(c=>!knownCityNames.has(c.name));
-    const cities=[...citiesBase,...customCities];
-    return phead('المناطق والمدن','تعريف المناطق والمدن — عدد الفروع يُحسب تلقائياً من الفروع المسجّلة',[],
+    const regions=buildRegions();
+    const cities=buildCities();
+    const allCityNames=[...new Set(cities.map(c=>c.name))];
+    const totals=sumStats(allCityNames);
+    const summary=kpi([
+      {i:'🗺',l:'المناطق',v:String(regions.length)},
+      {i:'▦',l:'المدن المغطاة',v:String(cities.length)},
+      {i:'⌖',l:'إجمالي الفروع',v:fmt(totals.branches)},
+      {i:'🚗',l:'إجمالي الأسطول',v:fmt(totals.cars)}
+    ]);
+    const areaActs=(t,name)=>`<button class="btn ghost sm" onclick="WafraOps.viewArea('${t}','${escAttr(name)}')">استعراض</button> <button class="btn ghost sm" onclick="WafraOps.editArea('${t}','${escAttr(name)}')">تعديل</button>`;
+    return phead('المناطق والمدن','التغطية الجغرافية للمنصة: المزودون والفروع والأسطول والطلب لكل مدينة.',[],
       `<button class="btn coral" onclick="WafraOps.addArea('${active}')">＋ تعريف ${active==='regions'?'منطقة':'مدينة'}</button>`)
+      +summary
       +card(`<div class="tabs">
         <button class="tab ${active==='regions'?'on':''}" onclick="WafraOps.areasTab('regions')">المناطق</button>
         <button class="tab ${active==='cities'?'on':''}" onclick="WafraOps.areasTab('cities')">المدن</button>
       </div><div class="card-b">${
         active==='regions'
-          ?table(['المنطقة','المدن','الفروع','الحالة','الإجراءات'],regions.map(r=>{
+          ?table(['المنطقة','المدن','المزودون','الفروع','السيارات','الحجوزات','الحالة','الإجراءات'],regions.map(r=>{
               const citiesList=(r.cities&&r.cities.length)?r.cities:citiesOfRegion(r.name);
-              const count=citiesList.reduce((n,c)=>n+branchCountByCity(c),0);
-              return [r.name,citiesList.length?citiesList.join(' · '):'—',String(count),pill(r.status||'نشط'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('استعراض ${r.name}')">استعراض</button> <button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل ${r.name}')">تعديل</button>`];
+              const s=sumStats(citiesList);
+              return [
+                r.name,
+                citiesList.length?citiesList.join(' · '):'—',
+                fmt(s.providers),
+                fmt(s.branches),
+                fmt(s.cars),
+                fmt(s.bookings),
+                pill(r.status||'نشط'),
+                areaActs('regions',r.name)
+              ];
             }))
-          :table(['المدينة','المنطقة','الفروع','الحالة','الإجراءات'],cities.map(c=>[c.name,c.region,String(branchCountByCity(c.name)),pill(c.status||'نشط'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('استعراض ${c.name}')">استعراض</button> <button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل ${c.name}')">تعديل</button>`]))
+          :table(['المدينة','المنطقة','المزودون','الفروع','السيارات','الحجوزات','الحالة','الإجراءات'],cities.map(c=>{
+              const s=cityStats(c.name);
+              return [
+                c.name,
+                c.region,
+                fmt(s.providers),
+                fmt(s.branches),
+                fmt(s.cars),
+                fmt(s.bookings),
+                pill(c.status||'نشط'),
+                areaActs('cities',c.name)
+              ];
+            }))
       }</div>`);
   };
 
@@ -272,19 +488,19 @@
   S.intercityFees=()=>{
     const fees=state.fees||[];
     return phead('رسوم التسليم بين المدن','إدارة الرسوم لكل مزود مع حالة الرسوم',[],
-      `<button class="btn coral" onclick="WafraOps.addFee()">＋ إضافة رسوم</button>`)
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent('رسوم-التسليم-بين-المدن','Excel')">⤓ تصدير</button><button class="btn coral" onclick="WafraOps.addFee()">＋ إضافة رسوم</button>`)
       +card(`<div class="filters" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
         ${fld('المزودون',`<select class="native-input"><option>كل المزودين</option><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}
         ${fld('المدن',`<select class="native-input"><option>كل المدن</option><option>الرياض</option><option>جدة</option><option>الدمام</option></select>`)}
         ${fld('حالة الرسوم',`<select class="native-input"><option>كل الحالات</option><option>نشطة</option><option>غير نشطة</option></select>`)}
       </div><div class="card-b">${table(
         ['المزود','الاستلام','التسليم','الرسوم','تاريخ الإضافة','الحالة','الإجراءات'],
-        fees.map(x=>[
+        fees.map((x,i)=>[
           x.provider,x.from,x.to,
           {v:`${x.amount} ر.س`,c:'num'},
           x.added||'—',
           bdg(x.status,x.status==='نشطة'?'g':'n'),
-          `<button class="btn ghost sm" onclick="WafraOps.demoAction('تعديل رسوم ${x.from} → ${x.to}')">✎</button>`
+          `<button class="btn ghost sm" onclick="WafraOps.editFee(${i})" title="تعديل">✎</button>`
         ])
       )}</div>`);
   };

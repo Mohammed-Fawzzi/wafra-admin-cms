@@ -75,7 +75,27 @@
   Object.assign(WafraOps,{
     schedToggle:i=>{const s=window.__schedState[i]; if(!s) return; s.on=!s.on; render();},
     schedGenerate:i=>{const s=window.__schedState[i]; toast(`توليد الآن: ${s?s.t:'التقرير'} — جاهز للتنزيل.`);},
-    schedNew:()=>toast('تم فتح نموذج تقرير مجدول جديد.')
+    schedNew:()=>{
+      openM(modal('جدول تقرير جديد', `
+        <div class="frow">
+          ${fld('اسم التقرير', `<input id="sch-name" class="native-input" value="تقرير مالي مجدول">`)}
+          ${fld('التكرار', `<select id="sch-freq" class="native-input"><option>يومي</option><option>أسبوعي</option><option>شهري</option><option>ربع سنوي</option></select>`)}
+        </div>
+        <div class="frow">
+          ${fld('الصيغة', `<select id="sch-fmt" class="native-input"><option>PDF</option><option>Excel</option><option>PDF و Excel</option></select>`)}
+          ${fld('المستلمون', `<input id="sch-to" class="native-input" value="الإدارة المالية">`)}
+        </div>
+        ${note('info','الجدولة','يُرسل التقرير تلقائياً في الموعد المحدد ويمكن توليد نسخة فوراً بعد الحفظ.')}
+      `, `<button type="button" class="btn coral" onclick="WafraOps.confirmSchedNew()">حفظ الجدول</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    confirmSchedNew:()=>{
+      const name=document.getElementById('sch-name')?.value?.trim()||'تقرير مجدول';
+      const freq=document.getElementById('sch-freq')?.value||'أسبوعي';
+      const fmt=document.getElementById('sch-fmt')?.value||'PDF';
+      const to=document.getElementById('sch-to')?.value?.trim()||'الإدارة';
+      window.__schedState.unshift({on:true,ico:'🗓',t:name,d:`${freq} · ${fmt} · ${to}`,next:'التشغيل القادم'});
+      closeM(); render(); toast(`تم جدولة «${name}».`);
+    }
   });
 
   const kpi=(ic,bg,label,value)=>`<div class="ox-kpi"><div class="ic" style="background:${bg}">${ic}</div><div class="l">${label}</div><div class="v">${value}</div></div>`;

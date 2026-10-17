@@ -1,0 +1,351 @@
+<script>
+/* الدعم + الإعدادات التشغيلية + صلاحيات الحقول الحساسة. */
+(function(){
+  const toast=msg=>{
+    if(typeof window.__toast==='function') return window.__toast(msg);
+    if(WafraOps.demoAction) return WafraOps.demoAction(msg);
+    const el=document.createElement('div'); el.className='toast on'; el.textContent=msg;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),2400);
+  };
+
+  /* —— التذاكر: حقل التاريخ —— */
+  S.tickets=()=>phead('تذاكر الدعم','متابعة الطلبات الواردة من العملاء والمزوّدين',[],
+    `<button class="btn ghost" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('التذاكر','Excel')">⤒ تصدير</button>`)
+    +note('dngr','ستّ تذاكر تجاوزت الـ SLA','أعلاها أولوية: مشكلة دفع لعميل منذ 9 ساعات. التذاكر المتأخّرة تُصعَّد تلقائياً.')
+    +card(tabs([{t:'الكل',n:142,on:1},{t:'مفتوحة',n:38},{t:'قيد المعالجة',n:24},{t:'بانتظار الردّ',n:11},{t:'محلولة',n:63},{t:'مغلقة',n:6}])
+    +`<div class="filters mkt-filters">
+        <label class="fd mkt-date">من تاريخ<input type="date" value="2026-08-01"></label>
+        <label class="fd mkt-date">إلى تاريخ<input type="date" value="2026-08-31"></label>
+        <div class="fd">الحالة<span class="cv">▾</span></div>
+        <div class="fd">الأولوية<span class="cv">▾</span></div>
+        <div class="fd">المزود<span class="cv">▾</span></div>
+        <div class="fd">الموضوع<span class="cv">▾</span></div>
+        <div class="fd">المُسنَدة إلى<span class="cv">▾</span></div>
+        <div class="fsearch">⌕<input placeholder="ابحث برقم التذكرة أو الاسم…"></div>
+      </div>`
+    +table(['رقم التذكرة','الموضوع','مقدّم الطلب','النوع','الأولوية','المُسنَدة إلى','تاريخ التذكرة','تاريخ المعالجة','SLA','الحالة','الإجراءات'],[
+      [{v:'SUP-1042',c:'strong num'},{v:'تأخّر في صرف المستحقّات المالية<span class="sub">لم تصلني تسوية الأسبوع الماضي</span>',c:'strong'},'شركة الصحراء',bdg('مزوّد','flat n'),bdg('عالية','r'),'—',{v:'2026/08/27 14:22',c:'num'},'—',bdg('متأخّرة 9 ساعات','r'),bdg('مفتوحة','a'),`<a class="btn sm" href="#ticket">فتح</a>`],
+      [{v:'SUP-1041',c:'strong num'},{v:'خطأ في ظهور سيارة بنتائج البحث<span class="sub">سيارة نشطة لا تظهر رغم توفّرها</span>',c:'strong'},'كي رنت',bdg('مزوّد','flat n'),bdg('متوسطة','a'),'محمد العنزي',{v:'2026/08/27 11:05',c:'num'},{v:'2026/08/27 12:40',c:'num'},bdg('متبقٍ 3 ساعات','a'),bdg('قيد المعالجة','b'),`<a class="btn sm" href="#ticket">فتح</a>`],
+      [{v:'SUP-1038',c:'strong num'},{v:'خُصم المبلغ مرتين<span class="sub">ظهر خصمان لنفس الحجز</span>',c:'strong'},'أحمد الشمري',bdg('عميل','flat b'),bdg('عاجلة','r'),'ليلى الدوسري',{v:'2026/08/26 19:18',c:'num'},{v:'2026/08/26 20:02',c:'num'},bdg('متأخّرة 2 ساعة','r'),bdg('قيد المعالجة','b'),`<a class="btn sm" href="#ticket">فتح</a>`],
+      [{v:'SUP-1035',c:'strong num'},{v:'استفسار عن سياسة الإلغاء',c:'strong'},'هند الشهري',bdg('عميل','flat b'),bdg('منخفضة','n'),'محمد العنزي',{v:'2026/08/25 09:40',c:'num'},{v:'2026/08/25 10:15',c:'num'},bdg('متبقٍ يومان','g'),bdg('بانتظار الردّ','n'),`<a class="btn sm" href="#ticket">فتح</a>`]
+    ])
+    +pager(142,15));
+
+  /* —— تقارير الدعم: نماذج ملخص + أداء الفريق —— */
+  Object.assign(WafraOps,{
+    supportReportsTab:t=>{window.__srTab=t;render();}
+  });
+  S.supportReports=()=>{
+    const tab=window.__srTab||'summary';
+    const head=phead('تقارير الدعم','اتجاهات التذاكر وأوقات الاستجابة والالتزام بالاتفاقية',[],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent('تقارير-الدعم','Excel')">⤒ تصدير</button>`);
+    const tabsHtml=`<div class="tabs">
+      <button type="button" class="tab ${tab==='summary'?'on':''}" onclick="WafraOps.supportReportsTab('summary')">ملخص الدعم</button>
+      <button type="button" class="tab ${tab==='tickets'?'on':''}" onclick="WafraOps.supportReportsTab('tickets')">التذاكر</button>
+      <button type="button" class="tab ${tab==='team'?'on':''}" onclick="WafraOps.supportReportsTab('team')">أداء الفريق</button>
+    </div>
+    <div class="filters mkt-filters">
+      <label class="fd mkt-date">من تاريخ<input type="date" value="2026-08-01"></label>
+      <label class="fd mkt-date">إلى تاريخ<input type="date" value="2026-08-31"></label>
+      <div class="fd">الحالة<span class="cv">▾</span></div>
+      <div class="fd">الفريق<span class="cv">▾</span></div>
+      <div class="fsearch">⌕<input placeholder="ابحث…"></div>
+    </div>`;
+
+    if(tab==='team'){
+      return head+card(tabsHtml
+        +`<div class="card-b">
+          <div class="kpis" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px">
+            <div class="kpi"><div class="lb"><span class="ic gh-ic blue">👤</span>أعضاء الفريق</div><div class="vl">6</div></div>
+            <div class="kpi"><div class="lb"><span class="ic gh-ic green">✓</span>متوسط الالتزام بـ SLA</div><div class="vl">91%</div></div>
+            <div class="kpi"><div class="lb"><span class="ic gh-ic amber">◷</span>متوسط أول رد</div><div class="vl">48 د</div></div>
+            <div class="kpi"><div class="lb"><span class="ic gh-ic blue">🎫</span>تذاكر مغلقة / عضو</div><div class="vl">18.4</div></div>
+          </div>
+          ${table(['الموظف','الدور','مفتوحة','قيد المعالجة','مغلقة','متوسط أول رد','الالتزام بـ SLA','تقييم الرضا','الإجراء'],[
+            ['ليلى الدوسري','مشرفة دعم','4','6','52','32 د','96%',bdg('4.8','g'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('ملف ليلى')">ملف</button>`],
+            ['محمد العنزي','أخصائي دعم','7','8','41','55 د','89%',bdg('4.5','g'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('ملف محمد')">ملف</button>`],
+            ['سارة العتيبي','أخصائي دعم','5','4','38','61 د','87%',bdg('4.4','g'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('ملف سارة')">ملف</button>`],
+            ['خالد المطيري','دعم مالي','3','5','29','44 د','93%',bdg('4.6','g'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('ملف خالد')">ملف</button>`],
+            ['نورة القحطاني','دعم مزودين','2','3','22','70 د','84%',bdg('4.2','a'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('ملف نورة')">ملف</button>`],
+            ['فهد الحربي','متدرب','6','2','11','95 د','78%',bdg('3.9','a'),`<button class="btn ghost sm" onclick="WafraOps.demoAction('ملف فهد')">ملف</button>`]
+          ])}
+          ${card(cardH('توزيع عبء العمل','عدد التذاكر النشطة لكل عضو')+`<div class="card-b">${bars([
+            ['ليلى الدوسري',72,'#20A16E'],['محمد العنزي',85,'#E8A23A'],['سارة العتيبي',64,'#2C68D8'],
+            ['خالد المطيري',55,'#2C68D8'],['نورة القحطاني',42,'#6B5CE7'],['فهد الحربي',48,'#E8A23A']
+          ])}</div>`)}
+        </div>`);
+    }
+
+    if(tab==='tickets'){
+      return head+card(tabsHtml
+        +`<div class="card-b">${table(['الحالة','العدد','متوسط أول رد','متوسط الإغلاق','نسبة الالتزام'],[
+          ['مفتوحة','38','—','—',bdg('—','n')],
+          ['قيد المعالجة','24','1س 12د','—',bdg('88%','a')],
+          ['بانتظار الردّ','11','2س 40د','—',bdg('82%','a')],
+          ['محلولة','63','48د','1ي 4س',bdg('96%','g')],
+          ['مغلقة','6','55د','2ي',bdg('94%','g')]
+        ])}</div>`);
+    }
+
+    /* ملخص الدعم — نموذج محاكاة */
+    return head+card(tabsHtml
+      +`<div class="card-b">
+        <div class="kpis" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:16px">
+          <div class="kpi"><div class="lb"><span class="ic gh-ic blue">🎫</span>إجمالي التذاكر</div><div class="vl">142</div></div>
+          <div class="kpi"><div class="lb"><span class="ic gh-ic amber">◷</span>مفتوحة الآن</div><div class="vl">38</div></div>
+          <div class="kpi"><div class="lb"><span class="ic gh-ic red">⚠</span>تجاوزت SLA</div><div class="vl">6</div></div>
+          <div class="kpi"><div class="lb"><span class="ic gh-ic green">✓</span>نسبة الحل من أول رد</div><div class="vl">64%</div></div>
+          <div class="kpi"><div class="lb"><span class="ic gh-ic blue">★</span>رضا العملاء</div><div class="vl">4.5</div></div>
+        </div>
+        <div class="grid2">
+          ${card(cardH('حجم التذاكر خلال الفترة')+`<div class="card-b">${spark([40,55,48,62,70,58,66],5)}<div class="legend"><span>أسبوع 1</span><span>أسبوع 2</span><span>أسبوع 3</span><span>أسبوع 4</span></div></div>`)}
+          ${card(cardH('التصنيف الأعلى')+`<div class="card-b">${bars([
+            ['مالي / تسويات',28,'#C62828'],['مشاكل دفع',22,'#E8A23A'],['الحجز والاستلام',18,'#2C68D8'],
+            ['سياسة الإلغاء',14,'#6B5CE7'],['أخرى',18,'#5A657C']
+          ])}</div>`)}
+        </div>
+        ${note('info','نموذج العمل','الملخص يحاكي دورة الدعم: فتح ← أول رد ← معالجة ← حل/إغلاق، مع قياس الالتزام بـ SLA ورضا العميل.')}
+        ${table(['المؤشر','القيمة','الهدف','الحالة'],[
+          ['متوسط وقت أول رد','48 دقيقة','≤ 60 دقيقة',bdg('ضمن الهدف','g')],
+          ['متوسط وقت الإغلاق','1ي 6س','≤ 2 يوم',bdg('ضمن الهدف','g')],
+          ['الالتزام بـ SLA','91%','≥ 90%',bdg('ضمن الهدف','g')],
+          ['إعادة فتح التذكرة','7%','≤ 10%',bdg('ضمن الهدف','g')],
+          ['تصعيد للمدير','4%','≤ 5%',bdg('ضمن الهدف','g')]
+        ])}
+      </div>`);
+  };
+
+  /* —— الإعدادات التشغيلية —— */
+  const cancelTiers=`
+    <div class="cancel-tiers">
+      <div class="ct-row free">
+        <div class="ct-badge">مجاني</div>
+        <div><b>الإلغاء قبل موعد الاستلام بـ 6 ساعات أو أكثر</b>
+        <span class="sub">لا تُحتسب أي رسوم على العميل · استرداد كامل للدفعة</span></div>
+      </div>
+      <div class="ct-row mid">
+        <div class="ct-badge">25%</div>
+        <div><b>الإلغاء خلال 6 ساعات من موعد الاستلام</b>
+        <span class="sub">خصم 25% من قيمة اليوم الأول · يُسترد الباقي للعميل</span></div>
+      </div>
+      <div class="ct-row full">
+        <div class="ct-badge">يوم كامل</div>
+        <div><b>عدم الحضور أو الإلغاء بعد الموعد</b>
+        <span class="sub">خصم قيمة يوم كامل من الدفعة الأصلية</span></div>
+      </div>
+    </div>`;
+
+  if(!document.getElementById('wafra-settings-p51')){
+    const st=document.createElement('style');
+    st.id='wafra-settings-p51';
+    st.textContent=`
+      .cancel-tiers{display:flex;flex-direction:column;gap:10px}
+      .ct-row{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:12px;border:1px solid #E6EAF3;background:#FAFBFE}
+      .ct-row.free{border-color:#C6EBD8;background:#F3FBF7}
+      .ct-row.mid{border-color:#F3E2B3;background:#FFFBF0}
+      .ct-row.full{border-color:#F5C6C6;background:#FFF5F5}
+      .ct-badge{flex:0 0 auto;min-width:72px;text-align:center;font:800 12px Cairo;padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #E6EAF3}
+      .ct-row.free .ct-badge{color:#148A5A;border-color:#C6EBD8}
+      .ct-row.mid .ct-badge{color:#9A6B00;border-color:#F3E2B3}
+      .ct-row.full .ct-badge{color:#C62828;border-color:#F5C6C6}
+      .ct-row b{display:block;font:800 13.5px Cairo;margin-bottom:4px}
+      .set-sec{margin-bottom:16px}
+      .pay-row,.ch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #EEF1F6}
+      .pay-row:last-child,.ch-row:last-child{border-bottom:0}
+    `;
+    document.head.appendChild(st);
+  }
+
+  Object.assign(WafraOps,{
+    saveOpsSettings:()=>{toast('تم حفظ الإعدادات التشغيلية.');},
+    togglePayMethod:(id)=>{
+      const el=document.getElementById('pay-'+id);
+      if(!el) return;
+      const on=el.classList.toggle('on');
+      toast((on?'تفعيل':'إيقاف')+' وسيلة الدفع.');
+    },
+    toggleNotifChannel:(id)=>{
+      const el=document.getElementById('ch-'+id);
+      if(!el) return;
+      const on=el.classList.toggle('on');
+      toast((on?'تفعيل':'إيقاف')+' قناة الإشعار.');
+    },
+    editPayMethod:id=>{
+      openM(modal('تعديل وسيلة الدفع',`
+        ${fld('الاسم',`<input id="pm-name" class="native-input" value="${id}">`)}
+        ${fld('رسوم البوابة (%)',`<input id="pm-fee" class="native-input" type="number" value="1.5" step="0.1">`)}
+        ${fld('الحالة',`<select id="pm-st" class="native-input"><option>مفعّلة</option><option>موقوفة</option></select>`)}
+      `,`<button class="btn" onclick="closeM();WafraOps.demoAction('حفظ وسيلة الدفع')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    }
+  });
+
+  S.settings=()=>{
+    const tg=(id,on)=>`<button type="button" class="tg ${on?'on':''}" id="${id}" onclick="this.classList.toggle('on')"></button>`;
+    return phead('الإعدادات التشغيلية','القيم التي يعمل بها النظام — أي تعديل يحتاج اعتماد المسؤول الأعلى',[],
+      `<button class="btn ghost" onclick="render()">إلغاء</button><button class="btn coral" onclick="WafraOps.saveOpsSettings()">حفظ التغييرات</button>`)
+      +note('warn','هذه القيم تؤثّر على كل الحجوزات الجديدة','التعديل لا يسري على الحجوزات القائمة، ويُسجَّل في سجل التدقيق بالقيمة قبل وبعد.')
+
+      +card(cardH('شرائح تطبيق الخصم عند الإلغاء','السياسة المعتمدة للإلغاء وعدم الحضور')+`<div class="card-b">${cancelTiers}</div>`)
+
+      +`<div class="grid2 set-sec">`
+      +card(cardH('الحجز والردّ')+`<div class="card-b">
+        <div class="frow">${fld('مهلة ردّ المزوّد',`<input class="native-input" value="30 دقيقة">`)}${fld('نافذة تسجيل عدم الحضور',`<input class="native-input" value="60 دقيقة">`)}</div>
+        <div class="frow">${fld('أقل مدة حجز',`<input class="native-input" value="يوم واحد">`)}${fld('أقصى مدة حجز',`<input class="native-input" value="90 يوماً">`)}</div>
+        <div class="frow">${fld('عدد الساعات المسموحة للتعديل',`<input class="native-input" value="24 ساعة">`)}${fld('مدة السماح قبل احتساب التأخير',`<input class="native-input" value="59 دقيقة">`)}</div>
+      </div>`)
+      +card(cardH('المالية')+`<div class="card-b">
+        <div class="frow">${fld('نسبة العمولة العامة',`<input class="native-input" value="15%">`)}${fld('حد غرامة التأخير اليومية',`<input class="native-input" value="100% من السعر اليومي">`)}</div>
+        <div class="frow">${fld('دورة التسوية الافتراضية',`<select class="native-input"><option>أسبوعية</option><option>شهرية</option></select>`)}${fld('ضريبة القيمة المضافة',`<input class="native-input" value="15%">`)}</div>
+      </div>`)
+      +`</div>`
+
+      +card(cardH('SLA — المعايير التشغيلية والمالية','مهل الرد والإنجاز حسب نوع العملية')+`<div class="card-b">${table(['المعيار','النوع','المهلة','التصعيد عند التجاوز'],[
+        ['قبول / رفض الحجز','تشغيلي','30 دقيقة','تذكير للمزود ← إلغاء واسترداد كامل'],
+        ['تسليم المركبة','تشغيلي','ساعتان من الموعد','تصعيد لمدير العمليات'],
+        ['اعتماد التسوية','مالي','48 ساعة','تصعيد للمالية'],
+        ['تنفيذ التحويل البنكي','مالي','72 ساعة بعد الاعتماد','تنبيه المدير المالي'],
+        ['صرف الاسترداد المعتمد','مالي','5 أيام عمل','تصعيد للمالية + إشعار العميل']
+      ])}</div>`)
+
+      +card(cardH('SLA — خدمة العملاء ومعالجة الشكاوى والمنازلات','متى يُصعَّد الطلب ومهلة رد المزود')+`<div class="card-b">
+        <div class="frow">
+          ${fld('مهلة أول رد للدعم',`<input class="native-input" value="60 دقيقة">`)}
+          ${fld('مهلة حل التذكرة (عادية)',`<input class="native-input" value="48 ساعة">`)}
+        </div>
+        <div class="frow">
+          ${fld('مهلة حل التذكرة (عاجلة)',`<input class="native-input" value="8 ساعات">`)}
+          ${fld('مهلة رد المزود على النزاع / التظلّم',`<input class="native-input" value="36 ساعة">`)}
+        </div>
+        ${table(['الحالة','شرط التصعيد','إلى','الإجراء'],[
+          ['تذكرة دعم','تجاوز مهلة الحل أو أولوية عاجلة بلا رد','مشرف الدعم','إعادة إسناد + تنبيه'],
+          ['شكوى عميل','تكرار الشكوى مرتين أو تقييم ≤ 2','مدير العمليات','فتح تحقيق'],
+          ['نزاع / تظلّم','انتهاء مهلة رد المزود دون رد','اعتماد آلي للخصم','إغلاق وإدراج في التسوية'],
+          ['نزاع معترض عليه','المزود اعترض خلال المهلة','لجنة الحسم','قرار نهائي خلال 24 ساعة']
+        ])}
+      </div>`)
+
+      +card(cardH('معايير استرداد العملاء','حالات الاسترداد المسموحة وشروطها')+`<div class="card-b">${table(['الحالة','الشرط','نسبة / قيمة الاسترداد','ملاحظة'],[
+        ['إلغاء ≥ 6 ساعات قبل الاستلام','حسب شريحة الإلغاء','100%','مجاني'],
+        ['إلغاء خلال 6 ساعات','حسب شريحة الإلغاء','استرداد بعد خصم 25% من اليوم الأول','—'],
+        ['عدم حضور / إلغاء بعد الموعد','حسب شريحة الإلغاء','استرداد بعد خصم يوم كامل','—'],
+        ['إرجاع مبكر بعد الاستلام','تم الاستلام ولم تُكمل المدة','المتبقي من الدفعة غير المستخدم','عبر إنشاء استرداد'],
+        ['عطل سيارة / عدم توفر','مثبت من الدعم أو المزود','100% أو بديل','تعويض اختياري بكوبون'],
+        ['خصم مزدوج / خطأ تحصيل','مثبت محاسبياً','كامل الفرق','أولوية عاجلة']
+      ])}</div>`)
+
+      +`<div class="grid2">`
+      +card(cardH('قنوات الإشعارات','تفعيل أو إيقاف كل قناة')+`<div class="card-b">
+        <div class="ch-row"><div><b>إشعار داخل التطبيق (Push)</b><span class="sub">للحجوزات والتنبيهات الفورية</span></div>${tg('ch-push',true)}</div>
+        <div class="ch-row"><div><b>البريد الإلكتروني</b><span class="sub">الملخصات والفواتير</span></div>${tg('ch-email',true)}</div>
+        <div class="ch-row"><div><b>رسالة نصية SMS</b><span class="sub">OTP والتنبيهات الحرجة</span></div>${tg('ch-sms',true)}</div>
+        <div class="ch-row"><div><b>واتساب للأعمال</b><span class="sub">اختياري — حملات وتذكير</span></div>${tg('ch-wa',false)}</div>
+      </div>`)
+      +card(cardH('وسائل الدفع المتاحة','التحكم والتعديل على البوابات')+`<div class="card-b">
+        ${[['mada','مدى'],['visa','Visa / Mastercard'],['apple','Apple Pay'],['stc','STC Pay'],['wallet','محفظة وفرا']].map(([id,name])=>`
+          <div class="pay-row">
+            <div><b>${name}</b><span class="sub">بوابة نشطة</span></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn ghost sm" onclick="WafraOps.editPayMethod('${name}')">تعديل</button>
+              ${tg('pay-'+id,id!=='wallet')}
+            </div>
+          </div>`).join('')}
+      </div>`)
+      +`</div>`
+
+      +`<div class="grid2">`
+      +card(cardH('أوقات الذروة')+`<div class="card-b">
+        ${fld('فترات الذروة',`<input class="native-input" value="الخميس والجمعة · مواسم الإجازات">`)}
+        ${fld('نسبة الزيادة المسموحة في الذروة',`<input class="native-input" value="حتى 40%">`)}
+      </div>`)
+      +card(cardH('التوثيق والوصول')+`<div class="card-b">
+        ${swRow('إلزام توثيق رخصة القيادة قبل الحجز','يمنع إتمام الحجز قبل قبول الوثيقة',1)}
+        ${swRow('السماح بالحجز للزوّار','بدون إنشاء حساب',0)}
+        ${swRow('الإخفاء التلقائي عند انتهاء الاستمارة','تُخفى السيارة فور انتهاء وثيقتها',1)}
+      </div>`)
+      +`</div>`;
+  };
+
+  /* —— صلاحيات الحقول: زر إضافة حقل —— */
+  const FIELDS_KEY='wafra-field-perms-fields-v1';
+  const defaultFieldDefs=[
+    {id:'nationalId',label:'رقم الهوية'},
+    {id:'iban',label:'الآيبان البنكي'},
+    {id:'mobile',label:'الجوال'},
+    {id:'email',label:'البريد الإلكتروني'}
+  ];
+  const loadFieldDefs=()=>{
+    try{const r=JSON.parse(localStorage.getItem(FIELDS_KEY)||'null'); if(Array.isArray(r)&&r.length) return r;}catch(e){}
+    return defaultFieldDefs.slice();
+  };
+  const saveFieldDefs=arr=>{try{localStorage.setItem(FIELDS_KEY,JSON.stringify(arr));}catch(e){}};
+
+  Object.assign(WafraOps,{
+    openAddSensitiveField:()=>{
+      openM(modal('إضافة حقل حساس جديد',`
+        ${fld('معرّف الحقل (إنجليزي)',`<input id="sf-id" class="native-input" placeholder="مثال: passportNo">`)}
+        ${fld('اسم الحقل (عربي)',`<input id="sf-label" class="native-input" placeholder="مثال: رقم جواز السفر">`)}
+        ${note('info','الصلاحيات','بعد الإضافة يظهر الحقل في المصفوفة ويمكن تفعيل إظهاره لكل دور.')}
+      `,`<button class="btn" onclick="WafraOps.saveSensitiveField()">إضافة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveSensitiveField:()=>{
+      const id=(document.getElementById('sf-id')?.value||'').trim().replace(/\s+/g,'_');
+      const label=(document.getElementById('sf-label')?.value||'').trim();
+      if(!id||!label){toast('أكمل معرّف واسم الحقل.');return;}
+      const defs=loadFieldDefs();
+      if(defs.some(f=>f.id===id)){toast('المعرّف موجود مسبقاً.');return;}
+      defs.push({id,label});
+      saveFieldDefs(defs);
+      /* أضفه لمصفوفة الصلاحيات إن وُجدت */
+      try{
+        const KEY='wafra-field-perms-v1';
+        const m=JSON.parse(localStorage.getItem(KEY)||'{}')||{};
+        m[id]={finance:false,ops:false,regional:false,company:false,content:false,support:false};
+        localStorage.setItem(KEY,JSON.stringify(m));
+      }catch(e){}
+      closeM(); toast(`تم إضافة الحقل «${label}».`); render();
+    }
+  });
+
+  const prevFieldPerms=S.fieldPermissions;
+  S.fieldPermissions=()=>{
+    /* أعد بناء المصفوفة مع الحقول المخصصة */
+    const roles=[
+      {id:'finance',letter:'ما',color:'#3B6FE2',name:'المدير المالي'},
+      {id:'ops',letter:'ع',color:'#5B6B8C',name:'مدير العمليات'},
+      {id:'regional',letter:'ر',color:'#C45C26',name:'مدير إقليمي'},
+      {id:'company',letter:'ش',color:'#2F7D57',name:'مدير شركة'},
+      {id:'content',letter:'ت',color:'#8A651A',name:'مدير المحتوى والتسويق'},
+      {id:'support',letter:'ه',color:'#6B5B95',name:'مسؤول الدعم'}
+    ];
+    const fields=loadFieldDefs();
+    const KEY='wafra-field-perms-v1';
+    let m={};
+    try{m=Object.assign({},JSON.parse(localStorage.getItem(KEY)||'null')||{});}catch(e){m={};}
+    const head=roles.map(r=>`<th><div class="sfp-role"><span class="badge-ltr" style="background:${r.color}">${r.letter}</span><span class="nm">${r.name}</span></div></th>`).join('');
+    const rows=fields.map(f=>{
+      const row=m[f.id]||{};
+      const cells=roles.map(r=>{
+        const on=!!row[r.id];
+        return `<td><button type="button" class="sfp-tg ${on?'on':''}" aria-label="${f.label}" onclick="WafraFieldPerms&&WafraFieldPerms.toggle('${f.id}','${r.id}')"></button></td>`;
+      }).join('');
+      return `<tr><td>${f.label}</td>${cells}</tr>`;
+    }).join('');
+    return phead('صلاحيات الحقول الحساسة','تحكم دقيق بإظهار أو إخفاء الحقول الحساسة حسب الدور',[],
+      `<button class="btn coral" onclick="WafraOps.openAddSensitiveField()">＋ إضافة حقل جديد</button>`)
+      +`<div class="sfp-card">
+          <div class="sfp-head">
+            <h2>صلاحيات الحقول الحساسة</h2>
+            <p>تحكم دقيق: إخفاء أعمدة بعينها عن أدوار محددة دون حجب الوحدة كاملة. «مدير النظام» يرى الكل دائماً.</p>
+          </div>
+          <div class="tw" style="padding:0 8px 8px">
+            <table class="sfp-table">
+              <thead><tr><th>الحقل</th>${head}</tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="sfp-foot">المفتاح الفعّال = الحقل ظاهر لهذا الدور. المطفأ = مقنّع، يُطبّق فوراً على ملفات المستأجرين والمزوّدين.</div>
+        </div>`;
+  };
+  if(window.TITLES) window.TITLES.fieldPermissions='صلاحيات الحقول الحساسة';
+})();
+</script>

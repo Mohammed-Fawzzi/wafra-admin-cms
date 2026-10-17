@@ -10,6 +10,10 @@
 .op-kpi .l{font:700 11px Cairo;color:var(--muted);line-height:1.35;min-height:28px}
 .op-kpi .v{font:800 18px Cairo;color:var(--ink);letter-spacing:-.02em;line-height:1.1}
 .op-kpi .v small{font-size:12px;font-weight:700;color:var(--muted);margin-inline-start:2px}
+.op-kpi .chg{font:700 11px Cairo;margin-top:2px;display:inline-flex;align-items:center;gap:3px}
+.op-kpi .chg.up{color:#20A16E}
+.op-kpi .chg.dn{color:#E23D3D}
+.op-kpi .chg.fl{color:#7A869E}
 .op-grid{display:grid;grid-template-columns:1.05fr 1.2fr;gap:14px}
 .op-panel{background:#fff;border:1px solid #E4E9F3;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.04)}
 .op-panel-h{padding:14px 16px;border-bottom:1px solid #EEF1F7;font:800 14px Cairo;color:var(--ink)}
@@ -36,9 +40,12 @@
   const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
   const C={navy:'#293B85',blue:'#2C68D8',green:'#20A16E',red:'#E23D3D',amber:'#EAA631',ink:'#1E2A44',muted:'#7A869E',line:'#E4E9F3'};
 
-  const kpiCard=(ic,label,value,tone)=>{
+  const kpiCard=(ic,label,value,chg,tone)=>{
     const cls=tone==='danger'?'danger':tone==='warn'?'warn':'';
-    return `<div class="op-kpi"><div class="ic ${cls}">${ic}</div><div class="l">${label}</div><div class="v">${value}</div></div>`;
+    const dir=chg&&chg.t==='dn'?'dn':chg&&chg.t==='fl'?'fl':'up';
+    const arrow=dir==='dn'?'▼':dir==='fl'?'●':'▲';
+    const chgHtml=chg?`<div class="chg ${dir}">${arrow} ${chg.p} <span style="color:#7A869E;font-weight:600">مقارنة بالفترة السابقة</span></div>`:'';
+    return `<div class="op-kpi"><div class="ic ${cls}">${ic}</div><div class="l">${label}</div><div class="v">${value}</div>${chgHtml}</div>`;
   };
 
   const contractBars=()=>{
@@ -77,26 +84,26 @@
     if(active!=='operations') return baseAnalytics();
 
     const row1=[
-      kpiCard('🚗','أسطول المركبات','6,494'),
-      kpiCard('✓','المتاحة','920'),
-      kpiCard('🔑','المؤجرة','3,806'),
-      kpiCard('⚠','المتعطلة','871','warn'),
-      kpiCard('📄','إجمالي العقود','14,926'),
-      kpiCard('◉','العقود المفتوحة','3,705'),
-      kpiCard('▣','العقود المغلقة','8,230'),
-      kpiCard('✕','العقود الملغاة','1,707'),
-      kpiCard('◷','متوسط مدة الإيجار','22.5 <small>يوم</small>'),
-      kpiCard('🚚','متوسط وقت التسليم','31 <small>د</small>'),
-      kpiCard('⏱','متوسط وقت الاستجابة','61 <small>د</small>')
+      kpiCard('🚗','أسطول المركبات','6,494',{p:'3.2%',t:'up'}),
+      kpiCard('✓','المتاحة','920',{p:'1.8%',t:'up'}),
+      kpiCard('🔑','المؤجرة','3,806',{p:'4.6%',t:'up'}),
+      kpiCard('⚠','المتعطلة','871',{p:'2.1%',t:'dn'},'warn'),
+      kpiCard('📄','إجمالي العقود','14,926',{p:'6.4%',t:'up'}),
+      kpiCard('◉','العقود المفتوحة','3,705',{p:'2.9%',t:'up'}),
+      kpiCard('▣','العقود المغلقة','8,230',{p:'5.1%',t:'up'}),
+      kpiCard('✕','العقود الملغاة','1,707',{p:'1.4%',t:'dn'}),
+      kpiCard('◷','متوسط مدة الإيجار','22.5 <small>يوم</small>',{p:'0.8%',t:'up'}),
+      kpiCard('🚚','متوسط وقت التسليم','31 <small>د</small>',{p:'3.5%',t:'dn'}),
+      kpiCard('⏱','متوسط وقت الاستجابة','61 <small>د</small>',{p:'2.2%',t:'dn'})
     ].join('');
 
     const row2=[
-      kpiCard('👤','عدد العملاء','520'),
-      kpiCard('👥','عدد المستخدمين','64'),
-      kpiCard('🏢','عدد الشركات','28'),
-      kpiCard('📍','عدد الفروع','242'),
-      kpiCard('⚑','عدد الشكاوى','779','danger'),
-      kpiCard('🎫','عدد التذاكر','310','warn')
+      kpiCard('👤','عدد العملاء','520',{p:'4.1%',t:'up'}),
+      kpiCard('👥','عدد المستخدمين','64',{p:'1.6%',t:'up'}),
+      kpiCard('🏢','عدد الشركات','28',{p:'7.4%',t:'up'}),
+      kpiCard('📍','عدد الفروع','242',{p:'2.5%',t:'up'}),
+      kpiCard('⚑','عدد الشكاوى','779',{p:'5.8%',t:'dn'},'danger'),
+      kpiCard('🎫','عدد التذاكر','310',{p:'3.3%',t:'dn'},'warn')
     ].join('');
 
     const gauges=`<div class="op-gauges">

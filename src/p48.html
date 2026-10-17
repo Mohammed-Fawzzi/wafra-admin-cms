@@ -1,0 +1,408 @@
+<script>
+/* المالية — مقارنة الكروت + شاشات منفصلة + سجلات + استردادات. */
+(function(){
+  const toast=msg=>{
+    if(typeof window.__toast==='function') return window.__toast(msg);
+    const old=document.querySelector('.wafra-demo-toast'); old?.remove();
+    const el=document.createElement('div'); el.className='toast on wafra-demo-toast'; el.textContent=msg;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),2400);
+  };
+  const nowStr=()=>{
+    const d=new Date(),p=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+  const HIST_KEY='wafra-finance-history-v1';
+  const REF_KEY='wafra-refunds-v1';
+
+  const defaultHist=()=>({
+    disputes:[
+      {when:'2026/09/28 14:20',id:'DSP-1090',action:'إغلاق آلي',by:'النظام',detail:'انتهت مهلة الرد · اعتُمد الخصم'},
+      {when:'2026/09/27 11:05',id:'DSP-1093',action:'قبول النزاع',by:'إدارة · سارة العتيبي',detail:'كوبون تعويضي 50 ر.س'},
+      {when:'2026/09/25 16:40',id:'DSP-1088',action:'حسم اعتراض',by:'إدارة · محمد الصغير',detail:'تثبيت الخصم على المزود'},
+      {when:'2026/09/22 09:12',id:'DSP-1085',action:'إنشاء طلب تعويض',by:'إدارة · سارة العتيبي',detail:'عدم نظافة السيارة'}
+    ],
+    fines:[
+      {when:'2026/09/28 10:15',id:'FINE-2202',action:'تحصيل',by:'إدارة · محمد الصغير',detail:'150.00 ر.س · غرامة إلغاء متأخر'},
+      {when:'2026/09/20 13:00',id:'FINE-2190',action:'إعفاء',by:'إدارة · سارة العتيبي',detail:'ظروف قاهرة موثّقة'},
+      {when:'2026/09/15 08:40',id:'FINE-2201',action:'تسجيل غرامة',by:'النظام',detail:'تأخير تسليم · 250.00 ر.س'}
+    ],
+    settlements:[
+      {when:'2026/09/02 11:20',id:'SET-2026-07',action:'اعتماد وإرسال للتحويل',by:'إدارة · محمد الصغير',detail:'إصدار INV-2026-07 · 102,688.00 ر.س'},
+      {when:'2026/08/05 09:00',id:'SET-2026-06',action:'تم التحويل',by:'النظام',detail:'مرجع بنكي SA-77665544'},
+      {when:'2026/08/01 10:30',id:'SET-2026-08',action:'إنشاء دورة تسوية',by:'إدارة · سارة العتيبي',detail:'أغسطس 2026 · مسودة'}
+    ],
+    invoices:[
+      {when:'2026/09/04 14:10',id:'INV-2026-07',action:'تأكيد التحويل البنكي',by:'إدارة · محمد الصغير',detail:'SA-99887766'},
+      {when:'2026/09/02 11:25',id:'INV-2026-07',action:'إصدار مطالبة',by:'النظام',detail:'بعد اعتماد SET-2026-07'},
+      {when:'2026/05/05 16:00',id:'INV-2026-04',action:'إصدار مطالبة',by:'النظام',detail:'قيد التحويل البنكي'}
+    ],
+    refunds:[
+      {when:'2026/09/26 12:40',id:'RF-6995',action:'موافقة على الاسترداد',by:'إدارة · سارة العتيبي',detail:'1,200 ر.س · إرجاع مبكر'},
+      {when:'2026/09/24 09:15',id:'RF-6990',action:'رفض الاسترداد',by:'إدارة · محمد الصغير',detail:'لا يتوافق مع سياسة الإلغاء'},
+      {when:'2026/09/20 15:30',id:'RF-6988',action:'إنشاء استرداد',by:'إدارة · سارة العتيبي',detail:'BK-28010 · متبقي من الدفعة'}
+    ]
+  });
+  const loadHist=()=>{
+    try{const raw=JSON.parse(localStorage.getItem(HIST_KEY)||'null'); if(raw&&typeof raw==='object') return Object.assign(defaultHist(),raw);}catch(e){}
+    return defaultHist();
+  };
+  const saveHist=h=>{try{localStorage.setItem(HIST_KEY,JSON.stringify(h));}catch(e){}};
+  const pushHist=(bucket,row)=>{
+    const h=loadHist();
+    h[bucket]=h[bucket]||[];
+    h[bucket].unshift(Object.assign({when:nowStr(),by:'الإدارة'},row));
+    saveHist(h);
+  };
+
+  const defaultRefunds=()=>[
+    {id:'RF-7000',booking:'BK-28076',customer:'سلطان القحطاني',amount:'3,000.00',reason:'عدم توفر السيارة',status:'بانتظار المراجعة',date:'2026-09-28'},
+    {id:'RF-7001',booking:'BK-31864',customer:'شهد الشهري',amount:'1,500.00',reason:'خصم مضاعف',status:'بانتظار المراجعة',date:'2026-09-27'},
+    {id:'RF-7002',booking:'BK-29110',customer:'فهد العتيبي',amount:'99.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-26'},
+    {id:'RF-7003',booking:'BK-30542',customer:'نورة الدوسري',amount:'2,200.00',reason:'عطل السيارة',status:'بانتظار المراجعة',date:'2026-09-25'},
+    {id:'RF-7004',booking:'BK-27481',customer:'ماجد السبيعي',amount:'450.00',reason:'عدم توفر السيارة',status:'معتمد',date:'2026-09-22'},
+    {id:'RF-7005',booking:'BK-31209',customer:'ريم الزهراني',amount:'1,100.00',reason:'خصم مضاعف',status:'مرفوض',date:'2026-09-20'},
+    {id:'RF-7006',booking:'BK-29833',customer:'خالد المطيري',amount:'780.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-18'},
+    {id:'RF-7007',booking:'BK-32155',customer:'سارة العتيبي',amount:'1,800.00',reason:'عطل السيارة',status:'مكتمل',date:'2026-09-15'},
+    {id:'RF-7008',booking:'BK-26740',customer:'وليد الحربي',amount:'320.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-12'}
+  ];
+  const eligibleEarlyReturns=()=>[
+    {booking:'BK-33012',customer:'عبدالله الغامدي',provider:'شركة الصحراء',paid:'2,400.00',daysBooked:7,daysUsed:3,remain:'1,371.00',received:'2026-09-20'},
+    {booking:'BK-32988',customer:'منى القحطاني',provider:'كي رنت',paid:'1,800.00',daysBooked:5,daysUsed:2,remain:'1,080.00',received:'2026-09-22'},
+    {booking:'BK-32840',customer:'تركي العنزي',provider:'مسار',paid:'3,150.00',daysBooked:10,daysUsed:4,remain:'1,890.00',received:'2026-09-18'},
+    {booking:'BK-32755',customer:'هند الشهري',provider:'الوسام كار',paid:'960.00',daysBooked:4,daysUsed:1,remain:'720.00',received:'2026-09-24'}
+  ];
+  const loadRefunds=()=>{
+    try{const raw=JSON.parse(localStorage.getItem(REF_KEY)||'null'); if(raw&&Array.isArray(raw.items)) return raw;}catch(e){}
+    return {items:defaultRefunds()};
+  };
+  const saveRefunds=s=>{try{localStorage.setItem(REF_KEY,JSON.stringify(s));}catch(e){}};
+
+  /* CSS: إظهار المقارنة دائماً */
+  if(!document.getElementById('wafra-finance-p48')){
+    const st=document.createElement('style');
+    st.id='wafra-finance-p48';
+    st.textContent=`.fi-card{min-height:132px!important}.fi-card .trend{display:block!important;font:700 11.5px Cairo!important;color:var(--green)!important;margin-top:auto!important;line-height:1.35;white-space:normal}`;
+    document.head.appendChild(st);
+  }
+
+  const fiCard=(lbl,val,unit,tone,icon,trend)=>`<div class="fi-card"><div class="top"><span class="lbl">${lbl}</span><span class="ic ${tone}">${icon}</span></div><div class="val">${val}${unit?`<small>${unit}</small>`:''}</div><div class="trend">${trend}</div></div>`;
+
+  S.finance=()=>{
+    const charts=`<div class="grid2">${card(cardH('نمو الإيرادات','أبريل إلى سبتمبر')+`<div class="card-b">${spark([40,61,60,58,63,84],32)}<div class="legend"><span>أبريل</span><span>مايو</span><span>يونيو</span><span>يوليو</span><span>أغسطس</span><span>سبتمبر</span></div></div>`)}${card(cardH('توزيع الإيرادات حسب المدينة')+`<div class="card-b">${donut([['الرياض',31,'var(--navy)','1.16M'],['جدة',24,'var(--coral)','895K'],['الخبر',18,'var(--blue)','671K'],['مكة',14,'var(--green)','522K'],['أخرى',13,'#8367C7','482K']],'3.73M','ر.س')}</div>`)}</div>`
+      +card(cardH('ملخص المصروفات والتسويات')+`<div class="card-b">${table(['البند','القيمة','الحالة','آخر تحديث'],[['تكلفة التوصيل','184,200 ر.س',bdg('ضمن الميزانية','g'),'اليوم'],['تكاليف التسويق','112,600 ر.س',bdg('تحت المراجعة','a'),'اليوم'],['تسويات المزودين','486,300 ر.س',bdg('11 بانتظار الاعتماد','a'),'أمس'],['استردادات العملاء','62,940 ر.س',bdg('مكتملة','g'),'أمس']])}</div>`);
+    return phead('النظرة المالية','حساب تلقائي للمؤشرات المالية مع اتجاهات النمو والتوزيع',[],
+      `<button class="btn ghost" onclick="WafraOps.scheduleFinanceReport()">◷ جدولة تقرير</button>
+       <button class="btn ghost" onclick="WafraOps.exportCurrent('النظرة-المالية','Excel')">⤒ تصدير</button>`)
+      +`<div class="fi-wrap">
+        <div class="fi-head"><div><h2>المؤشرات المالية</h2><p>حساب تلقائي للمؤشرات المالية مع اتجاهات النمو والتوزيع</p></div></div>
+        <div class="fi-grid">
+          ${fiCard('إجمالي الإيرادات','132.97','م ر.س','g','💵','▲ 8.3% مقارنة بالفترة السابقة')}
+          ${fiCard('إجمالي العمولات','12.4','م ر.س','b','💳','▲ 7.1% مقارنة بالفترة السابقة')}
+          ${fiCard('إجمالي الخصومات','4.54','م ر.س','n','🏷','▼ 2.4% مقارنة بالفترة السابقة')}
+          ${fiCard('المبالغ المحصلة','110.22','م ر.س','g','💵','▲ 9.2% مقارنة بالفترة السابقة')}
+          ${fiCard('المبالغ غير المحصلة','22.75','م ر.س','r','🚫','▼ 4.6% مقارنة بالفترة السابقة')}
+          ${fiCard('متوسط قيمة العقد','8.9','ألف ر.س','b','📄','▲ 3.1% مقارنة بالفترة السابقة')}
+          ${fiCard('الإيراد لكل سيارة','20.5','ألف ر.س','p','🚗','▲ 5.4% مقارنة بالفترة السابقة')}
+          ${fiCard('الإيراد لكل شركة','4.75','م ر.س','t','🏢','▲ 6.0% مقارنة بالفترة السابقة')}
+          ${fiCard('الإيراد لكل فرع','549.5','ألف ر.س','n','📍','▲ 2.8% مقارنة بالفترة السابقة')}
+        </div>
+        <div class="fi-grid row2">
+          ${fiCard('صافي الربح','38.36','م ر.س','g','💵','▲ 6.7% مقارنة بالفترة السابقة')}
+          ${fiCard('إجمالي المصروفات','77.67','م ر.س','r','💸','▲ 4.2% مقارنة بالفترة السابقة')}
+          ${fiCard('هامش الربح','28.8','%','b','📊','▲ 1.1% مقارنة بالفترة السابقة')}
+          ${fiCard('نمو الإيرادات','8.3','%','g','📈','▲ 1.4% مقارنة بالفترة السابقة')}
+          ${fiCard('نمو الأرباح','6.7','%','t','📉','▲ 0.9% مقارنة بالفترة السابقة')}
+        </div>
+      </div>`+charts;
+  };
+
+  const histTable=rows=>rows&&rows.length
+    ? table(['الوقت','المرجع','الإجراء','بواسطة','التفاصيل'],rows.map(r=>[{v:r.when,c:'num'},{v:r.id,c:'strong num'},r.action,r.by||'—',r.detail||'—']))
+    : `<p class="note info" style="margin:12px 0">لا توجد سجلات بعد.</p>`;
+
+  /* —— تعديل شريط التابات داخل مخرجات الشاشات الأصلية —— */
+  const removeSettleInvTabs=html=>html
+    .replace(/<button type="button" class="tab[^"]*" onclick="WafraOps\.setPayTab\('settlements'\)">[\s\S]*?<\/button>\s*/g,'')
+    .replace(/<button type="button" class="tab[^"]*" onclick="WafraOps\.setPayTab\('invoices'\)">[\s\S]*?<\/button>\s*/g,'');
+
+  const addTabAfterFines=(html,tabHtml)=>html.replace(
+    /(onclick="WafraOps\.setPayTab\('fines'\)">[\s\S]*?<\/button>)/,
+    `$1${tabHtml}`
+  );
+
+  const shellTabsOnly=(tabs,body,prefixHtml)=>{
+    /* استبدال كتلة التابات+الجسم بالكامل */
+    return prefixHtml.replace(
+      /<div class="card">[\s\S]*$/,
+      card(`<div class="tabs">${tabs}</div><div class="card-b">${body}</div>`)
+    );
+  };
+
+  const splitShell=html=>{
+    const m=html.match(/<div class="card\b[^"]*">/);
+    const idx=m?html.indexOf(m[0]):-1;
+    if(idx<0) return {head:html,rest:''};
+    return {head:html.slice(0,idx),rest:html.slice(idx)};
+  };
+
+  const grabBody=html=>{
+    const m=html.match(/<div class="card-b">([\s\S]*)<\/div>\s*<\/div>\s*$/);
+    return m?m[1]:'';
+  };
+
+  /* حفظ الأصول مرة واحدة */
+  if(!window.__finOrig){
+    window.__finOrig={
+      compDisputes:S.compDisputes,
+      fines:S.fines,
+      settlements:S.settlements,
+      invoices:S.invoices
+    };
+  }
+  const O=window.__finOrig;
+
+  S.compDisputes=()=>{
+    const sub=window.__compSubTab||'list';
+    const raw=removeSettleInvTabs(O.compDisputes());
+    const {head}=splitShell(raw);
+    const body=grabBody(raw);
+    const h=loadHist();
+    if(sub==='history'){
+      const bucket=window.__compHistBucket||'disputes';
+      return head+card(`<div class="tabs">
+        <button type="button" class="tab" onclick="window.__compSubTab='list';render()">المنازعات</button>
+        <button type="button" class="tab" onclick="window.__compSubTab='list';location.hash='fines'">الغرامات</button>
+        <button type="button" class="tab on" onclick="window.__compSubTab='history';render()">السجل</button>
+      </div><div class="card-b">
+        <div class="st-sec"><div><h3>سجل المنازعات والغرامات</h3><p>تاريخ الإجراءات على المنازعات والغرامات</p></div></div>
+        <div class="tabs" style="margin-bottom:12px">
+          <button type="button" class="tab ${bucket==='disputes'?'on':''}" onclick="window.__compHistBucket='disputes';render()">المنازعات</button>
+          <button type="button" class="tab ${bucket==='fines'?'on':''}" onclick="window.__compHistBucket='fines';render()">الغرامات</button>
+        </div>
+        ${histTable(h[bucket]||[])}
+      </div>`);
+    }
+    return head+card(`<div class="tabs">
+      <button type="button" class="tab on" onclick="window.__compSubTab='list';render()">المنازعات</button>
+      <button type="button" class="tab" onclick="window.__compSubTab='list';location.hash='fines'">الغرامات</button>
+      <button type="button" class="tab" onclick="window.__compSubTab='history';render()">السجل</button>
+    </div><div class="card-b">${body}</div>`);
+  };
+
+  S.fines=()=>{
+    const sub=window.__compSubTab||'list';
+    const raw=removeSettleInvTabs(O.fines());
+    const {head}=splitShell(raw);
+    const body=grabBody(raw);
+    const h=loadHist();
+    if(sub==='history'){
+      const bucket=window.__compHistBucket||'fines';
+      return head+card(`<div class="tabs">
+        <button type="button" class="tab" onclick="window.__compSubTab='list';location.hash='compDisputes'">المنازعات</button>
+        <button type="button" class="tab" onclick="window.__compSubTab='list';render()">الغرامات</button>
+        <button type="button" class="tab on" onclick="window.__compSubTab='history';render()">السجل</button>
+      </div><div class="card-b">
+        <div class="st-sec"><div><h3>سجل المنازعات والغرامات</h3><p>تاريخ الإجراءات على المنازعات والغرامات</p></div></div>
+        <div class="tabs" style="margin-bottom:12px">
+          <button type="button" class="tab ${bucket==='disputes'?'on':''}" onclick="window.__compHistBucket='disputes';render()">المنازعات</button>
+          <button type="button" class="tab ${bucket==='fines'?'on':''}" onclick="window.__compHistBucket='fines';render()">الغرامات</button>
+        </div>
+        ${histTable(h[bucket]||[])}
+      </div>`);
+    }
+    return head+card(`<div class="tabs">
+      <button type="button" class="tab" onclick="window.__compSubTab='list';location.hash='compDisputes'">المنازعات</button>
+      <button type="button" class="tab on" onclick="window.__compSubTab='list';render()">الغرامات</button>
+      <button type="button" class="tab" onclick="window.__compSubTab='history';render()">السجل</button>
+    </div><div class="card-b">${body}</div>`);
+  };
+
+  S.settlements=()=>{
+    const sub=window.__settleSubTab||'list';
+    const raw=O.settlements();
+    const {head}=splitShell(raw);
+    const body=grabBody(raw);
+    /* إزالة تابات المنازعات/الفواتير/الغرامات — صفحة مستقلة */
+    if(sub==='history'){
+      return head+card(`<div class="tabs">
+        <button type="button" class="tab" onclick="window.__settleSubTab='list';render()">التسويات</button>
+        <button type="button" class="tab on" onclick="window.__settleSubTab='history';render()">السجل</button>
+      </div><div class="card-b">
+        <div class="st-sec"><div><h3>سجل التسويات</h3><p>تاريخ إنشاء واعتماد وتحويل دورات التسوية</p></div></div>
+        ${histTable(loadHist().settlements||[])}
+      </div>`);
+    }
+    return head+card(`<div class="tabs">
+      <button type="button" class="tab on" onclick="window.__settleSubTab='list';render()">التسويات</button>
+      <button type="button" class="tab" onclick="window.__settleSubTab='history';render()">السجل</button>
+    </div><div class="card-b">${body}</div>`);
+  };
+
+  S.invoices=()=>{
+    const sub=window.__invSubTab||'list';
+    const raw=O.invoices();
+    const {head}=splitShell(raw);
+    const body=grabBody(raw);
+    if(sub==='history'){
+      return head+card(`<div class="tabs">
+        <button type="button" class="tab" onclick="window.__invSubTab='list';render()">الفواتير</button>
+        <button type="button" class="tab on" onclick="window.__invSubTab='history';render()">السجل</button>
+      </div><div class="card-b">
+        <div class="st-sec"><div><h3>سجل الفواتير</h3><p>تاريخ إصدار المطالبات وتأكيد التحويلات البنكية</p></div></div>
+        ${histTable(loadHist().invoices||[])}
+      </div>`);
+    }
+    return head+card(`<div class="tabs">
+      <button type="button" class="tab on" onclick="window.__invSubTab='list';render()">الفواتير</button>
+      <button type="button" class="tab" onclick="window.__invSubTab='history';render()">السجل</button>
+    </div><div class="card-b">${body}</div>`);
+  };
+
+  /* —— استردادات العملاء —— */
+  const statusTone=s=>s==='معتمد'||s==='مكتمل'?'g':s==='مرفوض'?'r':'a';
+  const statusPill=s=>typeof pill==='function'?pill(s,statusTone(s)):bdg(s,statusTone(s));
+
+  Object.assign(WafraOps,{
+    setRefundSubTab:t=>{window.__refundSubTab=t;render();},
+    applyRefundFilters:()=>{
+      window.__rfStatus=document.getElementById('rf-f-status')?.value||'الكل';
+      window.__rfFrom=document.getElementById('rf-f-from')?.value||'';
+      window.__rfTo=document.getElementById('rf-f-to')?.value||'';
+      render();
+    },
+    openCreateRefund:()=>{
+      const rows=eligibleEarlyReturns();
+      openM(modal('إنشاء استرداد',`
+        ${note('info','الحجوزات المؤهّلة','حجوزات تم استلامها ولم يُكمل العميل مدة الحجز كاملة، ويتبقّى مبلغ من الدفعة الأصلية.')}
+        <div class="st-board" style="margin-top:12px"><div class="st-scroll"><table class="st-table">
+          <thead><tr><th></th><th>الحجز</th><th>العميل</th><th>المزود</th><th>الدفعة</th><th>المستخدم/المحجوز</th><th>المتبقي</th></tr></thead>
+          <tbody>${rows.map((r,i)=>`<tr>
+            <td><input type="radio" name="rf-elig" value="${i}" ${i===0?'checked':''}></td>
+            <td class="num">${r.booking}</td><td>${r.customer}</td><td>${r.provider}</td>
+            <td class="num">${r.paid}</td><td>${r.daysUsed}/${r.daysBooked} يوم</td>
+            <td class="num" style="color:#148A5A;font-weight:800">${r.remain} ر.س</td>
+          </tr>`).join('')}</tbody>
+        </table></div></div>
+        ${fld('سبب الاسترداد',`<select id="rf-new-reason" class="native-input"><option>إرجاع مبكر — متبقي من الدفعة</option><option>إلغاء بعد الاستلام</option><option>عطل السيارة</option><option>أخرى</option></select>`)}
+        ${fld('ملاحظات',`<textarea id="rf-new-notes" class="native-input" rows="2" placeholder="اختياري…"></textarea>`)}
+      `,`<button class="btn ghost" onclick="closeM()">إلغاء</button><button class="btn coral" onclick="WafraOps.saveCreateRefund()">إنشاء الاسترداد</button>`));
+    },
+    saveCreateRefund:()=>{
+      const idx=Number(document.querySelector('input[name="rf-elig"]:checked')?.value);
+      const r=eligibleEarlyReturns()[idx];
+      if(!r){toast('اختر حجزاً أولاً.');return;}
+      const reason=document.getElementById('rf-new-reason')?.value||'إرجاع مبكر — متبقي من الدفعة';
+      const store=loadRefunds();
+      const n=store.items.reduce((m,x)=>Math.max(m,Number(String(x.id).replace(/\D/g,''))||0),7008)+1;
+      const row={id:`RF-${n}`,booking:r.booking,customer:r.customer,amount:r.remain,reason,status:'بانتظار المراجعة',date:new Date().toISOString().slice(0,10)};
+      store.items=[row,...store.items];
+      saveRefunds(store);
+      pushHist('refunds',{id:row.id,action:'إنشاء استرداد',detail:`${r.booking} · متبقي ${r.remain} ر.س`});
+      closeM(); toast(`تم إنشاء طلب الاسترداد ${row.id}.`); render();
+    },
+    approveRefund:id=>{
+      const store=loadRefunds();
+      const row=store.items.find(x=>x.id===id); if(!row) return;
+      row.status='معتمد'; saveRefunds(store);
+      pushHist('refunds',{id,action:'موافقة على الاسترداد',detail:`${row.amount} ر.س`});
+      toast(`تمت الموافقة على الاسترداد ${id}.`); render();
+    },
+    rejectRefund:id=>{
+      const store=loadRefunds();
+      const row=store.items.find(x=>x.id===id); if(!row) return;
+      row.status='مرفوض'; saveRefunds(store);
+      pushHist('refunds',{id,action:'رفض الاسترداد',detail:`${row.amount} ر.س`});
+      toast(`تم رفض الاسترداد ${id}.`); render();
+    }
+  });
+
+  /* تسجيل أحداث المالية في السجل */
+  const wrapPush=(fn,bucket,action)=>{
+    const prev=WafraOps[fn];
+    if(typeof prev!=='function'||prev._p48) return;
+    const wrapped=function(...args){
+      const id=args[0];
+      const r=prev.apply(this,args);
+      try{pushHist(bucket,{id:id||'—',action,detail:args[1]!=null?String(args[1]):'—'});}catch(e){}
+      return r;
+    };
+    wrapped._p48=true;
+    WafraOps[fn]=wrapped;
+  };
+  wrapPush('acceptDispute','disputes','قبول النزاع');
+  wrapPush('objectDispute','disputes','اعتراض على النزاع');
+  wrapPush('saveDispute','disputes','إنشاء طلب تعويض');
+  wrapPush('finalizeDispute','disputes','حسم النزاع');
+  wrapPush('saveFine','fines','تسجيل غرامة');
+  wrapPush('collectFine','fines','تحصيل غرامة');
+  wrapPush('waiveFine','fines','إعفاء غرامة');
+  wrapPush('saveSettlement','settlements','إنشاء دورة تسوية');
+  wrapPush('approveSettlementRow','settlements','اعتماد وإرسال للتحويل');
+  wrapPush('saveBankTransfer','invoices','تأكيد التحويل البنكي');
+
+  S.refunds=()=>{
+    const sub=window.__refundSubTab||'list';
+    const store=loadRefunds();
+    const st=window.__rfStatus||'الكل';
+    const from=window.__rfFrom||'';
+    const to=window.__rfTo||'';
+    let items=store.items.slice();
+    if(st&&st!=='الكل') items=items.filter(x=>x.status===st);
+    if(from) items=items.filter(x=>x.date>=from);
+    if(to) items=items.filter(x=>x.date<=to);
+
+    const acts=(rf,bk,status)=>{
+      if(status!=='بانتظار المراجعة') return `<div class="st-actions"><a class="btn ghost sm" href="#booking">تفاصيل الحجز</a></div>`;
+      return `<div class="st-actions rf-acts">
+        <a class="btn ghost sm" href="#booking">تفاصيل الحجز</a>
+        <button class="btn sm st-approve" onclick="WafraOps.approveRefund('${rf}')">موافقة</button>
+        <button class="btn danger sm" onclick="WafraOps.rejectRefund('${rf}')">رفض</button>
+      </div>`;
+    };
+
+    if(sub==='history'){
+      return phead('استردادات العملاء','طلبات استرداد المبالغ للعملاء',[],
+        `<button class="btn coral" onclick="WafraOps.openCreateRefund()">＋ إنشاء استرداد</button>
+         <button class="btn ghost" onclick="WafraOps.exportCurrent('استردادات-العملاء','Excel')">⤒ تصدير</button>`)
+        +card(`<div class="tabs">
+          <button type="button" class="tab" onclick="WafraOps.setRefundSubTab('list')">الطلبات</button>
+          <button type="button" class="tab on" onclick="WafraOps.setRefundSubTab('history')">السجل</button>
+        </div><div class="card-b">
+          <div class="st-sec"><div><h3>سجل الاستردادات</h3><p>تاريخ إنشاء وموافقة ورفض طلبات الاسترداد</p></div></div>
+          ${histTable(loadHist().refunds||[])}
+        </div>`);
+    }
+
+    return phead('استردادات العملاء','طلبات استرداد المبالغ للعملاء — بما فيها الإرجاع المبكر ومتبقي الدفعة',[],
+      `<button class="btn coral" onclick="WafraOps.openCreateRefund()">＋ إنشاء استرداد</button>
+       <button class="btn ghost" onclick="WafraOps.exportCurrent('استردادات-العملاء','Excel')">⤒ تصدير</button>`)
+      +card(`<div class="tabs">
+          <button type="button" class="tab on" onclick="WafraOps.setRefundSubTab('list')">الطلبات</button>
+          <button type="button" class="tab" onclick="WafraOps.setRefundSubTab('history')">السجل</button>
+        </div>
+        <div class="filters" style="padding:12px 16px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+          ${fld('من تاريخ',`<input id="rf-f-from" class="native-input" type="date" value="${from}" onchange="WafraOps.applyRefundFilters()">`)}
+          ${fld('إلى تاريخ',`<input id="rf-f-to" class="native-input" type="date" value="${to}" onchange="WafraOps.applyRefundFilters()">`)}
+          ${fld('الحالة',`<select id="rf-f-status" class="native-input" onchange="WafraOps.applyRefundFilters()">
+            ${['الكل','بانتظار المراجعة','معتمد','مرفوض','مكتمل'].map(x=>`<option ${st===x?'selected':''}>${x}</option>`).join('')}
+          </select>`)}
+          <div class="fsearch" style="flex:1;min-width:180px">⌕ <input placeholder="بحث برقم الطلب أو الحجز أو العميل…"></div>
+        </div>
+        <div class="card-b">${table(
+          ['الطلب','الحجز','العميل','المبلغ','السبب','التاريخ','الحالة','إجراءات'],
+          items.map(r=>[
+            {v:r.id,c:'strong num'},
+            {v:`<a class="st-link" href="#booking">${r.booking}</a>`,c:'num'},
+            r.customer,
+            {v:r.amount+' ر.س',c:'num'},
+            r.reason,
+            {v:r.date,c:'num'},
+            statusPill(r.status),
+            acts(r.id,r.booking,r.status)
+          ])
+        )}
+        <div class="rf-foot"><span>${items.length} سجل</span></div>
+        </div>`);
+  };
+})();
+</script>

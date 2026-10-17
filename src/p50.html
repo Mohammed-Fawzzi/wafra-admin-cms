@@ -1,0 +1,164 @@
+<script>
+/* المخاطر والأتمتة — نافذة قاعدة جديدة + تشغيل فحص الاحتيال. */
+(function(){
+  const toast=msg=>{
+    if(typeof window.__toast==='function') return window.__toast(msg);
+    if(WafraOps.demoAction) return WafraOps.demoAction(msg);
+    const el=document.createElement('div'); el.className='toast on'; el.textContent=msg;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),2400);
+  };
+
+  Object.assign(WafraOps,{
+    openNewAutomationRule:()=>{
+      openM(modal('إضافة قاعدة أتمتة جديدة',`
+        <div class="frow">
+          ${fld('اسم القاعدة',`<input id="auto-name" class="native-input" placeholder="مثال: تصعيد تذاكر SLA">`)}
+          ${fld('الحالة',`<select id="auto-status" class="native-input"><option>مفعّل</option><option>موقوف</option></select>`)}
+        </div>
+        <div class="frow">
+          ${fld('المحفّز',`<select id="auto-trigger" class="native-input">
+            <option>عند تجاوز المهلة</option>
+            <option>درجة مخاطر ≥ 90</option>
+            <option>بعد 48 ساعة</option>
+            <option>انتهاء مهلة الرد</option>
+            <option>بعد 24 ساعة</option>
+            <option>اشتباه سوء استخدام</option>
+            <option>مخصص…</option>
+          </select>`)}
+          ${fld('التكرار',`<select id="auto-freq" class="native-input">
+            <option>فوري</option>
+            <option>كل 15 د</option>
+            <option>كل ساعة</option>
+            <option>يومي</option>
+            <option>أسبوعي</option>
+          </select>`)}
+        </div>
+        ${fld('نطاق التطبيق',`<select id="auto-scope" class="native-input">
+          <option>كل المنصة</option>
+          <option>التذاكر والدعم</option>
+          <option>المزودون والمخاطر</option>
+          <option>المالية والتسويات</option>
+          <option>الكوبونات والعروض</option>
+        </select>`)}
+        ${fld('الإجراء عند التفعيل',`<select id="auto-action" class="native-input">
+          <option>إرسال تنبيه للإدارة</option>
+          <option>تصعيد للتذكرة</option>
+          <option>إيقاف / تجميد الكيان</option>
+          <option>إنشاء مهمة متابعة</option>
+          <option>إغلاق آلي</option>
+        </select>`)}
+        ${fld('وصف / شروط إضافية',`<textarea id="auto-notes" class="native-input" rows="3" placeholder="اختياري: شروط أو استثناءات…"></textarea>`)}
+        ${note('info','التشغيل','تُحفظ القاعدة محلياً في النموذج ويمكن تفعيلها أو إيقافها من الجدول.')}
+      `,`<button class="btn" onclick="WafraOps.saveAutomationRule()">حفظ القاعدة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveAutomationRule:()=>{
+      const name=(document.getElementById('auto-name')?.value||'').trim();
+      if(!name){toast('أدخل اسم القاعدة أولاً.');return;}
+      const trigger=document.getElementById('auto-trigger')?.value||'';
+      const freq=document.getElementById('auto-freq')?.value||'';
+      const status=document.getElementById('auto-status')?.value||'مفعّل';
+      window.__autoRules=window.__autoRules||[];
+      window.__autoRules.unshift({name,trigger,freq,status,tot:'0',ok:'0',fail:'0',rate:'—'});
+      closeM(); toast(`تم حفظ قاعدة «${name}».`); render();
+    },
+    runFraudScan:()=>{
+      openM(modal('تشغيل فحص الاحتيال',`
+        ${fld('نطاق الفحص',`<select id="fd-scope" class="native-input">
+          <option>كل الحسابات النشطة</option>
+          <option>حجوزات آخر 7 أيام</option>
+          <option>حجوزات آخر 30 يوماً</option>
+          <option>المدفوعات الفاشلة فقط</option>
+          <option>الحالات المفتوحة فقط</option>
+        </select>`)}
+        ${fld('حد الخطورة الأدنى',`<select id="fd-threshold" class="native-input">
+          <option value="50">50 — متوسطة فأعلى</option>
+          <option value="70" selected>70 — عالية</option>
+          <option value="85">85 — حرجة</option>
+        </select>`)}
+        ${note('info','الفحص','يُشغَّل الفحص على الأنماط المعرّفة (مبالغ غير معتادة، كثافة حجوزات، بطاقات متعددة…) ويُحدَّث جدول الحالات المفتوحة.')}
+      `,`<button class="btn" onclick="WafraOps.confirmFraudScan()">تشغيل الفحص</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    confirmFraudScan:()=>{
+      const scope=document.getElementById('fd-scope')?.value||'';
+      const th=document.getElementById('fd-threshold')?.value||'70';
+      closeM();
+      toast(`اكتمل فحص الاحتيال · النطاق: ${scope} · الحد ${th} — عُثر على 2 حالة جديدة.`);
+      render();
+    }
+  });
+
+  S.automation=()=>{
+    const pill=(n,tone)=>`<span class="sla-pill ${tone}">${n}</span>`;
+    const st=(t,tone)=>`<span class="ab-status ${tone}">${t}</span>`;
+    const base=[
+      ['تصعيد تذاكر SLA','عند تجاوز المهلة','كل 15 د','128','3','2','98%','مفعّل','active'],
+      ['إيقاف مزود عالي المخاطر','درجة مخاطر ≥ 90','فوري','42','1','0','98%','مفعّل','active'],
+      ['تنبيه تسوية معلّقة','بعد 48 ساعة','يومي','36','0','1','97%','مفعّل','active'],
+      ['إغلاق تظلّم آلي','انتهاء مهلة الرد','كل ساعة','19','2','0','90%','موقوف','done'],
+      ['تذكير استرداد معلّق','بعد 24 ساعة','كل ساعة','54','0','3','95%','مفعّل','active'],
+      ['تجميد كوبون مشبوه','اشتباه سوء استخدام','فوري','11','0','0','100%','مفعّل','active']
+    ];
+    const extra=(window.__autoRules||[]).map(r=>[r.name,r.trigger,r.freq,r.tot||'0',r.ok||'0',r.fail||'0',r.rate||'—',r.status,r.status==='مفعّل'?'active':'done']);
+    const rows=extra.concat(base);
+    return phead('محرك الأتمتة','قواعد تشغيل تلقائية للطوابير والمخاطر والتنبيهات الإدارية',[],
+      `<button class="btn" onclick="WafraOps.openNewAutomationRule()">＋ قاعدة جديدة</button>`)
+      +`<div class="kpis sla-kpis">
+        <div class="kpi"><div class="lb"><span class="ic gh-ic blue">⚙</span>قواعد مفعّلة</div><div class="vl">${rows.filter(r=>r[7]==='مفعّل').length}</div></div>
+        <div class="kpi"><div class="lb"><span class="ic gh-ic green">✓</span>تشغيلات ناجحة اليوم</div><div class="vl">290</div></div>
+        <div class="kpi"><div class="lb"><span class="ic gh-ic amber">◷</span>معلّقة / قيد التنفيذ</div><div class="vl">6</div></div>
+        <div class="kpi"><div class="lb"><span class="ic gh-ic red">⚠</span>فشل اليوم</div><div class="vl">6</div></div>
+      </div>`
+      +card(cardH('قواعد الأتمتة','المحفّز · التكرار · نتائج التشغيل')
+      +table(['القاعدة','المحفّز','التكرار','الإجمالي','نجحت','فشلت','النجاح','الحالة','الإجراء'],
+        rows.map(([name,trig,freq,tot,ok,fail,rate,status,tone])=>[
+          {v:name,c:'strong'},trig,freq,{v:tot,c:'num'},pill(ok,'ok'),pill(fail,fail==='0'?'ok':'late'),{v:rate,c:'num'},st(status,tone),
+          `<div class="st-actions">
+            <button class="btn ghost sm" onclick="WafraOps.openNewAutomationRule()">تعديل</button>
+            <button class="btn ${status==='مفعّل'?'danger':'st-approve'} sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('${status==='مفعّل'?'إيقاف':'تفعيل'} ${name}')">${status==='مفعّل'?'إيقاف':'تفعيل'}</button>
+          </div>`
+        ])));
+  };
+
+  S.fraudDetect=()=>{
+    const score=n=>{
+      const tone=n>=70?'hi':n>=50?'mid':'lo';
+      return `<span class="fd-score ${tone}">${n}</span>`;
+    };
+    const rows=[
+      ['FR-A2','نواف المطيري','مبلغ غير معتاد (6.6 ألف ر.س)','1',85],
+      ['FR-A5','سلطان القحطاني','كثافة حجوزات غير اعتيادية','41',78],
+      ['FR-A7','شهد الشهري','بطاقات متعددة خلال ساعة','18',73],
+      ['FR-B1','فهد العتيبي','مبلغ غير معتاد (4.2 ألف ر.س)','1',69],
+      ['FR-B3','نورة الدوسري','إلغاءات متكررة بعد الدفع','12',63],
+      ['FR-B8','ماجد السبيعي','تغيير جهاز متكرر','7',56],
+      ['FR-C2','ريم الزهراني','كثافة حجوزات غير اعتيادية','9',53],
+      ['FR-C4','خالد المطيري','محاولات دفع فاشلة متتالية','22',48],
+      ['FR-C9','سارة العتيبي','مبلغ غير معتاد (2.1 ألف ر.س)','1',47]
+    ];
+    return phead('كشف الاحتيال','أنماط سلوك مشبوهة في المدفوعات والحجوزات',[],
+      `<button class="btn" onclick="WafraOps.runFraudScan()">تشغيل الفحص</button>`)
+      +`<div class="kpis fd-kpis">
+        <div class="kpi"><div class="lb"><span class="ic gh-ic red">🛡</span>حالات مفتوحة</div><div class="vl">11</div></div>
+        <div class="kpi"><div class="lb"><span class="ic gh-ic amber">⚠</span>خطورة عالية</div><div class="vl">4</div></div>
+      </div>`
+      +card(`<div class="rf-toolbar">
+        <div class="fsearch">⌕ <input placeholder="بحث..."></div>
+        <div class="rf-tools">
+          <button class="btn ghost sm" onclick="WafraOps.runFraudScan()">تشغيل الفحص</button>
+          <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('كشف الاحتيال','PDF')">PDF</button>
+          <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('كشف الاحتيال','Excel')">Excel ⤓</button>
+        </div>
+      </div>`
+      +table(['الحالة','الحساب','النمط','التكرار','الدرجة','الحالة','إجراءات'],
+        rows.map(([id,acc,pat,freq,sc])=>[
+          {v:id,c:'strong num'},acc,pat,{v:freq,c:'num'},score(sc),
+          `<span class="fd-open">مفتوح</span>`,
+          `<div class="st-actions">
+            <button class="btn danger sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('علم مشبوهاً ${id}')">علم مشبوهاً</button>
+            <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('تجاهل ${id}')">تجاهل</button>
+          </div>`
+        ]))
+      +`<div class="rf-foot"><span>11 سجل</span></div>`);
+  };
+})();
+</script>
