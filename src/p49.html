@@ -86,38 +86,73 @@
   const cities=['كل العملاء','عملاء جدد','عملاء VIP','مدينة الرياض','مدينة جدة','مدينة مكة المكرمة','مدينة الدمام','مدينة الخبر','مدينة المدينة المنورة','مدينة الطائف','مدينة بريدة','مدينة تبوك','مدينة أبها','مدينة حائل','مدينة نجران'];
   const targetOpts=cities.map((x,i)=>`<option ${i===0?'selected':''}>${x}</option>`).join('');
 
-  /* —— نموذج إنشاء عرض (مطابق للمزود) —— */
-  const offerForm=()=>`
-    <div class="frow">${fld('الكود',`<input id="of-code" class="native-input" value="SUMMER25">`)}
-      ${fld('نوع الكوبون',`<select id="of-type" class="native-input">
-        <option selected>نسبة مئوية</option><option>مبلغ ثابت</option><option>إعفاء رسوم توصيل</option><option>ترحيب تلقائي</option>
-      </select>`)}</div>
-    <div class="frow">${fld('القيمة',`<input id="of-val" class="native-input" value="25%">`)}
-      ${fld('المتحمل للتكلفة',`<select id="of-bearer" class="native-input"><option>المنصة</option><option>المزود</option><option>مشترك</option></select>`)}</div>
-    <div class="frow">${fld('الحد الأدنى للحجز',`<input id="of-min" class="native-input" value="200 ر.س">`)}
-      ${fld('سقف الاستخدام الكلي',`<input id="of-cap" class="native-input" value="2000">`)}</div>
-    <div class="frow">${fld('سقف الاستخدام لكل عميل',`<input id="of-per" class="native-input" value="1">`)}
-      ${fld('تاريخ ووقت البداية',`<input id="of-start" class="native-input" type="datetime-local" value="2026-09-01T09:00">`)}</div>
-    <div class="frow">${fld('إلى تاريخ',`<input id="of-end" class="native-input" value="30/09/2026">`)}
+  /* —— أنواع الخصومات (مطابقة لتطبيق المزود) —— */
+  const OFFER_TYPES=[
+    {k:'pct_coupon',t:'خصم بنسبة مئوية باستخدام كوبون',desc:'يُخصم نسبة ثابتة عند إدخال كود الكوبون',needsCode:1,valLabel:'نسبة الخصم %',valPh:'25',valDef:'25'},
+    {k:'fixed_coupon',t:'خصم ثابت على إجمالي الحجز باستخدام كوبون',desc:'يُخصم مبلغ ثابت من إجمالي الحجز عند إدخال الكود',needsCode:1,valLabel:'مبلغ الخصم (ر.س)',valPh:'50',valDef:'50'},
+    {k:'daily_coupon',t:'سعر يومي ثابت باستخدام كوبون',desc:'سعر يومي مخفّض يُطبَّق عند إدخال كود الكوبون',needsCode:1,valLabel:'السعر اليومي الثابت (ر.س)',valPh:'99',valDef:'99',needModel:1},
+    {k:'pct_auto',t:'خصم بنسبة مئوية يُطبق تلقائيًا',desc:'نسبة خصم تُضاف تلقائياً بدون كود',needsCode:0,valLabel:'نسبة الخصم %',valPh:'15',valDef:'15'},
+    {k:'daily_auto',t:'سعر يومي ثابت يُطبق تلقائيًا',desc:'سعر يومي مخفّض يُطبَّق تلقائياً حسب السيارة/الموديل',needsCode:0,valLabel:'السعر اليومي الثابت (ر.س)',valPh:'120',valDef:'120',needModel:1},
+    {k:'delivery',t:'توصيل مجاني / إعفاء من رسوم التسليم',desc:'تخفيض أو إعفاء كامل من رسوم التسليم بين المدن',needsCode:0,valLabel:'نسبة الإعفاء %',valPh:'100',valDef:'100',delivery:1},
+    {k:'welcome',t:'ترحيب تلقائي',desc:'كوبون يُعيَّن تلقائياً للعميل الجديد عند التسجيل',needsCode:1,valLabel:'نسبة الخصم %',valPh:'10',valDef:'10'}
+  ];
+  const offerTypeOpts=(sel)=>OFFER_TYPES.map(t=>`<option value="${t.k}" ${t.k===(sel||'pct_coupon')?'selected':''}>${t.t}</option>`).join('');
+  const offerForm=(selK)=>{
+    const t=OFFER_TYPES.find(x=>x.k===(selK||'pct_coupon'))||OFFER_TYPES[0];
+    return `
+    <div class="note info" id="of-type-desc" style="margin-bottom:12px">${t.desc}</div>
+    ${fld('نوع الخصم',`<select id="of-type" class="native-input" onchange="WafraOps.onOfferTypeChange(this.value)">
+      ${offerTypeOpts(t.k)}
+    </select>`)}
+    <div id="of-code-wrap" style="${t.needsCode?'':'display:none'}">${fld('كود الكوبون',`<input id="of-code" class="native-input" value="SUMMER25" placeholder="مثال SUMMER25"><div class="hint">أحرف إنجليزية كبيرة وأرقام فقط</div>`)}</div>
+    <div id="of-delivery-wrap" style="${t.delivery?'':'display:none'}">
+      <div class="frow">${fld('نوع الإعفاء',`<select id="of-ex-type" class="native-input"><option>إعفاء كامل</option><option>نسبة مئوية</option></select>`)}
+        ${fld('نسبة الإعفاء %',`<input id="of-ex-pct" class="native-input" type="number" value="100">`)}</div>
+      <div class="frow">${fld('من (مدينة الاستلام)',`<select id="of-from-city" class="native-input"><option>الرياض</option><option>جدة</option><option>الدمام</option><option>كل المدن</option></select>`)}
+        ${fld('إلى (مدينة التسليم)',`<select id="of-to-city" class="native-input"><option>جدة</option><option>الرياض</option><option>الدمام</option><option>كل المدن</option></select>`)}</div>
+    </div>
+    <div id="of-val-wrap" style="${t.delivery?'display:none':''}">${fld(t.valLabel,`<input id="of-val" class="native-input" value="${t.valDef}" placeholder="${t.valPh}">`)}</div>
+    <div class="frow">${fld('المتحمل للتكلفة',`<select id="of-bearer" class="native-input"><option>المنصة</option><option>المزود</option><option>مشترك</option></select>`)}
       ${fld('المزود (اختياري)',`<select id="of-prov" class="native-input"><option>كل المزودين / المنصة</option><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}</div>
+    <div class="frow">${fld('المدينة (اختياري)',`<select id="of-city" class="native-input"><option>كل المدن</option><option>الرياض</option><option>جدة</option><option>الدمام</option><option>الخبر</option></select>`)}
+      ${fld('الفرع (اختياري)',`<select id="of-branch" class="native-input"><option>كل الفروع</option><option>مطار الملك خالد</option><option>جدة الرقمية</option><option>الخبر التشغيلي</option></select>`)}</div>
+    <div class="frow">${fld(t.needModel?'الموديل (إلزامي)':'الموديل (اختياري)',`<select id="of-model" class="native-input" multiple size="3" style="min-height:72px"><option selected>كامري</option><option>إلنترا</option><option>K5</option><option>صني</option><option>كل الموديلات</option></select><div class="hint">يمكن اختيار أكثر من موديل</div>`)}
+      ${fld(t.needModel?'نوع السيارة (إلزامي)':'نوع السيارة (اختياري)',`<select id="of-car-type" class="native-input" multiple size="3" style="min-height:72px"><option selected>سيدان</option><option>اقتصادية</option><option>SUV</option><option>كل الأنواع</option></select><div class="hint">يمكن اختيار أكثر من نوع</div>`)}</div>
+    <div class="frow">${fld('تاريخ البداية',`<input id="of-start" class="native-input" type="date" value="2026-09-01">`)}
+      ${fld('تاريخ النهاية',`<input id="of-end" class="native-input" type="date" value="2026-09-30">`)}</div>
+    <div class="frow">${fld('حد الاستخدام',`<input id="of-cap" class="native-input" value="2000" placeholder="100 أو غير محدود">`)}
+      ${fld('سقف الاستخدام لكل عميل',`<input id="of-per" class="native-input" value="1">`)}</div>
+    <div class="frow">${fld('الحد الأدنى لمبلغ الحجز (اختياري)',`<input id="of-min" class="native-input" value="200" placeholder="ر.س">`)}
+      ${fld('حد أدنى للأيام (اختياري)',`<input id="of-min-days" class="native-input" type="number" value="1">`)}</div>
     ${fld('الشريحة المستهدفة',`<select id="of-seg" class="native-input">${targetOpts}</select>`)}
     ${fld('قواعد التطبيق',`<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
       <label style="display:flex;gap:8px;align-items:center;font:600 12.5px Cairo"><input type="checkbox" id="of-r1" checked> لا يُجمع مع عروض أخرى</label>
       <label style="display:flex;gap:8px;align-items:center;font:600 12.5px Cairo"><input type="checkbox" id="of-r2"> استثناء فئة السيارات الفاخرة</label>
       <label style="display:flex;gap:8px;align-items:center;font:600 12.5px Cairo"><input type="checkbox" id="of-r3"> لا يسري في أوقات الذروة</label>
     </div>`)}`;
+  };
 
   M.newCoupon=()=>modal('كوبون جديد',offerForm(),
     `<button class="btn" onclick="WafraOps.saveOffer()">إنشاء العرض</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
 
   Object.assign(WafraOps,{
+    onOfferTypeChange:k=>{
+      const body=document.querySelector('#mc .modal-b');
+      if(!body) return;
+      body.innerHTML=offerForm(k);
+    },
     openCreateOffer:()=>openM(modal('كوبون جديد',offerForm(),
       `<button class="btn" onclick="WafraOps.saveOffer()">إنشاء العرض</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`)),
     saveOffer:()=>{
-      const code=document.getElementById('of-code')?.value?.trim()||'OFFER';
-      const type=document.getElementById('of-type')?.value||'';
+      const typeEl=document.getElementById('of-type');
+      const typeKey=typeEl?.value||'pct_coupon';
+      const typeMeta=OFFER_TYPES.find(x=>x.k===typeKey);
+      const type=typeMeta?.t||typeKey;
+      const code=typeMeta?.needsCode===0
+        ? ('AUTO-'+typeKey.toUpperCase())
+        : (document.getElementById('of-code')?.value?.trim()||'OFFER');
       pushH('offers',{id:code,action:'إنشاء عرض',detail:type});
-      closeM(); toast(`تم إنشاء العرض ${code}.`); render();
+      closeM(); toast(`تم إنشاء العرض «${type}»${typeMeta?.needsCode!==0?` · ${code}`:''}.`); render();
     },
     setOffersTab:t=>{window.__offersTab=t; if(t==='list'&&!window.__offersStatus) window.__offersStatus='نشطة'; render();},
     setOffersStatus:s=>{window.__offersTab='list'; window.__offersStatus=s; render();},

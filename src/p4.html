@@ -498,7 +498,15 @@ M.rejectSettlement = () => modal('رفض كشف التسوية', `
   `<button class="btn danger" onclick="closeM()">رفض الكشف</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
 
 M.newCoupon = () => modal('كوبون جديد', `
-  <div class="frow">${fld('الكود', inp('SUMMER25'))}${fld('نوع الخصم', sel('نسبة مئوية'))}</div>
+  <div class="frow">${fld('الكود', inp('SUMMER25'))}${fld('نوع الخصم', `<select class="native-input">
+    <option>خصم بنسبة مئوية باستخدام كوبون</option>
+    <option>خصم ثابت على إجمالي الحجز باستخدام كوبون</option>
+    <option>سعر يومي ثابت باستخدام كوبون</option>
+    <option>خصم بنسبة مئوية يُطبق تلقائيًا</option>
+    <option>سعر يومي ثابت يُطبق تلقائيًا</option>
+    <option>توصيل مجاني / إعفاء من رسوم التسليم</option>
+    <option>ترحيب تلقائي</option>
+  </select>`)}</div>
   <div class="frow">${fld('القيمة', inp('25%'))}${fld('سقف قيمة الخصم', inp('150 ر.س'))}</div>
   <div class="frow">${fld('الحد الأدنى للحجز', inp('200 ر.س'))}${fld('المتحمّل للتكلفة', sel('المنصّة'))}</div>
   <div class="frow">${fld('سقف الاستخدام الكلي', inp('2000'))}${fld('سقف الاستخدام لكل عميل', inp('1'))}</div>
