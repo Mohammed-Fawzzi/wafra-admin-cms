@@ -219,43 +219,55 @@
 
   S.settlements=()=>{
     const sub=window.__settleSubTab||'list';
-    const raw=O.settlements();
-    const {head}=splitShell(raw);
-    const body=grabBody(raw);
-    /* إزالة تابات المنازعات/الفواتير/الغرامات — صفحة مستقلة */
+    const head=phead('تسويات المزوّدين','دورة التسوية الأسبوعية — الاعتماد على خطوتين قبل التحويل',['FR-ADP-04','FR-ADP-05'],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('تسويات-المزودين','Excel')">⤓ تصدير</button><button class="btn" onclick="WafraOps.openCreateSettlement&&WafraOps.openCreateSettlement()">إنشاء دورة تسوية</button>`)
+      +note('info','دورة 22 – 28 أغسطس 2026 جاهزة للاعتماد','11 كشفاً بإجمالي 486,300 ر.س. لا يتم التحويل قبل اعتماد المسؤول الأعلى وتسجيل مرجع الحوالة.');
+    const topTabs=`<div class="tabs">
+      <button type="button" class="tab ${sub==='list'?'on':''}" onclick="window.__settleSubTab='list';render()">التسويات <span class="n">11</span></button>
+      <button type="button" class="tab ${sub==='history'?'on':''}" onclick="window.__settleSubTab='history';render()">السجل</button>
+    </div>`;
     if(sub==='history'){
-      return head+card(`<div class="tabs">
-        <button type="button" class="tab" onclick="window.__settleSubTab='list';render()">التسويات</button>
-        <button type="button" class="tab on" onclick="window.__settleSubTab='history';render()">السجل</button>
-      </div><div class="card-b">
+      return head+card(`${topTabs}<div class="card-b">
         <div class="st-sec"><div><h3>سجل التسويات</h3><p>تاريخ إنشاء واعتماد وتحويل دورات التسوية</p></div></div>
         ${histTable(loadHist().settlements||[])}
       </div>`);
     }
-    return head+card(`<div class="tabs">
-      <button type="button" class="tab on" onclick="window.__settleSubTab='list';render()">التسويات</button>
-      <button type="button" class="tab" onclick="window.__settleSubTab='history';render()">السجل</button>
-    </div><div class="card-b">${body}</div>`);
+    const listBody=tabs([{t:'قيد المراجعة',n:11,on:1},{t:'معتمدة',n:3},{t:'محوّلة',n:142},{t:'مرفوضة',n:2}])
+      +filters(['الدورة','المزوّد','الحالة'],'ابحث باسم المزوّد أو رقم الكشف…')
+      +table(['رقم الكشف','المزوّد','الحجوزات','إجمالي الإيراد','العمولة','خصومات وتظلّمات','الصافي المستحقّ','الحالة','الإجراءات'],[
+        [{v:'ST-2214',c:'strong num'},'شركة الصحراء','168',{v:'286,400',c:'num'},{v:'34,368',c:'num'},{v:'— 0',c:'num'},{v:'252,032',c:'strong num'},bdg('قيد المراجعة','a'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
+        [{v:'ST-2215',c:'strong num'},'كي رنت','121',{v:'241,900',c:'num'},{v:'33,866',c:'num'},{v:'— 960',c:'num'},{v:'207,074',c:'strong num'},bdg('قيد المراجعة','a'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
+        [{v:'ST-2216',c:'strong num'},'الوسام كار','74',{v:'96,200',c:'num'},{v:'14,430',c:'num'},{v:'— 1,850 (محتجز)',c:'num'},{v:'79,920',c:'strong num'},bdg('محتجز — تظلّم','r'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
+        [{v:'ST-2217',c:'strong num'},'مسار','96',{v:'188,200',c:'num'},{v:'26,348',c:'num'},{v:'— 420',c:'num'},{v:'161,432',c:'strong num'},bdg('معتمدة','b'),`<button class="btn sm ghost">تسجيل التحويل</button>`],
+      ])
+      +pager(28,1);
+    return head+card(`${topTabs}<div class="card-b">${listBody}</div>`);
   };
 
   S.invoices=()=>{
     const sub=window.__invSubTab||'list';
-    const raw=O.invoices();
-    const {head}=splitShell(raw);
-    const body=grabBody(raw);
+    const head=phead('الفواتير','كل الفواتير الصادرة وإشعارات التعديل',['FR-ADP-08'],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('متابعة-الفواتير','Excel')">⤓ تصدير</button>`);
+    const topTabs=`<div class="tabs">
+      <button type="button" class="tab ${sub==='list'?'on':''}" onclick="window.__invSubTab='list';render()">الفواتير <span class="n">3,540</span></button>
+      <button type="button" class="tab ${sub==='history'?'on':''}" onclick="window.__invSubTab='history';render()">السجل</button>
+    </div>`;
     if(sub==='history'){
-      return head+card(`<div class="tabs">
-        <button type="button" class="tab" onclick="window.__invSubTab='list';render()">الفواتير</button>
-        <button type="button" class="tab on" onclick="window.__invSubTab='history';render()">السجل</button>
-      </div><div class="card-b">
+      return head+card(`${topTabs}<div class="card-b">
         <div class="st-sec"><div><h3>سجل الفواتير</h3><p>تاريخ إصدار المطالبات وتأكيد التحويلات البنكية</p></div></div>
         ${histTable(loadHist().invoices||[])}
       </div>`);
     }
-    return head+card(`<div class="tabs">
-      <button type="button" class="tab on" onclick="window.__invSubTab='list';render()">الفواتير</button>
-      <button type="button" class="tab" onclick="window.__invSubTab='history';render()">السجل</button>
-    </div><div class="card-b">${body}</div>`);
+    const listBody=tabs([{t:'الكل',n:'3,540',on:1},{t:'صادرة',n:'3,486'},{t:'مُعدَّلة',n:38},{t:'ملغاة',n:16}])
+      +filters(['المزوّد','الحالة','التاريخ'],'ابحث برقم الفاتورة أو الحجز…')
+      +table(['رقم الفاتورة','الحجز','العميل','المزوّد','الإجمالي','ضريبة القيمة المضافة','تاريخ الإصدار','الحالة','الإجراءات'],[
+        [{v:'INV-10245',c:'strong num'},{v:'BK-20411',c:'num'},'منى القحطاني','مسار',{v:'2,480.00',c:'num'},{v:'323.48',c:'num'},'2026/08/26',bdg('صادرة','g'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
+        [{v:'INV-10244',c:'strong num'},{v:'BK-20396',c:'num'},'وليد الحربي','مسار',{v:'1,090.00',c:'num'},{v:'142.17',c:'num'},'2026/08/26',bdg('مُعدَّلة — إشعار مدين','a'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
+        [{v:'INV-10243',c:'strong num'},{v:'BK-20388',c:'num'},'ماجد السبيعي','مسار',{v:'620.00',c:'num'},{v:'80.87',c:'num'},'2026/08/24',bdg('صادرة','g'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
+        [{v:'INV-10240',c:'strong num'},{v:'BK-20355',c:'num'},'تركي العنزي','الوسام كار',{v:'1,960.00',c:'num'},{v:'255.65',c:'num'},'2026/08/21',bdg('قيد المراجعة — تظلّم','r'),acts([{i:'👁'},{i:'⤓'}])],
+      ])
+      +pager(60,12);
+    return head+card(`${topTabs}<div class="card-b">${listBody}</div>`);
   };
 
   /* —— استردادات العملاء —— */

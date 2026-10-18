@@ -74,7 +74,49 @@
 
   Object.assign(WafraOps,{
     schedToggle:i=>{const s=window.__schedState[i]; if(!s) return; s.on=!s.on; render();},
-    schedGenerate:i=>{const s=window.__schedState[i]; toast(`توليد الآن: ${s?s.t:'التقرير'} — جاهز للتنزيل.`);},
+    schedGenerate:i=>{
+      const s=window.__schedState[i];
+      if(!s){ toast('التقرير غير موجود.'); return; }
+      const stamp=new Date().toLocaleString('ar-SA');
+      const safe=String(s.t||'تقرير').replace(/[\\/:*?"<>|]/g,'-').trim()||'تقرير';
+      const wantsPdf=/PDF/i.test(s.d||'');
+      const wantsExcel=/Excel|CSV/i.test(s.d||'');
+      const enc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+      const rows=[
+        ['التقرير','الوصف','حالة الجدولة','وقت التوليد'],
+        [s.t,s.d,s.on?'مفعّل':'موقوف',stamp],
+        ['إيرادات الفترة','186,400 ر.س','—',stamp],
+        ['عدد الحجوزات','142','—',stamp],
+        ['نسبة التشغيل','78%','—',stamp],
+        ['متوسط التقييم','4.6 / 5','—',stamp]
+      ];
+      const csv='\ufeff'+rows.map(r=>r.map(enc).join(',')).join('\n');
+      const trigger=(blob,filename)=>{
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download=filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+      };
+      if(wantsExcel||!wantsPdf){
+        trigger(new Blob([csv],{type:'text/csv;charset=utf-8'}),`${safe}.csv`);
+      }
+      if(wantsPdf||!wantsExcel){
+        const html=`<!DOCTYPE html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>${safe}</title>
+          <body style="font-family:Tahoma,Arial,sans-serif;padding:32px;color:#1E2A44">
+          <h1>${s.t}</h1><p>${s.d}</p><p>وقت التوليد: ${stamp}</p>
+          <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%">
+          ${rows.slice(1).map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}
+          </table><p style="margin-top:24px;color:#7A869E">تقرير تجريبي من لوحة وفرا — توليد يدوي</p>
+          <script>onload=()=>print()<\/script></body></html>`;
+        const w=window.open('','_blank');
+        if(w){ w.document.write(html); w.document.close(); }
+        else trigger(new Blob([html],{type:'text/html;charset=utf-8'}),`${safe}.html`);
+      }
+      s.next='تم التوليد الآن';
+      render();
+      toast(`تم توليد «${s.t}»${s.on?'':' (الجدول متوقف — التوليد اليدوي متاح)'}.`);
+    },
     schedNew:()=>{
       openM(modal('جدول تقرير جديد', `
         <div class="frow">

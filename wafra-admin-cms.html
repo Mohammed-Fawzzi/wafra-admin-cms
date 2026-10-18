@@ -1146,48 +1146,89 @@ ${note('warn','لا يُصرف قبل اعتماد المسؤول الأعلى',
 ]));
 
 /* ========== 24. استردادات العملاء ========== */
+/* ملاحظات المالية: زر إنشاء استرداد (إرجاع مبكر/متبقي الدفعة) + سجل + فلاتر تاريخ/حالة */
 S.refunds = () => {
-  const chk = id => `<input type="checkbox" class="wafra-check" aria-label="تحديد ${id}">`;
-  const amt = v => `<span class="rf-amt">${v}</span>`;
-  const status = `<span class="badge a">بانتظار المراجعة</span>`;
-  const acts = (rf, bk) => `<div class="st-actions rf-acts">
-    <a class="btn ghost sm" href="#booking" onclick="WafraOps.openBooking&&WafraOps.openBooking('${bk}')" title="اطلاع على تفاصيل الحجز">تفاصيل الحجز</a>
-    <button class="btn sm st-approve" onclick="WafraOps.approveRefund&&WafraOps.approveRefund('${rf}')">موافقة</button>
-    <button class="btn danger sm" onclick="WafraOps.rejectRefund&&WafraOps.rejectRefund('${rf}')">رفض</button>
-  </div>`;
+  const sub = window.__refundSubTab || 'list';
+  const st = window.__rfStatus || 'الكل';
+  const from = window.__rfFrom || '';
+  const to = window.__rfTo || '';
+  const tone = s => s === 'معتمد' || s === 'مكتمل' ? 'g' : s === 'مرفوض' ? 'r' : 'a';
+  const statusPill = s => (typeof pill === 'function' ? pill(s) : bdg(s, tone(s)));
   const rows = [
-    ['RF-7000','BK-28076','سلطان القحطاني','3 ألف ر.س','عدم توفر السيارة'],
-    ['RF-7001','BK-31864','شهد الشهري','1.5 ألف ر.س','خصم مضاعف'],
-    ['RF-7002','BK-29110','فهد العتيبي','99 ر.س','إلغاء الحجز'],
-    ['RF-7003','BK-30542','نورة الدوسري','2.2 ألف ر.س','عطل السيارة'],
-    ['RF-7004','BK-27481','ماجد السبيعي','450 ر.س','عدم توفر السيارة'],
-    ['RF-7005','BK-31209','ريم الزهراني','1.1 ألف ر.س','خصم مضاعف'],
-    ['RF-7006','BK-29833','خالد المطيري','780 ر.س','إلغاء الحجز'],
-    ['RF-7007','BK-32155','سارة العتيبي','1.8 ألف ر.س','عطل السيارة'],
-    ['RF-7008','BK-26740','وليد الحربي','320 ر.س','إلغاء الحجز'],
+    {id:'RF-7000',booking:'BK-28076',customer:'سلطان القحطاني',amount:'3,000.00',reason:'عدم توفر السيارة',status:'بانتظار المراجعة',date:'2026-09-28'},
+    {id:'RF-7001',booking:'BK-31864',customer:'شهد الشهري',amount:'1,500.00',reason:'خصم مضاعف',status:'بانتظار المراجعة',date:'2026-09-27'},
+    {id:'RF-7002',booking:'BK-29110',customer:'فهد العتيبي',amount:'99.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-26'},
+    {id:'RF-7003',booking:'BK-30542',customer:'نورة الدوسري',amount:'2,200.00',reason:'عطل السيارة',status:'بانتظار المراجعة',date:'2026-09-25'},
+    {id:'RF-7004',booking:'BK-27481',customer:'ماجد السبيعي',amount:'450.00',reason:'عدم توفر السيارة',status:'معتمد',date:'2026-09-22'},
+    {id:'RF-7005',booking:'BK-31209',customer:'ريم الزهراني',amount:'1,100.00',reason:'خصم مضاعف',status:'مرفوض',date:'2026-09-20'},
+    {id:'RF-7006',booking:'BK-29833',customer:'خالد المطيري',amount:'780.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-18'},
+    {id:'RF-7007',booking:'BK-32155',customer:'سارة العتيبي',amount:'1,800.00',reason:'عطل السيارة',status:'مكتمل',date:'2026-09-15'},
+    {id:'RF-7008',booking:'BK-26740',customer:'وليد الحربي',amount:'320.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-12'},
   ];
-  return phead('استردادات العملاء','طلبات استرداد المبالغ للعملاء',['FR-ADP-06'])
-  + card(`<div class="rf-toolbar">
-      <div class="fsearch">⌕ <input placeholder="بحث..." oninput="WafraOps.searchHint&&WafraOps.searchHint(this.value)"></div>
-      <div class="rf-tools">
-        <button class="btn ghost sm" onclick="WafraOps.demoAction&&WafraOps.demoAction('حفظ العرض')">💾 حفظ العرض</button>
-        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('استردادات العملاء','PDF')">PDF</button>
-        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('استردادات العملاء','Excel')">Excel ⤓</button>
+  let items = rows.slice();
+  if (st && st !== 'الكل') items = items.filter(x => x.status === st);
+  if (from) items = items.filter(x => x.date >= from);
+  if (to) items = items.filter(x => x.date <= to);
+
+  const acts = (rf, bk, status) => {
+    if (status !== 'بانتظار المراجعة') {
+      return `<div class="st-actions"><a class="btn ghost sm" href="#booking" onclick="WafraOps.openBooking&&WafraOps.openBooking('${bk}')">تفاصيل الحجز</a></div>`;
+    }
+    return `<div class="st-actions rf-acts">
+      <a class="btn ghost sm" href="#booking" onclick="WafraOps.openBooking&&WafraOps.openBooking('${bk}')">تفاصيل الحجز</a>
+      <button class="btn sm st-approve" onclick="WafraOps.approveRefund&&WafraOps.approveRefund('${rf}')">موافقة</button>
+      <button class="btn danger sm" onclick="WafraOps.rejectRefund&&WafraOps.rejectRefund('${rf}')">رفض</button>
+    </div>`;
+  };
+
+  const headActs = `<button class="btn coral" onclick="WafraOps.openCreateRefund&&WafraOps.openCreateRefund()">＋ إنشاء استرداد</button>
+    <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('استردادات العملاء','PDF')">PDF</button>
+    <button class="btn ghost sm" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('استردادات-العملاء','Excel')">Excel ⤓</button>`;
+
+  if (sub === 'history') {
+    const hist = (window.__rfHistFallback || [
+      {when:'2026/09/26 12:40',id:'RF-6995',action:'موافقة على الاسترداد',by:'إدارة · سارة العتيبي',detail:'1,200 ر.س · إرجاع مبكر'},
+      {when:'2026/09/24 09:15',id:'RF-6990',action:'رفض الاسترداد',by:'إدارة · محمد الصغير',detail:'لا يتوافق مع سياسة الإلغاء'},
+      {when:'2026/09/20 15:30',id:'RF-6988',action:'إنشاء استرداد',by:'إدارة · سارة العتيبي',detail:'BK-28010 · متبقي من الدفعة'},
+    ]);
+    return phead('استردادات العملاء','طلبات استرداد المبالغ للعملاء',[], headActs)
+      + card(`<div class="tabs">
+          <button type="button" class="tab" onclick="window.__refundSubTab='list';render()">الطلبات</button>
+          <button type="button" class="tab on" onclick="window.__refundSubTab='history';render()">السجل</button>
+        </div><div class="card-b">
+          <div class="st-sec"><div><h3>سجل الاستردادات</h3><p>تاريخ إنشاء وموافقة ورفض طلبات الاسترداد</p></div></div>
+          ${table(['الوقت','المرجع','الإجراء','بواسطة','التفاصيل'], hist.map(r => [{v:r.when,c:'num'},{v:r.id,c:'strong num'},r.action,r.by||'—',r.detail||'—']))}
+        </div>`);
+  }
+
+  return phead('استردادات العملاء','طلبات استرداد المبالغ للعملاء — بما فيها الإرجاع المبكر ومتبقي الدفعة',[], headActs)
+    + card(`<div class="tabs">
+        <button type="button" class="tab on" onclick="window.__refundSubTab='list';render()">الطلبات</button>
+        <button type="button" class="tab" onclick="window.__refundSubTab='history';render()">السجل</button>
       </div>
-    </div>`
-  + table([`<input type="checkbox" class="wafra-check" aria-label="تحديد الكل">`,'الطلب','الحجز','العميل','المبلغ','السبب','الحالة','إجراءات'],
-    rows.map(([rf,bk,cust,money,reason])=>[
-      chk(rf),
-      {v:rf,c:'strong num'},
-      {v:`<a class="st-link" href="#booking" onclick="WafraOps.openBooking&&WafraOps.openBooking('${bk}')">${bk}</a>`,c:'num'},
-      cust,
-      amt(money),
-      reason,
-      status,
-      acts(rf,bk)
-    ])
-  )
-  + `<div class="rf-foot"><span>9 سجل</span></div>`);
+      <div class="filters" style="padding:12px 16px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+        ${fld('من تاريخ',`<input id="rf-f-from" class="native-input" type="date" value="${from}" onchange="window.__rfFrom=this.value;render()">`)}
+        ${fld('إلى تاريخ',`<input id="rf-f-to" class="native-input" type="date" value="${to}" onchange="window.__rfTo=this.value;render()">`)}
+        ${fld('الحالة',`<select id="rf-f-status" class="native-input" onchange="window.__rfStatus=this.value;render()">
+          ${['الكل','بانتظار المراجعة','معتمد','مرفوض','مكتمل'].map(x => `<option ${st===x?'selected':''}>${x}</option>`).join('')}
+        </select>`)}
+        <div class="fsearch" style="flex:1;min-width:180px">⌕ <input placeholder="بحث برقم الطلب أو الحجز أو العميل…"></div>
+      </div>
+      <div class="card-b">${table(
+        ['الطلب','الحجز','العميل','المبلغ','السبب','التاريخ','الحالة','إجراءات'],
+        items.map(r => [
+          {v:r.id,c:'strong num'},
+          {v:`<a class="st-link" href="#booking" onclick="WafraOps.openBooking&&WafraOps.openBooking('${r.booking}')">${r.booking}</a>`,c:'num'},
+          r.customer,
+          {v:r.amount+' ر.س',c:'num'},
+          r.reason,
+          {v:r.date,c:'num'},
+          statusPill(r.status),
+          acts(r.id,r.booking,r.status)
+        ])
+      )}
+      <div class="rf-foot"><span>${items.length} سجل</span></div>
+      </div>`);
 };
 
 /* ========== 25. الفواتير ========== */
@@ -3606,12 +3647,16 @@ M.qualityReport = () => modal('بلاغ جودة', `
   ${swRow('إيقاف الظهور حتى المعالجة','إخفاء الفرع/السيارة من البحث فوراً',0)}`,
   `<button class="btn coral" onclick="closeM()">تسجيل البلاغ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
 
-M.createRefund = () => modal('إنشاء استرداد', `
-  <div class="frow">${fld('رقم الحجز', inp('','BK-20418'))}${fld('العميل', inp('','أحمد الشمري'))}</div>
-  <div class="frow">${fld('المبلغ', inp('','185.00 ر.س'))}${fld('السبب', sel('إلغاء إداري · خطأ تحصيل · تعويض'))}</div>
-  ${fld('ملاحظة داخلية', `<div class="inp" style="min-height:70px;color:#AAB3C7">تُسجَّل في سجل التدقيق…</div>`)}
-  ${note('warn','الاسترداد يخصم من مستحقّات المزوّد','يُنفَّذ عبر بوابة الدفع ويصل إشعار للعميل والمزوّد.')}`,
-  `<button class="btn coral" onclick="closeM()">إنشاء الاسترداد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`);
+M.createRefund = () => {
+  if (typeof WafraOps !== 'undefined' && typeof WafraOps.openCreateRefund === 'function') return WafraOps.openCreateRefund();
+  return openM(modal('إنشاء استرداد', `
+    ${note('info','الحجوزات المؤهّلة','حجوزات تم استلامها ولم يُكمل العميل مدة الحجز كاملة، ويتبقّى مبلغ من الدفعة الأصلية.')}
+    <div class="frow">${fld('رقم الحجز', inp('','BK-33012'))}${fld('العميل', inp('','عبدالله الغامدي'))}</div>
+    <div class="frow">${fld('المتبقي من الدفعة', inp('','1,371.00 ر.س'))}${fld('المستخدم/المحجوز', inp('','3/7 يوم'))}</div>
+    ${fld('سبب الاسترداد', sel('إرجاع مبكر — متبقي من الدفعة'))}
+    ${fld('ملاحظات', `<div class="inp" style="min-height:70px;color:#AAB3C7">اختياري…</div>`)}`,
+    `<button class="btn coral" onclick="closeM()">إنشاء الاسترداد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+};
 
 M.confirmDeleteAccount = () => modal('تأكيد حذف الحساب', `
   ${note('dngr','الحذف نهائي بعد انتهاء فترة الاحتفاظ','لن يظهر الحساب في البحث، وتُؤرشف بياناته وفق سياسة الخصوصية.')}
@@ -3709,7 +3754,7 @@ const NAV = [
     {k:'coupons',t:'الكوبونات',i:'🎟'},
     {k:'welcomeCoupon',t:'كوبون الترحيب',i:'🎁'},
     {k:'couponGov',t:'حوكمة الكوبونات',i:'🛡',n:2},
-    {k:'campaigns',t:'الحملات',i:'📣'},
+    {k:'campaigns',t:'الحملات الترويجية',i:'📣'},
     {k:'banners',t:'البانرات',i:'🖼'},
     {k:'abTest',t:'اختبار A/B',i:'🆎',n:3},
     {k:'segments',t:'تجزئة الجمهور',i:'👥'},
@@ -4940,7 +4985,7 @@ document.querySelectorAll('.user-chip .nm').forEach(el=>{ if(el.textContent.incl
 
   const providerGroup=NAV.find(g=>g.g==='المزوّدون'); if(providerGroup&&!providerGroup.items.some(x=>x.k==='providerSetup'))providerGroup.items.push({k:'providerSetup',t:'تهيئة مزود وفرع',i:'＋'});
   const fleetGroup=NAV.find(g=>g.g==='إدارة الأسطول'); if(fleetGroup){const q=fleetGroup.items.find(x=>x.k==='fleetReview');if(q)q.t='مراقبة جودة الأسطول';}
-  const marketing=NAV.find(g=>g.g==='التسويق'); if(marketing){['coupons','campaigns','banners','vendorAds'].forEach(k=>{const i=marketing.items.find(x=>x.k===k);if(i)i.t+=' — تصدير';});}
+  const marketing=NAV.find(g=>g.g==='التسويق'); if(marketing){['coupons','banners','vendorAds'].forEach(k=>{const i=marketing.items.find(x=>x.k===k);if(i)i.t+=' — تصدير';});}
   const reports=NAV.find(g=>g.g==='التقارير'); if(reports){const a=reports.items.find(x=>x.k==='analytics'); if(a)a.t='التحليلات'; else reports.items.push({k:'analytics',t:'التحليلات',i:'◫'});}
   NAV.forEach(g=>g.items.forEach(i=>window.TITLES[i.k]=i.t)); render();
 })();
@@ -6743,7 +6788,49 @@ function pill(value){
 
   Object.assign(WafraOps,{
     schedToggle:i=>{const s=window.__schedState[i]; if(!s) return; s.on=!s.on; render();},
-    schedGenerate:i=>{const s=window.__schedState[i]; toast(`توليد الآن: ${s?s.t:'التقرير'} — جاهز للتنزيل.`);},
+    schedGenerate:i=>{
+      const s=window.__schedState[i];
+      if(!s){ toast('التقرير غير موجود.'); return; }
+      const stamp=new Date().toLocaleString('ar-SA');
+      const safe=String(s.t||'تقرير').replace(/[\\/:*?"<>|]/g,'-').trim()||'تقرير';
+      const wantsPdf=/PDF/i.test(s.d||'');
+      const wantsExcel=/Excel|CSV/i.test(s.d||'');
+      const enc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+      const rows=[
+        ['التقرير','الوصف','حالة الجدولة','وقت التوليد'],
+        [s.t,s.d,s.on?'مفعّل':'موقوف',stamp],
+        ['إيرادات الفترة','186,400 ر.س','—',stamp],
+        ['عدد الحجوزات','142','—',stamp],
+        ['نسبة التشغيل','78%','—',stamp],
+        ['متوسط التقييم','4.6 / 5','—',stamp]
+      ];
+      const csv='\ufeff'+rows.map(r=>r.map(enc).join(',')).join('\n');
+      const trigger=(blob,filename)=>{
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download=filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+      };
+      if(wantsExcel||!wantsPdf){
+        trigger(new Blob([csv],{type:'text/csv;charset=utf-8'}),`${safe}.csv`);
+      }
+      if(wantsPdf||!wantsExcel){
+        const html=`<!DOCTYPE html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>${safe}</title>
+          <body style="font-family:Tahoma,Arial,sans-serif;padding:32px;color:#1E2A44">
+          <h1>${s.t}</h1><p>${s.d}</p><p>وقت التوليد: ${stamp}</p>
+          <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%">
+          ${rows.slice(1).map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}
+          </table><p style="margin-top:24px;color:#7A869E">تقرير تجريبي من لوحة وفرا — توليد يدوي</p>
+          <script>onload=()=>print()<\/script></body></html>`;
+        const w=window.open('','_blank');
+        if(w){ w.document.write(html); w.document.close(); }
+        else trigger(new Blob([html],{type:'text/html;charset=utf-8'}),`${safe}.html`);
+      }
+      s.next='تم التوليد الآن';
+      render();
+      toast(`تم توليد «${s.t}»${s.on?'':' (الجدول متوقف — التوليد اليدوي متاح)'}.`);
+    },
     schedNew:()=>{
       openM(modal('جدول تقرير جديد', `
         <div class="frow">
@@ -7248,8 +7335,51 @@ function pill(value){
     },
     frReportIssue:(pid,cid)=>{
       const s=loadFrStore();
+      const p=s.providers.find(x=>x.id===pid);
       const c=(s.cars[pid]||[]).find(x=>x.id===cid);
-      toast(`تم فتح بلاغ مشكلة${c?' على '+c.car:''}.`);
+      if(!c||!p){ toast('تعذر فتح بلاغ المشكلة.'); return; }
+      window.__frIssue={pid,cid};
+      const types=['رخصة سير منتهية','تأمين منتهٍ','بحاجة صيانة','نظافة/حالة السيارة','أخرى'];
+      let pre='بحاجة صيانة';
+      if(c.licExp) pre='رخصة سير منتهية';
+      else if(c.insExp) pre='تأمين منتهٍ';
+      else if(c.maint||c.status==='بالصيانة') pre='بحاجة صيانة';
+      openM(modal('إبلاغ المزود بمشكلة', `
+        <div style="font:700 12.5px Cairo;color:var(--muted);margin:-4px 0 14px">${c.car} • ${p.name}</div>
+        ${fld('نوع المشكلة', `<select id="fr-issue-type" class="native-input">${types.map(t=>`<option value="${t}" ${t===pre?'selected':''}>${t}</option>`).join('')}</select>`)}
+        ${fld('تفاصيل للمزود (اختياري)', `<textarea id="fr-issue-note" class="native-input" rows="3" placeholder="وصف المشكلة والإجراء المطلوب من المزود..."></textarea>`)}
+        <div class="note info"><span>🔔</span><div>يصل الإشعار إلى حساب المزود في تبويب «إشعارات المزود» ليتصرّف بنفسه.</div></div>
+      `, `<button type="button" class="btn danger" onclick="WafraOps.frSendIssue()">إرسال الإبلاغ</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    frSendIssue:()=>{
+      const ed=window.__frIssue; if(!ed){ toast('لا يوجد بلاغ جاهز للإرسال.'); return; }
+      const s=loadFrStore();
+      const p=s.providers.find(x=>x.id===ed.pid);
+      const c=(s.cars[ed.pid]||[]).find(x=>x.id===ed.cid);
+      if(!c||!p){ toast('تعذر إرسال الإبلاغ.'); return; }
+      const type=document.getElementById('fr-issue-type')?.value||'مشكلة';
+      const details=(document.getElementById('fr-issue-note')?.value||'').trim();
+      s.issues=s.issues||[];
+      s.issues.unshift({
+        id:'ISS-'+Date.now(), pid:ed.pid, cid:ed.cid,
+        car:c.car, provider:p.name, type, details,
+        at:new Date().toLocaleString('ar-SA'), status:'مُرسل'
+      });
+      try{
+        const key='wafra-provider-notifs-v1';
+        const list=JSON.parse(localStorage.getItem(key)||'[]');
+        list.unshift({
+          title:`بلاغ جاهزية: ${type}`,
+          body:`السيارة ${c.car} — ${details||'يرجى معالجة المشكلة'}`,
+          provider:p.name, pid:ed.pid,
+          at:new Date().toLocaleString('ar-SA')
+        });
+        localStorage.setItem(key, JSON.stringify(list.slice(0,50)));
+      }catch(e){}
+      saveFrStore(s);
+      window.__frIssue=null;
+      closeM();
+      toast(`تم إرسال إبلاغ «${type}» إلى ${p.name}.`);
     }
   });
 
@@ -7912,7 +8042,7 @@ function pill(value){
   S.vendors=()=>{
     const f=window.__providerFilters||{};
     const rows=state.providers.filter(p=>(!f.q||`${p.name} ${p.address} ${p.cr||''}`.includes(f.q))&&(!f.city||p.city===f.city)&&(!f.status||p.status===f.status));
-    return phead('إدارة المزودين','بيانات الاعتماد والفروع والسيارات والخدمات لكل مزود',[],`<button class="btn coral" onclick="WafraOps.addProvider()">＋ إضافة مزود</button>`)
+    return phead('إدارة المزودين','بيانات الاعتماد والفروع والسيارات والخدمات لكل مزود',[],`<button class="btn ghost" onclick="WafraOps.exportCurrent('قائمة-المزودين','Excel')">⤓ تصدير Excel</button><button class="btn coral" onclick="WafraOps.addProvider()">＋ إضافة مزود</button>`)
       +card(`<div class="filters">
         <label class="fsearch">⌕ <input id="provider-q" value="${safe(f.q||'')}" placeholder="ابحث باسم المزود أو عنوانه أو السجل" oninput="WafraOps.providerFilters()"></label>
         ${fld('المدينة',`<select id="provider-city" class="native-input" onchange="WafraOps.providerFilters()"><option value="">كل المدن</option>${['الرياض','جدة','الخبر','الدمام','مكة','المدينة'].map(x=>`<option ${f.city===x?'selected':''}>${x}</option>`).join('')}</select>`)}
@@ -8348,12 +8478,14 @@ function pill(value){
       {i:'🚗',l:'إجمالي الأسطول',v:fmt(totals.cars)}
     ]);
     const areaActs=(t,name)=>`<button class="btn ghost sm" onclick="WafraOps.viewArea('${t}','${escAttr(name)}')">استعراض</button> <button class="btn ghost sm" onclick="WafraOps.editArea('${t}','${escAttr(name)}')">تعديل</button>`;
-    return phead('المناطق والمدن','التغطية الجغرافية للمنصة: المزودون والفروع والأسطول والطلب لكل مدينة.',[],
-      `<button class="btn coral" onclick="WafraOps.addArea('${active}')">＋ تعريف ${active==='regions'?'منطقة':'مدينة'}</button>`)
+    return phead('المناطق والمدن','التغطية الجغرافية للمنصة: المزودون والفروع والأسطول والطلب لكل مدينة.',[])
       +summary
-      +card(`<div class="tabs">
-        <button class="tab ${active==='regions'?'on':''}" onclick="WafraOps.areasTab('regions')">المناطق</button>
-        <button class="tab ${active==='cities'?'on':''}" onclick="WafraOps.areasTab('cities')">المدن</button>
+      +card(`<div class="ba-tabbar">
+        <div class="tabs">
+          <button class="tab ${active==='regions'?'on':''}" onclick="WafraOps.areasTab('regions')">المناطق</button>
+          <button class="tab ${active==='cities'?'on':''}" onclick="WafraOps.areasTab('cities')">المدن</button>
+        </div>
+        <button type="button" class="btn coral" onclick="WafraOps.addArea('${active}')">＋ تعريف ${active==='regions'?'منطقة':'مدينة'}</button>
       </div><div class="card-b">${
         active==='regions'
           ?table(['المنطقة','المدن','المزودون','الفروع','السيارات','الحجوزات','الحالة','الإجراءات'],regions.map(r=>{
@@ -8488,6 +8620,9 @@ function pill(value){
 .form-page{max-width:1020px}
 .branch-map{margin-top:12px;min-height:150px;display:grid;place-items:center;text-align:center;border-radius:12px;background:linear-gradient(125deg,#E2E8E3,#E9EEF2);color:var(--navy);font-size:13px}
 .branch-map span{font-size:11px;color:var(--ink-2)}
+.ba-tabbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 16px 0;border-bottom:1px solid var(--line)}
+.ba-tabbar .tabs{margin:0;padding:0;border:0;flex:1;min-width:200px}
+.ba-tabbar .btn{flex:0 0 auto;margin-bottom:8px}
 @media(max-width:800px){.form-page .frow{grid-template-columns:1fr}}
 </style>
 
@@ -8571,7 +8706,15 @@ function pill(value){
     {id:'Q-88',car:'K5 2026',provider:'مسار',branch:'الخبر التشغيلي',plate:'د ط ل 8812',note:'تأخر تحديث الإتاحة',level:'متوسط',date:'27 سبتمبر',status:'قيد المعالجة'},
     {id:'Q-81',car:'إلنترا 2025',provider:'كي رنت',branch:'جدة الشمالية',plate:'ب ن ج 4410',note:'عدم اكتمال صور الفحص',level:'منخفض',date:'25 سبتمبر',status:'مفتوح'}
   ];
-  const rentalLabel=r=>r&&r.trim()?r:'كل أنواع التأجير';
+  const rentalLabel=r=>{
+    if(!r||!String(r).trim()) return 'كل أنواع التأجير';
+    const parts=String(r).split(/[،,|]/).map(x=>x.trim()).filter(Boolean);
+    return parts.length?parts.join(' · '):'كل أنواع التأجير';
+  };
+  const rentalChecks=(selected)=>{
+    const set=new Set(String(selected||'').split(/[،,|]/).map(x=>x.trim()).filter(Boolean));
+    return ['يومي','أسبوعي','شهري'].map(t=>`<label style="display:inline-flex;align-items:center;gap:6px;margin:0 0 0 14px;font:700 13px Cairo;cursor:pointer"><input type="checkbox" class="addon-rental" value="${t}" ${set.has(t)?'checked':''}> ${t}</label>`).join('');
+  };
   const utilRuleText=r=>r.when==='>='?`عند وصول التشغيل إلى ${r.util}% أو أكثر`:`عند وصول التشغيل إلى ${r.util}% أو أقل`;
   const adjRuleText=r=>`${r.adj} ${r.pct}%`;
 
@@ -8676,7 +8819,13 @@ function pill(value){
          ${fld('الوصف',`<input id="addon-desc" class="native-input" value="${safe(a?.desc||'')}" placeholder="وصف مختصر يظهر للعميل">`)}
          <div class="frow">${fld('الرسوم الافتراضية (ر.س)',`<input id="addon-fee" class="native-input" type="number" value="${safe(a?.fee||'35')}">`)}
          ${fld('وحدة التسعير',`<select id="addon-unit" class="native-input"><option ${(!a||a.unit==='يوم')?'selected':''}>يوم</option><option ${a?.unit==='حجز'?'selected':''}>حجز</option></select>`)}</div>
-         ${fld('نوع التأجير',`<select id="addon-rental" class="native-input"><option value="" ${!a?.rental?'selected':''}>بدون اختيار — كل أنواع التأجير</option><option value="يومي" ${a?.rental==='يومي'?'selected':''}>يومي</option><option value="أسبوعي" ${a?.rental==='أسبوعي'?'selected':''}>أسبوعي</option><option value="شهري" ${a?.rental==='شهري'?'selected':''}>شهري</option></select>`,'اتركه بدون اختيار لتفعيل الإضافة على التأجير اليومي والأسبوعي والشهري معاً.')}
+         <div class="fld" style="margin-bottom:12px">
+           <label class="fl">نوع التأجير</label>
+           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#FAFBFE">
+             ${rentalChecks(a?.rental)}
+           </div>
+           <div class="hint">اترك الكل بدون تحديد لتفعيل الإضافة على التأجير اليومي والأسبوعي والشهري معاً.</div>
+         </div>
          ${fld('نطاق التفعيل',`<select id="addon-scope" class="native-input" onchange="WafraOps.addonScopeChange()"><option value="all">كل المزودين / كل الفروع</option><option value="providers">مزودين محددين</option><option value="branches">فروع محددة</option></select>`)}
          <div id="addon-providers-wrap" style="display:none;margin-top:8px">
            <div style="font:700 12px Cairo;margin-bottom:6px">اختر المزودين</div>
@@ -8717,7 +8866,8 @@ function pill(value){
         if(!sel.length){toast('اختر فرعاً واحداً على الأقل.');return;}
         count=sel.length; label=sel.join(' · ');
       }
-      const payload={name,desc:val('addon-desc')||'—',fee:val('addon-fee')||'0',unit:val('addon-unit')||'يوم',rental:val('addon-rental')||'',branches:count,status:'مفعلة'};
+      const rental=[...document.querySelectorAll('.addon-rental:checked')].map(x=>x.value).join('،');
+      const payload={name,desc:val('addon-desc')||'—',fee:val('addon-fee')||'0',unit:val('addon-unit')||'يوم',rental,branches:count,status:'مفعلة'};
       state.fleetAddons=state.fleetAddons||[];
       const edit=window.__addonEdit;
       if(edit!=null&&state.fleetAddons[edit]){
@@ -8733,6 +8883,36 @@ function pill(value){
 
     /* —— الماركات والموديلات —— */
     switchMakeTab:tab=>{window.__makeTab=tab;render();},
+    addMake:()=>{
+      openM(dlg('إضافة ماركة',
+        `${fld('اسم الماركة',`<input id="make-name" class="native-input" placeholder="مثال: تويوتا">`)}
+         ${fld('بلد المنشأ',`<input id="make-country" class="native-input" placeholder="مثال: اليابان">`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveNewMake()">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveNewMake:()=>{
+      const n=val('make-name'); if(!n){toast('أدخل اسم الماركة.');return;}
+      state.fleetMakes=state.fleetMakes||[];
+      if(state.fleetMakes.some(x=>x.name===n)){toast('الماركة موجودة مسبقاً.');return;}
+      state.fleetMakes.unshift({name:n,country:val('make-country')||'—',models:0,cars:'0'});
+      persist(); closeM(); window.__makeTab='makes'; render(); toast(`تمت إضافة ماركة «${n}».`);
+    },
+    addModel:()=>{
+      const makes=state.fleetMakes||[];
+      if(!makes.length){toast('أضف ماركة أولاً قبل إضافة موديل.');window.__makeTab='makes';render();return;}
+      openM(dlg('إضافة موديل',
+        `${fld('اسم الموديل',`<input id="mdl-name" class="native-input" placeholder="مثال: كامري">`)}
+         ${fld('الماركة',`<select id="mdl-make" class="native-input">${makes.map(x=>`<option>${x.name}</option>`).join('')}</select>`)}
+         <div class="frow">${fld('الفئة',`<select id="mdl-cat" class="native-input"><option>اقتصادية</option><option selected>سيدان</option><option>دفع رباعي</option><option>فاخرة</option></select>`)}
+         ${fld('الصورة',`<select id="mdl-image" class="native-input"><option>بانتظار صورة</option><option>صورة مضافة</option></select>`)}</div>
+         ${fld('المواصفات',`<input id="mdl-specs" class="native-input" value="5 ركاب · أوتوماتيك · بنزين">`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveNewModel()">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveNewModel:()=>{
+      const n=val('mdl-name'); if(!n){toast('أدخل اسم الموديل.');return;}
+      state.fleetModels=state.fleetModels||[];
+      state.fleetModels.unshift({name:n,make:val('mdl-make')||'—',image:val('mdl-image')||'بانتظار صورة',cat:val('mdl-cat')||'سيدان',specs:val('mdl-specs')||''});
+      persist(); closeM(); window.__makeTab='models'; render(); toast(`تمت إضافة موديل «${n}».`);
+    },
     editMake:name=>{
       const m=(state.fleetMakes||[]).find(x=>x.name===name); if(!m)return;
       openM(dlg(`تعديل ماركة: ${safe(m.name)}`,
@@ -8808,6 +8988,31 @@ function pill(value){
       closeM(); toast(`تم حفظ تعديلات ${val('av-name')||name}.`);
       if(typeof WafraOps.toggleVehicle==='function'&&val('av-status')==='موقفة'){/* حالة توضيحية */}
       render();
+    },
+    suspendVehicle:(id,name)=>{
+      const label=name||id;
+      openM(dlg(`إيقاف — ${safe(label)}`,
+        `${note('warn','الإيقاف يخفي السيارة عن العملاء فوراً','اختر سبب الإيقاف قبل التأكيد.')}
+         ${fld('سبب الإيقاف',`<select id="av-suspend-reason" class="native-input">
+           <option>انتهاء تأمين المركبات</option>
+           <option>مخالفة معايير الجودة</option>
+           <option>عدم توفر</option>
+         </select>`)}
+         ${fld('ملاحظة',`<textarea id="av-suspend-note" class="native-input" rows="2" placeholder="اختياري…"></textarea>`)}`,
+        `<button class="btn danger" onclick="WafraOps.confirmSuspendVehicle('${escAttr(id)}','${escAttr(label)}')">تأكيد الإيقاف</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    confirmSuspendVehicle:(id,name)=>{
+      const reason=val('av-suspend-reason')||'عدم توفر';
+      const extra=val('av-suspend-note')||'';
+      try{
+        const s=JSON.parse(localStorage.getItem('wafra-ops-v1')||'{}');
+        s.vehicleStates=s.vehicleStates||{};
+        s.vehicleStates[id]='موقفة';
+        s.vehicleReasons=s.vehicleReasons||{};
+        s.vehicleReasons[id]=extra?`${reason} · ${extra}`:reason;
+        localStorage.setItem('wafra-ops-v1',JSON.stringify(s));
+      }catch(e){}
+      closeM(); toast(`تم إيقاف ${name||id} — السبب: ${reason}`); render();
     },
 
     /* —— مراقبة جودة الأسطول —— */
@@ -9074,8 +9279,11 @@ function pill(value){
   /* —— الماركات والموديلات —— */
   S.fleetMakesModels=()=>{
     const active=window.__makeTab||'makes';
-    const tabs=[{k:'makes',t:'الماركات'},{k:'models',t:'الموديلات'},{k:'requests',t:'طلبات الإضافة'}];
-    const tabBar=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">${tabs.map(x=>`<button class="btn ${active===x.k?'coral':'ghost'} sm" onclick="WafraOps.switchMakeTab('${x.k}')">${x.t}</button>`).join('')}</div>`;
+    const actBtn=active==='makes'
+      ?`<button type="button" class="btn coral" onclick="WafraOps.addMake()">＋ إضافة ماركة</button>`
+      :active==='models'
+        ?`<button type="button" class="btn coral" onclick="WafraOps.addModel()">＋ إضافة موديل</button>`
+        :'';
     let content='';
     if(active==='makes'){
       content=table(['الماركة','بلد المنشأ','الموديلات','السيارات','الإجراء'],
@@ -9094,9 +9302,15 @@ function pill(value){
               ?`<button class="btn ghost sm" onclick="WafraOps.requestAction('docs')">طلب صورة</button>`
               :`<button class="btn ghost sm" onclick="WafraOps.requestAction('rejected')">دمج أو رفض</button>`]));
     }
-    return phead('الماركات والموديلات','الماركة هي الشركة المصنّعة، والموديل هو المركبة التابعة لها',[],
-      `<button class="btn coral" onclick="openM(M.newModel())">＋ إضافة موديل</button>`)
-      +card(tabBar+content);
+    return phead('الماركات والموديلات','الماركة هي الشركة المصنّعة، والموديل هو المركبة التابعة لها',[])
+      +card(`<div class="ba-tabbar">
+        <div class="tabs">
+          <button class="tab ${active==='makes'?'on':''}" onclick="WafraOps.switchMakeTab('makes')">الماركات</button>
+          <button class="tab ${active==='models'?'on':''}" onclick="WafraOps.switchMakeTab('models')">الموديلات</button>
+          <button class="tab ${active==='requests'?'on':''}" onclick="WafraOps.switchMakeTab('requests')">طلبات الإضافة</button>
+        </div>
+        ${actBtn}
+      </div><div class="card-b">${content}</div>`);
   };
   S.models=S.fleetMakesModels;
 
@@ -9122,10 +9336,13 @@ function pill(value){
         cars.map(x=>{
           const stopped=states[x[0]]==='موقفة'||x[5]===0;
           const st=x[5]===0?'إتاحتها صفر':(stopped?'موقفة':'متاحة للحجز');
+          const stopBtn=stopped
+            ? `<button class="btn ghost sm" onclick="WafraOps.toggleVehicle('${x[0]}')">تفعيل</button>`
+            : `<button class="btn ghost sm" onclick="WafraOps.suspendVehicle('${x[0]}','${escAttr(x[1])}')">إيقاف</button>`;
           return [x[1],x[2],x[3],x[4],String(x[5]),String(x[6]),bdg(st,stopped?'r':'g'),
             `<button class="btn ghost sm" onclick="WafraOps.openQualityReport('${escAttr(x[1])}')">بلاغ جودة</button>
              <button class="btn ghost sm" onclick="WafraOps.editAvailableVehicle('${x[0]}','${escAttr(x[1])}')">تعديل</button>
-             <button class="btn ghost sm" onclick="WafraOps.toggleVehicle('${x[0]}')">${stopped?'تفعيل':'إيقاف'}</button>`];
+             ${stopBtn}`];
         })));
   };
 
@@ -10832,7 +11049,7 @@ function pill(value){
   }
 
 })();
-
+</script>
 <script>
 /* المالية — مقارنة الكروت + شاشات منفصلة + سجلات + استردادات. */
 (function(){
@@ -11054,43 +11271,55 @@ function pill(value){
 
   S.settlements=()=>{
     const sub=window.__settleSubTab||'list';
-    const raw=O.settlements();
-    const {head}=splitShell(raw);
-    const body=grabBody(raw);
-    /* إزالة تابات المنازعات/الفواتير/الغرامات — صفحة مستقلة */
+    const head=phead('تسويات المزوّدين','دورة التسوية الأسبوعية — الاعتماد على خطوتين قبل التحويل',['FR-ADP-04','FR-ADP-05'],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('تسويات-المزودين','Excel')">⤓ تصدير</button><button class="btn" onclick="WafraOps.openCreateSettlement&&WafraOps.openCreateSettlement()">إنشاء دورة تسوية</button>`)
+      +note('info','دورة 22 – 28 أغسطس 2026 جاهزة للاعتماد','11 كشفاً بإجمالي 486,300 ر.س. لا يتم التحويل قبل اعتماد المسؤول الأعلى وتسجيل مرجع الحوالة.');
+    const topTabs=`<div class="tabs">
+      <button type="button" class="tab ${sub==='list'?'on':''}" onclick="window.__settleSubTab='list';render()">التسويات <span class="n">11</span></button>
+      <button type="button" class="tab ${sub==='history'?'on':''}" onclick="window.__settleSubTab='history';render()">السجل</button>
+    </div>`;
     if(sub==='history'){
-      return head+card(`<div class="tabs">
-        <button type="button" class="tab" onclick="window.__settleSubTab='list';render()">التسويات</button>
-        <button type="button" class="tab on" onclick="window.__settleSubTab='history';render()">السجل</button>
-      </div><div class="card-b">
+      return head+card(`${topTabs}<div class="card-b">
         <div class="st-sec"><div><h3>سجل التسويات</h3><p>تاريخ إنشاء واعتماد وتحويل دورات التسوية</p></div></div>
         ${histTable(loadHist().settlements||[])}
       </div>`);
     }
-    return head+card(`<div class="tabs">
-      <button type="button" class="tab on" onclick="window.__settleSubTab='list';render()">التسويات</button>
-      <button type="button" class="tab" onclick="window.__settleSubTab='history';render()">السجل</button>
-    </div><div class="card-b">${body}</div>`);
+    const listBody=tabs([{t:'قيد المراجعة',n:11,on:1},{t:'معتمدة',n:3},{t:'محوّلة',n:142},{t:'مرفوضة',n:2}])
+      +filters(['الدورة','المزوّد','الحالة'],'ابحث باسم المزوّد أو رقم الكشف…')
+      +table(['رقم الكشف','المزوّد','الحجوزات','إجمالي الإيراد','العمولة','خصومات وتظلّمات','الصافي المستحقّ','الحالة','الإجراءات'],[
+        [{v:'ST-2214',c:'strong num'},'شركة الصحراء','168',{v:'286,400',c:'num'},{v:'34,368',c:'num'},{v:'— 0',c:'num'},{v:'252,032',c:'strong num'},bdg('قيد المراجعة','a'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
+        [{v:'ST-2215',c:'strong num'},'كي رنت','121',{v:'241,900',c:'num'},{v:'33,866',c:'num'},{v:'— 960',c:'num'},{v:'207,074',c:'strong num'},bdg('قيد المراجعة','a'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
+        [{v:'ST-2216',c:'strong num'},'الوسام كار','74',{v:'96,200',c:'num'},{v:'14,430',c:'num'},{v:'— 1,850 (محتجز)',c:'num'},{v:'79,920',c:'strong num'},bdg('محتجز — تظلّم','r'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
+        [{v:'ST-2217',c:'strong num'},'مسار','96',{v:'188,200',c:'num'},{v:'26,348',c:'num'},{v:'— 420',c:'num'},{v:'161,432',c:'strong num'},bdg('معتمدة','b'),`<button class="btn sm ghost">تسجيل التحويل</button>`],
+      ])
+      +pager(28,1);
+    return head+card(`${topTabs}<div class="card-b">${listBody}</div>`);
   };
 
   S.invoices=()=>{
     const sub=window.__invSubTab||'list';
-    const raw=O.invoices();
-    const {head}=splitShell(raw);
-    const body=grabBody(raw);
+    const head=phead('الفواتير','كل الفواتير الصادرة وإشعارات التعديل',['FR-ADP-08'],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('متابعة-الفواتير','Excel')">⤓ تصدير</button>`);
+    const topTabs=`<div class="tabs">
+      <button type="button" class="tab ${sub==='list'?'on':''}" onclick="window.__invSubTab='list';render()">الفواتير <span class="n">3,540</span></button>
+      <button type="button" class="tab ${sub==='history'?'on':''}" onclick="window.__invSubTab='history';render()">السجل</button>
+    </div>`;
     if(sub==='history'){
-      return head+card(`<div class="tabs">
-        <button type="button" class="tab" onclick="window.__invSubTab='list';render()">الفواتير</button>
-        <button type="button" class="tab on" onclick="window.__invSubTab='history';render()">السجل</button>
-      </div><div class="card-b">
+      return head+card(`${topTabs}<div class="card-b">
         <div class="st-sec"><div><h3>سجل الفواتير</h3><p>تاريخ إصدار المطالبات وتأكيد التحويلات البنكية</p></div></div>
         ${histTable(loadHist().invoices||[])}
       </div>`);
     }
-    return head+card(`<div class="tabs">
-      <button type="button" class="tab on" onclick="window.__invSubTab='list';render()">الفواتير</button>
-      <button type="button" class="tab" onclick="window.__invSubTab='history';render()">السجل</button>
-    </div><div class="card-b">${body}</div>`);
+    const listBody=tabs([{t:'الكل',n:'3,540',on:1},{t:'صادرة',n:'3,486'},{t:'مُعدَّلة',n:38},{t:'ملغاة',n:16}])
+      +filters(['المزوّد','الحالة','التاريخ'],'ابحث برقم الفاتورة أو الحجز…')
+      +table(['رقم الفاتورة','الحجز','العميل','المزوّد','الإجمالي','ضريبة القيمة المضافة','تاريخ الإصدار','الحالة','الإجراءات'],[
+        [{v:'INV-10245',c:'strong num'},{v:'BK-20411',c:'num'},'منى القحطاني','مسار',{v:'2,480.00',c:'num'},{v:'323.48',c:'num'},'2026/08/26',bdg('صادرة','g'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
+        [{v:'INV-10244',c:'strong num'},{v:'BK-20396',c:'num'},'وليد الحربي','مسار',{v:'1,090.00',c:'num'},{v:'142.17',c:'num'},'2026/08/26',bdg('مُعدَّلة — إشعار مدين','a'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
+        [{v:'INV-10243',c:'strong num'},{v:'BK-20388',c:'num'},'ماجد السبيعي','مسار',{v:'620.00',c:'num'},{v:'80.87',c:'num'},'2026/08/24',bdg('صادرة','g'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
+        [{v:'INV-10240',c:'strong num'},{v:'BK-20355',c:'num'},'تركي العنزي','الوسام كار',{v:'1,960.00',c:'num'},{v:'255.65',c:'num'},'2026/08/21',bdg('قيد المراجعة — تظلّم','r'),acts([{i:'👁'},{i:'⤓'}])],
+      ])
+      +pager(60,12);
+    return head+card(`${topTabs}<div class="card-b">${listBody}</div>`);
   };
 
   /* —— استردادات العملاء —— */
@@ -11240,7 +11469,6 @@ function pill(value){
         </div>`);
   };
 })();
-</script>
 </script>
 <style id="wafra-popups-gallery">
 .popups-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px}
@@ -11696,7 +11924,7 @@ function pill(value){
       permissions:`<h3 style="margin:0 0 10px">صلاحيات الفروع</h3>${[['مطار الملك خالد','الرياض · 48 سيارة'],['طريق الملك عبدالعزيز','الرياض · 36 سيارة'],['جدة الشمالية','جدة · 31 سيارة']].map((x,i)=>`<div class="card" style="padding:14px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;gap:12px"><div><b>${x[0]}</b><span class="sub">${x[1]}</span></div>${status('نشط')}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn coral sm" onclick="WafraOps.demoAction('تبديل الحجوزات')">الحجوزات ✓</button><button class="btn ghost sm" onclick="WafraOps.demoAction('تبديل التوصيل')">التوصيل ○</button><button class="btn ghost sm" onclick="WafraOps.demoAction('تبديل الظهور')">الظهور بالبحث ○</button>${i===2?'':`<button class="btn ghost sm" onclick="WafraOps.demoAction('تبديل التأجير')">التأجير الذاتي ○</button>`}</div></div>`).join('')}`
     };
     return phead('تفاصيل المزود','بيانات شاملة للمزود وفروعه وأسطوله وحجوزاته',[],`<a class="btn ghost" href="#vendors">‹ رجوع لقائمة المزودين</a><button class="btn coral" onclick="WafraOps.editProvider&&WafraOps.editProvider('PV-001')">تعديل بيانات المزود</button>`)
-      +overviewHead()
+      +(active==='finance'?'':overviewHead())
       +card(tabNav(active)+`<div class="card-b">${bodies[active]||bodies.branches}</div>`);
   };
 })();
@@ -12014,7 +12242,8 @@ function pill(value){
       pushH('offers',{id:code,action:'إنشاء عرض',detail:type});
       closeM(); toast(`تم إنشاء العرض ${code}.`); render();
     },
-    setOffersTab:t=>{window.__offersTab=t;render();},
+    setOffersTab:t=>{window.__offersTab=t; if(t==='list'&&!window.__offersStatus) window.__offersStatus='نشطة'; render();},
+    setOffersStatus:s=>{window.__offersTab='list'; window.__offersStatus=s; render();},
     setWelcomeTab:t=>{window.__welcomeTab=t;render();},
     setGovTab:t=>{window.__govTab=t;render();},
     setCampTab:t=>{window.__campTab=t;render();},
@@ -12084,31 +12313,280 @@ function pill(value){
       closeM(); toast(`أُرسلت حملة استرجاع جماعية للفئة: ${seg}.`); render();
     },
     openCreateVendorAd:()=>{
-      openM(modal('إنشاء إعلان',`
-        <div class="frow">
-          ${fld('المزوّد',`<select id="vad-prov" class="native-input"><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option><option>الوسام كار</option></select>`)}
-          ${fld('نوع الإعلان',`<select id="vad-type" class="native-input">
-            <option>إشعارات</option><option>بانر</option><option selected>الظهور المميز</option><option>السيارة المميزة</option><option>البانر الرئيسي</option>
-          </select>`)}
-        </div>
-        <div class="frow">
-          ${fld('عنوان الحملة',`<input id="vad-title" class="native-input" placeholder="مثال: عروض بداية الأسبوع">`)}
-          ${fld('الميزانية (ر.س)',`<input id="vad-budget" class="native-input" type="number" value="4000">`)}
-        </div>
-        <div class="frow">
-          ${fld('من تاريخ',`<input id="vad-from" class="native-input" type="date" value="2026-09-01">`)}
-          ${fld('إلى تاريخ',`<input id="vad-to" class="native-input" type="date" value="2026-09-30">`)}
-        </div>
-        ${fld('نطاق التغطية',`<input id="vad-scope" class="native-input" placeholder="مثال: الرياض · جدة">`)}
-        ${fld('نص الإعلان',`<textarea id="vad-body" class="native-input" rows="3" placeholder="نص يظهر للعملاء…"></textarea>`)}
-        ${note('info','مراجعة','يُرسل الطلب لقائمة بانتظار الموافقة قبل النشر.')}
-      `,`<button class="btn coral" onclick="WafraOps.saveVendorAd()">إرسال للمراجعة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+      window.__vad={
+        step:1, done:false, payOpen:false,
+        type:'featured',
+        car:'كامري 2026', city:'جدة', branch:'فرع جدة',
+        bannerLink:'', headline:'', body:'',
+        sendMode:'now', sendAt:'',
+        from:'2026-01-19', to:'2026-01-22',
+        pay:'mada'
+      };
+      WafraOps.renderVendorAdWizard();
+    },
+    vadTypes:()=>[
+      {k:'featured',t:'السيارة المميزة في البحث',d:'ظهور سيارتك في أول 3 نتائج بحث في منطقة أو فرع محدد',price:160},
+      {k:'banner',t:'بانر الصفحة الرئيسية',d:'صورة/تصميم يظهر في السلايدر الرئيسي بالشاشة الرئيسية للتطبيق',price:200},
+      {k:'push',t:'إشعار Push',d:'رسالة إشعار مباشرة لهواتف العملاء حسب المدينة أو المنطقة',price:400}
+    ],
+    vadTypeMeta:()=>{
+      const st=window.__vad||{};
+      return WafraOps.vadTypes().find(x=>x.k===st.type)||WafraOps.vadTypes()[0];
+    },
+    vadDays:()=>{
+      const st=window.__vad||{};
+      const a=new Date(st.from), b=new Date(st.to);
+      if(isNaN(a)||isNaN(b)||b<a) return 1;
+      return Math.max(1, Math.round((b-a)/86400000)+1);
+    },
+    vadCost:()=>{
+      const days=WafraOps.vadDays();
+      const base=WafraOps.vadTypeMeta().price*days;
+      const vat=Math.round(base*0.15);
+      return {days, base, vat, total:base+vat};
+    },
+    vadFmtDate:iso=>{
+      if(!iso) return '—';
+      try{
+        return new Date(iso+'T00:00:00').toLocaleDateString('ar-SA',{day:'numeric',month:'long',year:'numeric'});
+      }catch(e){ return iso; }
+    },
+    vadCollect:()=>{
+      const st=window.__vad; if(!st) return;
+      const g=id=>document.getElementById(id);
+      if(g('vad-car')) st.car=g('vad-car').value;
+      if(g('vad-city')) st.city=g('vad-city').value;
+      if(g('vad-branch')) st.branch=g('vad-branch').value;
+      if(g('vad-link')) st.bannerLink=g('vad-link').value;
+      if(g('vad-headline')) st.headline=g('vad-headline').value;
+      if(g('vad-body')) st.body=g('vad-body').value;
+      if(g('vad-from')) st.from=g('vad-from').value;
+      if(g('vad-to')) st.to=g('vad-to').value;
+      if(g('vad-send-at')) st.sendAt=g('vad-send-at').value;
+      const send=document.querySelector('input[name="vad-send"]:checked');
+      if(send) st.sendMode=send.value;
+      const pay=document.querySelector('input[name="vad-pay"]:checked');
+      if(pay) st.pay=pay.value;
+    },
+    vadStepper:(step,done)=>{
+      const n=5;
+      return `<div class="vad-steps">${Array.from({length:n},(_,i)=>{
+        const s=i+1;
+        const cls=done||s<step?'done':(s===step?'on':'');
+        const mark=done||s<step?'✓':s;
+        return `<div class="vad-step ${cls}"><span class="cr">${mark}</span></div>`;
+      }).join('<i></i>')}</div>`;
+    },
+    vadSelectType:k=>{
+      WafraOps.vadCollect();
+      window.__vad.type=k;
+      WafraOps.renderVendorAdWizard();
+    },
+    vadSetSend:mode=>{
+      WafraOps.vadCollect();
+      window.__vad.sendMode=mode;
+      WafraOps.renderVendorAdWizard();
+    },
+    vadNext:()=>{
+      WafraOps.vadCollect();
+      const st=window.__vad;
+      if(st.step<5){ st.step++; WafraOps.renderVendorAdWizard(); }
+      else WafraOps.vadOpenPay();
+    },
+    vadPrev:()=>{
+      WafraOps.vadCollect();
+      const st=window.__vad;
+      if(st.payOpen){ st.payOpen=false; WafraOps.renderVendorAdWizard(); return; }
+      if(st.step>1){ st.step--; WafraOps.renderVendorAdWizard(); }
+    },
+    vadOpenPay:()=>{
+      WafraOps.vadCollect();
+      window.__vad.payOpen=true;
+      WafraOps.renderVendorAdWizard();
     },
     saveVendorAd:()=>{
-      const title=document.getElementById('vad-title')?.value?.trim()||'إعلان جديد';
-      const type=document.getElementById('vad-type')?.value||'';
-      pushH('vendorAds',{id:'AD-NEW',action:'إنشاء إعلان',detail:`${type} · ${title}`});
-      closeM(); toast(`تم إرسال الإعلان «${title}» للمراجعة.`); render();
+      WafraOps.vadCollect();
+      const st=window.__vad||{};
+      const meta=WafraOps.vadTypeMeta();
+      const cost=WafraOps.vadCost();
+      const id='AD-'+(540+Math.floor(Math.random()*80));
+      pushH('vendorAds',{id,action:'إنشاء إعلان',detail:`${meta.t} · ${st.branch||st.city||''} · ${cost.total} ر.س`});
+      st.done=true; st.payOpen=false; st.lastId=id;
+      WafraOps.renderVendorAdWizard();
+    },
+    viewVendorAd:()=>{
+      openM(modal('عرض الإعلان',`
+        <h4 style="margin:0 0 10px;font:800 14px Cairo">تفاصيل الإعلان</h4>
+        <div class="dl-grid">
+          <div class="it"><div class="k">نوع الإعلان</div><div class="v">السيارة المميزة في البحث</div></div>
+          <div class="it"><div class="k">الفرع المستهدف</div><div class="v">فرع جدة</div></div>
+          <div class="it"><div class="k">المدة</div><div class="v">4 أيام</div></div>
+          <div class="it"><div class="k">تاريخ البداية</div><div class="v">19 يناير 2026</div></div>
+          <div class="it"><div class="k">تاريخ النهاية</div><div class="v">22 يناير 2026</div></div>
+          <div class="it"><div class="k">إجمالي التكلفة</div><div class="v">184 ر.س</div></div>
+        </div>
+        <h4 style="margin:18px 0 10px;font:800 14px Cairo">ملخص التكلفة</h4>
+        <div class="dl-grid">
+          <div class="it"><div class="k">مدة الحملة</div><div class="v">4 أيام</div></div>
+          <div class="it"><div class="k">التكلفة الأساسية</div><div class="v">160 ر.س</div></div>
+          <div class="it"><div class="k">ضريبة القيمة المضافة (15%)</div><div class="v">24 ر.س</div></div>
+          <div class="it"><div class="k">الإجمالي المستحق</div><div class="v"><b>184 ر.س</b></div></div>
+        </div>
+        <h4 style="margin:18px 0 10px;font:800 14px Cairo">إحصائيات الإعلان</h4>
+        <div class="grid3">
+          <div class="note info" style="margin:0"><b>الحجوزات الناتجة</b><div style="font:800 22px Cairo;margin-top:6px">42</div></div>
+          <div class="note info" style="margin:0"><b>معدل الفتح</b><div style="font:800 22px Cairo;margin-top:6px">18.5%</div></div>
+          <div class="note info" style="margin:0"><b>العملاء المستهدفون</b><div style="font:800 22px Cairo;margin-top:6px">10,000</div></div>
+        </div>
+      `,`<button class="btn ghost" onclick="closeM()">إغلاق</button>`));
+    },
+    renderVendorAdWizard:()=>{
+      if(!document.getElementById('wafra-vad-wizard')){
+        const st=document.createElement('style');
+        st.id='wafra-vad-wizard';
+        st.textContent=`
+          .vad-steps{display:flex;align-items:center;justify-content:center;gap:0;margin:6px 0 18px}
+          .vad-steps>i{flex:1;height:2px;background:#E4E9F3;max-width:48px}
+          .vad-step .cr{width:28px;height:28px;border-radius:99px;display:grid;place-items:center;font:800 12px Cairo;background:#EEF2FB;color:#8A94A8}
+          .vad-step.on .cr{background:var(--navy);color:#fff}
+          .vad-step.done .cr{background:#1F9D63;color:#fff}
+          .vad-type{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;margin-bottom:10px;text-align:right;background:#fff}
+          .vad-type.on{border-color:var(--navy);box-shadow:0 0 0 3px rgba(35,56,109,.12)}
+          .vad-type b{display:block;font:800 14px Cairo;color:var(--ink);margin-bottom:4px}
+          .vad-type p{margin:0;font:500 12.5px/1.5 Cairo;color:var(--muted)}
+          .vad-type .pr{margin-inline-start:auto;font:800 13px Cairo;color:var(--navy);white-space:nowrap}
+          .vad-upload{border:1.5px dashed #C5D0E8;border-radius:14px;padding:28px 16px;text-align:center;background:#F8FAFD;margin:10px 0 14px}
+          .vad-pay{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+          .vad-pay label{flex:1;min-width:90px;border:1.5px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center;font:700 12px Cairo;cursor:pointer}
+          .vad-pay label:has(input:checked){border-color:var(--navy);background:#EEF2FB}
+          .vad-sum{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:8px 0 14px}
+          .vad-sum .row{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);font:600 13px Cairo}
+          .vad-sum .row:last-child{border-bottom:0;font-weight:800}
+          .vad-due{background:#EEF2FB;border-radius:12px;padding:14px;font:800 15px Cairo;color:var(--navy);margin:8px 0 14px;text-align:center}
+        `;
+        document.head.appendChild(st);
+      }
+      const st=window.__vad||{step:1};
+      const meta=WafraOps.vadTypeMeta();
+      const cost=WafraOps.vadCost();
+      const titles={1:'اختيار نوع الإعلان',2:'التفاصيل والمحتوى',3:'المدة الزمنية',4:'حساب التكلفة',5:'المراجعة والدفع'};
+      const stepLabel=st.done?'تم الإرسال':(st.payOpen?'دفع مستحقات الإعلان':`الخطوة ${st.step} من 5 — ${titles[st.step]}`);
+
+      let body='';
+      let foot='';
+
+      if(st.done){
+        body=`${WafraOps.vadStepper(5,true)}
+          <div style="text-align:center;padding:18px 8px 8px">
+            <div style="width:56px;height:56px;border-radius:99px;background:#E7F7EF;color:#1F9D63;display:grid;place-items:center;margin:0 auto 14px;font-size:26px">✓</div>
+            <h3 style="margin:0 0 10px;font:800 18px Cairo">تم إرسال طلب الإعلان بنجاح</h3>
+            <p style="margin:0;font:500 13.5px/1.7 Cairo;color:var(--muted)">تم تحويل حالة الحملة إلى «بانتظار موافقة الأدمن». سيتم تفعيلها تلقائياً بعد المراجعة والموافقة، وستصلك إشعار فور اعتماد الحملة.</p>
+          </div>`;
+        foot=`<button class="btn coral" onclick="closeM();render()">حسناً</button>`;
+      } else if(st.payOpen){
+        body=`<p style="margin:0 0 12px;font:600 13px Cairo;color:var(--muted)">نوع الإعلان: ${meta.t}</p>
+          <div class="vad-sum">
+            <div class="row"><span>نوع الإعلان</span><b>${meta.t}</b></div>
+            <div class="row"><span>المدة</span><b>${cost.days} أيام</b></div>
+            <div class="row"><span>الفرع المستهدف</span><b>${st.branch||st.city||'—'}</b></div>
+            <div class="row"><span>تاريخ البداية</span><b>${WafraOps.vadFmtDate(st.from)}</b></div>
+            <div class="row"><span>تاريخ النهاية</span><b>${WafraOps.vadFmtDate(st.to)}</b></div>
+            <div class="row"><span>إجمالي التكلفة</span><b>${cost.total} ريال</b></div>
+          </div>
+          <div class="vad-due">المبلغ المستحق: ${cost.total} ريال</div>
+          <div style="font:700 13px Cairo;margin-bottom:8px">طريقة الدفع</div>
+          <div class="vad-pay">
+            ${[['apple','Apple Pay'],['tabby','Tabby'],['tamara','Tamara'],['visa','Visa/Mastercard'],['mada','Mada']].map(([k,l])=>
+              `<label><input type="radio" name="vad-pay" value="${k}" ${st.pay===k?'checked':''} style="margin-inline-end:4px"> ${l}</label>`).join('')}
+          </div>
+          <div class="frow">${fld('اسم صاحب البطاقة',`<input class="native-input" placeholder="أدخل الاسم">`)}
+          ${fld('رقم البطاقة',`<input class="native-input" placeholder="•••• •••• •••• ••••">`)}</div>
+          <div class="frow">${fld('شهر / سنة',`<input class="native-input" placeholder="MM/YY">`)}
+          ${fld('CCV',`<input class="native-input" placeholder="•••">`)}</div>`;
+        foot=`<button class="btn coral" onclick="WafraOps.saveVendorAd()">تأكيد وإرسال الطلب</button>
+              <button class="btn ghost" onclick="WafraOps.vadPrev()">السابق</button>`;
+      } else if(st.step===1){
+        body=`${WafraOps.vadStepper(1)}
+          ${WafraOps.vadTypes().map(t=>`
+            <button type="button" class="vad-type ${st.type===t.k?'on':''}" onclick="WafraOps.vadSelectType('${t.k}')">
+              <input type="radio" ${st.type===t.k?'checked':''} style="margin-top:4px">
+              <div style="flex:1"><b>${t.t}</b><p>${t.d}</p></div>
+              <span class="pr">${t.price} ر.س/يوم</span>
+            </button>`).join('')}`;
+        foot=`<button class="btn coral" onclick="WafraOps.vadNext()">التالي</button>
+              <button class="btn ghost" onclick="closeM()">إلغاء</button>`;
+      } else if(st.step===2){
+        let fields='';
+        if(st.type==='featured'){
+          fields=`<div class="note info" style="margin-bottom:12px">نوع الإعلان : ${meta.t}</div>
+            ${fld('اختر السيارة من أسطولك',`<select id="vad-car" class="native-input"><option ${st.car==='كامري 2026'?'selected':''}>كامري 2026</option><option ${st.car==='إلنترا 2025'?'selected':''}>إلنترا 2025</option><option ${st.car==='K5 2026'?'selected':''}>K5 2026</option></select>`)}
+            ${fld('المدينة المستهدفة',`<select id="vad-city" class="native-input"><option>جدة</option><option>الرياض</option><option>الدمام</option><option>الخبر</option></select>`)}
+            ${fld('الفرع المستهدف',`<select id="vad-branch" class="native-input"><option>فرع جدة</option><option>فرع الرياض</option><option>فرع الدمام</option></select>`)}`;
+        } else if(st.type==='banner'){
+          fields=`<div class="note info" style="margin-bottom:12px">نوع الإعلان : بانر في الصفحة الرئيسية</div>
+            <div class="vad-upload">
+              <div style="font-size:28px;opacity:.45;margin-bottom:8px">🖼</div>
+              <button type="button" class="btn" onclick="toast('اختر صورة البانر (1200×400)')">اضغط لرفع صورة البانر</button>
+              <div style="margin-top:8px;font:600 12px Cairo;color:var(--muted)">المقاس المتوافق مع التطبيق: 1200×400 بكسل</div>
+            </div>
+            ${fld('الرابط / الوجهة عند الضغط على الصورة',`<input id="vad-link" class="native-input" value="${st.bannerLink||''}" placeholder="مثال، صفحة عروض السيارات العائلية">`)}`;
+        } else {
+          fields=`<div class="note info" style="margin-bottom:12px">نوع الإعلان: إشعار Push</div>
+            ${fld('عنوان الإشعار (Headline)',`<input id="vad-headline" class="native-input" value="${st.headline||''}" placeholder="مثال: عروض نهاية الأسبوع">`)}
+            ${fld('نص الإشعار (Body text)',`<textarea id="vad-body" class="native-input" rows="3" placeholder="مثال: استأجر هيونداي النترا الآن بخصم خاص لفترة محدودة.">${st.body||''}</textarea>`)}
+            <div style="font:700 13px Cairo;margin:8px 0">الوقت المفضل للإرسال</div>
+            <label style="display:flex;gap:8px;align-items:center;margin:8px 0;font:600 13px Cairo;cursor:pointer">
+              <input type="radio" name="vad-send" value="now" ${st.sendMode!=='later'?'checked':''} onchange="WafraOps.vadSetSend('now')"> إرسال فوري
+            </label>
+            <label style="display:flex;gap:8px;align-items:center;margin:8px 0;font:600 13px Cairo;cursor:pointer">
+              <input type="radio" name="vad-send" value="later" ${st.sendMode==='later'?'checked':''} onchange="WafraOps.vadSetSend('later')"> جدولة وقت محدد
+            </label>
+            ${st.sendMode==='later'?fld('حدد وقت الإرسال',`<input id="vad-send-at" class="native-input" type="datetime-local" value="${st.sendAt||''}">`):''}`;
+        }
+        body=`${WafraOps.vadStepper(2)}${fields}`;
+        foot=`<button class="btn coral" onclick="WafraOps.vadNext()">التالي</button>
+              <button class="btn ghost" onclick="WafraOps.vadPrev()">السابق</button>`;
+      } else if(st.step===3){
+        body=`${WafraOps.vadStepper(3)}
+          <h4 style="margin:0 0 12px;font:800 14px Cairo">تحديد تاريخ بداية ونهاية الحملة</h4>
+          <div class="frow">
+            ${fld('تاريخ البداية',`<input id="vad-from" class="native-input" type="date" value="${st.from}">`)}
+            ${fld('تاريخ النهاية',`<input id="vad-to" class="native-input" type="date" value="${st.to}">`)}
+          </div>`;
+        foot=`<button class="btn coral" onclick="WafraOps.vadNext()">التالي</button>
+              <button class="btn ghost" onclick="WafraOps.vadPrev()">السابق</button>`;
+      } else if(st.step===4){
+        body=`${WafraOps.vadStepper(4)}
+          <h4 style="margin:0 0 12px;font:800 14px Cairo">ملخص التكلفة</h4>
+          <div class="vad-sum">
+            <div class="row"><span>مدة الحملة</span><b>${cost.days} أيام</b></div>
+            <div class="row"><span>تاريخ البداية</span><b>${WafraOps.vadFmtDate(st.from)}</b></div>
+            <div class="row"><span>تاريخ النهاية</span><b>${WafraOps.vadFmtDate(st.to)}</b></div>
+            <div class="row"><span>التكلفة الأساسية</span><b>${cost.base} ر.س</b></div>
+            <div class="row"><span>ضريبة القيمة المضافة (15%)</span><b>${cost.vat} ر.س</b></div>
+            <div class="row"><span>الإجمالي المستحق</span><b>${cost.total} ر.س</b></div>
+          </div>`;
+        foot=`<button class="btn coral" onclick="WafraOps.vadNext()">التالي</button>
+              <button class="btn ghost" onclick="WafraOps.vadPrev()">السابق</button>`;
+      } else {
+        body=`${WafraOps.vadStepper(5)}
+          <h4 style="margin:0 0 12px;font:800 14px Cairo">مراجعة الطلب قبل الإرسال</h4>
+          <div class="vad-sum">
+            <div class="row"><span>نوع الإعلان</span><b>${meta.t}</b></div>
+            <div class="row"><span>الفرع المستهدف</span><b>${st.branch||st.city||'—'}</b></div>
+            <div class="row"><span>المدة</span><b>${cost.days} أيام</b></div>
+            <div class="row"><span>تاريخ البداية</span><b>${WafraOps.vadFmtDate(st.from)}</b></div>
+            <div class="row"><span>تاريخ النهاية</span><b>${WafraOps.vadFmtDate(st.to)}</b></div>
+            <div class="row"><span>إجمالي التكلفة</span><b>${cost.total} ر.س</b></div>
+          </div>
+          ${note('info','مراجعة','يُرسل الطلب لقائمة بانتظار الموافقة قبل النشر.')}`;
+        foot=`<button class="btn coral" onclick="WafraOps.vadOpenPay()">تأكيد وإرسال الطلب</button>
+              <button class="btn ghost" onclick="WafraOps.vadPrev()">السابق</button>`;
+      }
+
+      openM(modal(st.payOpen&&!st.done?'دفع مستحقات الإعلان':'إنشاء إعلان جديد',
+        `<div style="font:600 12.5px Cairo;color:var(--muted);margin:-4px 0 8px">${stepLabel}</div>${body}`,
+        foot));
     }
   });
 
@@ -12140,15 +12618,18 @@ function pill(value){
   }
 
   /* —— العروض (الكوبونات سابقاً) —— */
-  const offersRows=[
-    [{v:'WELCOME10',c:'strong num'},'ترحيب تلقائي','10% حتى 50 ر.س','مستخدمون جدد','1,204 / ∞','المنصّة',{v:'2026/01/01 00:00',c:'num'},'دائم',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
-    [{v:'SUMMER25',c:'strong num'},'نسبة مئوية','25% حتى 150 ر.س','كل العملاء','842 / 2,000','المنصّة',{v:'2026/08/01 09:00',c:'num'},'حتى 30/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
-    [{v:'SAHRA50',c:'strong num'},'مبلغ ثابت','50 ر.س','عملاء شركة الصحراء','311 / 500','المزوّد',{v:'2026/08/15 10:00',c:'num'},'حتى 15/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])],
-    [{v:'FREEDEL',c:'strong num'},'إعفاء رسوم توصيل','رسوم التوصيل','الرياض وجدة','96 / 300','المنصّة',{v:'2026/09/01 00:00',c:'num'},'يبدأ 01/09/2026',bdg('مجدول','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])],
-    [{v:'BACK15',c:'strong num'},'نسبة مئوية','15% حتى 80 ر.س','عملاء لم يحجزوا منذ 90 يوماً','—','المنصّة',{v:'2026/07/01 08:00',c:'num'},'أُوقف في 22/08',bdg('موقوف','r'),acts([{i:'👁'},{i:'▶'}])]
+  const offersData=[
+    {st:'نشطة',cells:[{v:'WELCOME10',c:'strong num'},'ترحيب تلقائي','10% حتى 50 ر.س','مستخدمون جدد','1,204 / ∞','المنصّة',{v:'2026/01/01 00:00',c:'num'},'دائم',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])]},
+    {st:'نشطة',cells:[{v:'SUMMER25',c:'strong num'},'نسبة مئوية','25% حتى 150 ر.س','كل العملاء','842 / 2,000','المنصّة',{v:'2026/08/01 09:00',c:'num'},'حتى 30/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])]},
+    {st:'نشطة',cells:[{v:'SAHRA50',c:'strong num'},'مبلغ ثابت','50 ر.س','عملاء شركة الصحراء','311 / 500','المزوّد',{v:'2026/08/15 10:00',c:'num'},'حتى 15/09/2026',bdg('نشط','g'),acts([{i:'👁'},{i:'✎'},{i:'⏸'}])]},
+    {st:'مجدولة',cells:[{v:'FREEDEL',c:'strong num'},'إعفاء رسوم توصيل','رسوم التوصيل','الرياض وجدة','96 / 300','المنصّة',{v:'2026/09/01 00:00',c:'num'},'يبدأ 01/09/2026',bdg('مجدول','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])]},
+    {st:'منتهية',cells:[{v:'BACK15',c:'strong num'},'نسبة مئوية','15% حتى 80 ر.س','عملاء لم يحجزوا منذ 90 يوماً','—','المنصّة',{v:'2026/07/01 08:00',c:'num'},'أُوقف في 22/08',bdg('منتهية','r'),acts([{i:'👁'},{i:'▶'}])]},
+    {st:'مجدولة',cells:[{v:'FALL20',c:'strong num'},'نسبة مئوية','20% حتى 100 ر.س','كل العملاء','—','المنصّة',{v:'2026/10/01 00:00',c:'num'},'يبدأ 01/10/2026',bdg('مجدول','b'),acts([{i:'👁'},{i:'✎'},{i:'🗑',d:1}])]},
+    {st:'منتهية',cells:[{v:'RAMADAN15',c:'strong num'},'نسبة مئوية','15% حتى 75 ر.س','كل العملاء','1,890 / 2,000','المنصّة',{v:'2026/03/01 00:00',c:'num'},'انتهى 30/03/2026',bdg('منتهية','n'),acts([{i:'👁'},{i:'▶'}])]}
   ];
   S.coupons=()=>{
     const tab=window.__offersTab||'list';
+    const status=window.__offersStatus||'نشطة';
     const head=phead('العروض','عروض وكوبونات المنصّة وقواعد تطبيقها',[],
       `<button class="btn ghost" onclick="WafraOps.exportCurrent('العروض','Excel')">⤒ تصدير</button>
        <button class="btn coral" onclick="WafraOps.openCreateOffer()">＋ إنشاء عرض</button>`);
@@ -12160,27 +12641,28 @@ function pill(value){
       {i:'↗',l:'حجوزات من العروض',v:'2,148',tone:'green'},
       {i:'💰',l:'إيراد منسوب',v:'8.4 م',tone:'blue'}
     ]);
+    const mainTabs=`<div class="tabs">
+      <button type="button" class="tab ${tab==='list'?'on':''}" onclick="WafraOps.setOffersTab('list')">العروض</button>
+      <button type="button" class="tab ${tab==='history'?'on':''}" onclick="WafraOps.setOffersTab('history')">السجل</button>
+    </div>`;
     if(tab==='history'){
-      return head+kpis+card(`<div class="tabs">
-        <button class="tab" onclick="WafraOps.setOffersTab('list')">العروض</button>
-        <button class="tab on" onclick="WafraOps.setOffersTab('history')">السجل</button>
-      </div><div class="card-b">${histTable(loadH().offers)}</div>`);
+      return head+kpis+card(`${mainTabs}<div class="card-b">${histTable(loadH().offers)}</div>`);
     }
-    return head+kpis+card(`<div class="tabs">
-      <button class="tab on" onclick="WafraOps.setOffersTab('list')">نشطة</button>
-      <button class="tab" onclick="WafraOps.setOffersTab('list')">مجدولة</button>
-      <button class="tab" onclick="WafraOps.setOffersTab('list')">منتهية</button>
-      <button class="tab" onclick="WafraOps.setOffersTab('history')">السجل</button>
+    const counts={نشطة:0,مجدولة:0,منتهية:0};
+    offersData.forEach(o=>{ if(counts[o.st]!=null) counts[o.st]++; });
+    const rows=offersData.filter(o=>o.st===status).map(o=>o.cells);
+    return head+kpis+card(`${mainTabs}
+    <div class="tabs" style="border-top:1px solid var(--line);background:#F8FAFD">
+      ${['نشطة','مجدولة','منتهية'].map(s=>`<button type="button" class="tab ${status===s?'on':''}" onclick="WafraOps.setOffersStatus('${s}')">${s}<span class="n">${counts[s]}</span></button>`).join('')}
     </div>
     <div class="filters mkt-filters">
       <div class="fd">المزود<span class="cv">▾</span></div>
       <label class="fd mkt-date">من<input type="date" value="2026-08-01"></label>
       <label class="fd mkt-date">إلى<input type="date" value="2026-09-30"></label>
-      <div class="fd">الحالة<span class="cv">▾</span></div>
       <div class="fsearch">⌕<input placeholder="ابحث بكود العرض…"></div>
     </div>`
-    +table(['الكود','النوع','القيمة','الشريحة','الاستخدام','المتحمّل','بداية العرض','الصلاحية','الحالة','الإجراءات'],offersRows)
-    +pager(12,2));
+    +table(['الكود','النوع','القيمة','الشريحة','الاستخدام','المتحمّل','بداية العرض','الصلاحية','الحالة','الإجراءات'],rows)
+    +pager(Math.max(rows.length,1),1));
   };
 
   /* —— كوبون الترحيب: سجل —— */
@@ -12471,8 +12953,8 @@ function pill(value){
     +table(['الحملة','المزوّد','النوع','نطاق التغطية','الفترة','الميزانية','المصروف','الظهور','الحجوزات','الإيرادات','الحالة','الإجراءات'],[
       [{v:'عروض بداية الأسبوع — خصم 20%',c:'strong'},'شركة الصحراء','إشعارات','مطار جدة','01/09 – 15/09',{v:'4,000 ر.س',c:'num'},{v:'0 ر.س',c:'num'},'—','—','—',bdg('قيد المراجعة','a'),`<button class="btn sm" onclick="openM(M.approveAd())">مراجعة</button>`],
       [{v:'خانة الظهور الكامل #2',c:'strong'},'كي رنت','الظهور المميز','كل المدن','05/09 – 05/10',{v:'15,000 ر.س',c:'num'},{v:'0 ر.س',c:'num'},'—','—','—',bdg('قيد المراجعة','a'),`<button class="btn sm" onclick="openM(M.approveAd())">مراجعة</button>`],
-      [{v:'كامري 2026 — سيارة مميزة',c:'strong'},'مسار','السيارة المميزة','الدمام · الخبر','20/08 – 20/09',{v:'6,000 ر.س',c:'num'},{v:'3,200 ر.س',c:'num'},{v:'28,400',c:'num'},{v:'96',c:'num'},{v:'84,200 ر.س',c:'num'},bdg('نشط','g'),acts([{i:'👁'},{i:'⏸'}])],
-      [{v:'أسطولنا الجديد 2026',c:'strong'},'الوسام كار','البانر الرئيسي','جدة','01/09 – 30/09',{v:'9,000 ر.س',c:'num'},{v:'4,100 ر.س',c:'num'},{v:'62,000',c:'num'},{v:'210',c:'num'},{v:'156,000 ر.س',c:'num'},bdg('نشط','g'),acts([{i:'👁'},{i:'⏸'}])]
+      [{v:'كامري 2026 — سيارة مميزة',c:'strong'},'مسار','السيارة المميزة','الدمام · الخبر','20/08 – 20/09',{v:'6,000 ر.س',c:'num'},{v:'3,200 ر.س',c:'num'},{v:'28,400',c:'num'},{v:'96',c:'num'},{v:'84,200 ر.س',c:'num'},bdg('نشط','g'),`<button class="btn ghost sm" onclick="WafraOps.viewVendorAd()">👁</button><button class="btn ghost sm" onclick="toast('تم إيقاف الإعلان مؤقتاً')">⏸</button>`],
+      [{v:'أسطولنا الجديد 2026',c:'strong'},'الوسام كار','البانر الرئيسي','جدة','01/09 – 30/09',{v:'9,000 ر.س',c:'num'},{v:'4,100 ر.س',c:'num'},{v:'62,000',c:'num'},{v:'210',c:'num'},{v:'156,000 ر.س',c:'num'},bdg('نشط','g'),`<button class="btn ghost sm" onclick="WafraOps.viewVendorAd()">👁</button><button class="btn ghost sm" onclick="toast('تم إيقاف الإعلان مؤقتاً')">⏸</button>`]
     ]));
   };
 

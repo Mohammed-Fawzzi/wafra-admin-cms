@@ -78,7 +78,15 @@
     {id:'Q-88',car:'K5 2026',provider:'مسار',branch:'الخبر التشغيلي',plate:'د ط ل 8812',note:'تأخر تحديث الإتاحة',level:'متوسط',date:'27 سبتمبر',status:'قيد المعالجة'},
     {id:'Q-81',car:'إلنترا 2025',provider:'كي رنت',branch:'جدة الشمالية',plate:'ب ن ج 4410',note:'عدم اكتمال صور الفحص',level:'منخفض',date:'25 سبتمبر',status:'مفتوح'}
   ];
-  const rentalLabel=r=>r&&r.trim()?r:'كل أنواع التأجير';
+  const rentalLabel=r=>{
+    if(!r||!String(r).trim()) return 'كل أنواع التأجير';
+    const parts=String(r).split(/[،,|]/).map(x=>x.trim()).filter(Boolean);
+    return parts.length?parts.join(' · '):'كل أنواع التأجير';
+  };
+  const rentalChecks=(selected)=>{
+    const set=new Set(String(selected||'').split(/[،,|]/).map(x=>x.trim()).filter(Boolean));
+    return ['يومي','أسبوعي','شهري'].map(t=>`<label style="display:inline-flex;align-items:center;gap:6px;margin:0 0 0 14px;font:700 13px Cairo;cursor:pointer"><input type="checkbox" class="addon-rental" value="${t}" ${set.has(t)?'checked':''}> ${t}</label>`).join('');
+  };
   const utilRuleText=r=>r.when==='>='?`عند وصول التشغيل إلى ${r.util}% أو أكثر`:`عند وصول التشغيل إلى ${r.util}% أو أقل`;
   const adjRuleText=r=>`${r.adj} ${r.pct}%`;
 
@@ -183,7 +191,13 @@
          ${fld('الوصف',`<input id="addon-desc" class="native-input" value="${safe(a?.desc||'')}" placeholder="وصف مختصر يظهر للعميل">`)}
          <div class="frow">${fld('الرسوم الافتراضية (ر.س)',`<input id="addon-fee" class="native-input" type="number" value="${safe(a?.fee||'35')}">`)}
          ${fld('وحدة التسعير',`<select id="addon-unit" class="native-input"><option ${(!a||a.unit==='يوم')?'selected':''}>يوم</option><option ${a?.unit==='حجز'?'selected':''}>حجز</option></select>`)}</div>
-         ${fld('نوع التأجير',`<select id="addon-rental" class="native-input"><option value="" ${!a?.rental?'selected':''}>بدون اختيار — كل أنواع التأجير</option><option value="يومي" ${a?.rental==='يومي'?'selected':''}>يومي</option><option value="أسبوعي" ${a?.rental==='أسبوعي'?'selected':''}>أسبوعي</option><option value="شهري" ${a?.rental==='شهري'?'selected':''}>شهري</option></select>`,'اتركه بدون اختيار لتفعيل الإضافة على التأجير اليومي والأسبوعي والشهري معاً.')}
+         <div class="fld" style="margin-bottom:12px">
+           <label class="fl">نوع التأجير</label>
+           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#FAFBFE">
+             ${rentalChecks(a?.rental)}
+           </div>
+           <div class="hint">اترك الكل بدون تحديد لتفعيل الإضافة على التأجير اليومي والأسبوعي والشهري معاً.</div>
+         </div>
          ${fld('نطاق التفعيل',`<select id="addon-scope" class="native-input" onchange="WafraOps.addonScopeChange()"><option value="all">كل المزودين / كل الفروع</option><option value="providers">مزودين محددين</option><option value="branches">فروع محددة</option></select>`)}
          <div id="addon-providers-wrap" style="display:none;margin-top:8px">
            <div style="font:700 12px Cairo;margin-bottom:6px">اختر المزودين</div>
@@ -224,7 +238,8 @@
         if(!sel.length){toast('اختر فرعاً واحداً على الأقل.');return;}
         count=sel.length; label=sel.join(' · ');
       }
-      const payload={name,desc:val('addon-desc')||'—',fee:val('addon-fee')||'0',unit:val('addon-unit')||'يوم',rental:val('addon-rental')||'',branches:count,status:'مفعلة'};
+      const rental=[...document.querySelectorAll('.addon-rental:checked')].map(x=>x.value).join('،');
+      const payload={name,desc:val('addon-desc')||'—',fee:val('addon-fee')||'0',unit:val('addon-unit')||'يوم',rental,branches:count,status:'مفعلة'};
       state.fleetAddons=state.fleetAddons||[];
       const edit=window.__addonEdit;
       if(edit!=null&&state.fleetAddons[edit]){
@@ -315,6 +330,31 @@
       closeM(); toast(`تم حفظ تعديلات ${val('av-name')||name}.`);
       if(typeof WafraOps.toggleVehicle==='function'&&val('av-status')==='موقفة'){/* حالة توضيحية */}
       render();
+    },
+    suspendVehicle:(id,name)=>{
+      const label=name||id;
+      openM(dlg(`إيقاف — ${safe(label)}`,
+        `${note('warn','الإيقاف يخفي السيارة عن العملاء فوراً','اختر سبب الإيقاف قبل التأكيد.')}
+         ${fld('سبب الإيقاف',`<select id="av-suspend-reason" class="native-input">
+           <option>انتهاء تأمين المركبات</option>
+           <option>مخالفة معايير الجودة</option>
+           <option>عدم توفر</option>
+         </select>`)}
+         ${fld('ملاحظة',`<textarea id="av-suspend-note" class="native-input" rows="2" placeholder="اختياري…"></textarea>`)}`,
+        `<button class="btn danger" onclick="WafraOps.confirmSuspendVehicle('${escAttr(id)}','${escAttr(label)}')">تأكيد الإيقاف</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    confirmSuspendVehicle:(id,name)=>{
+      const reason=val('av-suspend-reason')||'عدم توفر';
+      const extra=val('av-suspend-note')||'';
+      try{
+        const s=JSON.parse(localStorage.getItem('wafra-ops-v1')||'{}');
+        s.vehicleStates=s.vehicleStates||{};
+        s.vehicleStates[id]='موقفة';
+        s.vehicleReasons=s.vehicleReasons||{};
+        s.vehicleReasons[id]=extra?`${reason} · ${extra}`:reason;
+        localStorage.setItem('wafra-ops-v1',JSON.stringify(s));
+      }catch(e){}
+      closeM(); toast(`تم إيقاف ${name||id} — السبب: ${reason}`); render();
     },
 
     /* —— مراقبة جودة الأسطول —— */
@@ -629,10 +669,13 @@
         cars.map(x=>{
           const stopped=states[x[0]]==='موقفة'||x[5]===0;
           const st=x[5]===0?'إتاحتها صفر':(stopped?'موقفة':'متاحة للحجز');
+          const stopBtn=stopped
+            ? `<button class="btn ghost sm" onclick="WafraOps.toggleVehicle('${x[0]}')">تفعيل</button>`
+            : `<button class="btn ghost sm" onclick="WafraOps.suspendVehicle('${x[0]}','${escAttr(x[1])}')">إيقاف</button>`;
           return [x[1],x[2],x[3],x[4],String(x[5]),String(x[6]),bdg(st,stopped?'r':'g'),
             `<button class="btn ghost sm" onclick="WafraOps.openQualityReport('${escAttr(x[1])}')">بلاغ جودة</button>
              <button class="btn ghost sm" onclick="WafraOps.editAvailableVehicle('${x[0]}','${escAttr(x[1])}')">تعديل</button>
-             <button class="btn ghost sm" onclick="WafraOps.toggleVehicle('${x[0]}')">${stopped?'تفعيل':'إيقاف'}</button>`];
+             ${stopBtn}`];
         })));
   };
 
