@@ -31,11 +31,23 @@
     });
   }
   state.areas.regions=state.areas.regions||[];
+  const FEE_CITIES=['الرياض','جدة','مكة','المدينة','الدمام','الخبر','الأحساء','الجبيل','تبوك','أبها'];
   state.fees=state.fees||[
-    {provider:'شركة الصحراء',from:'الرياض',to:'جدة',amount:'180',status:'نشطة',added:'12 أغسطس 2026'},
-    {provider:'كي رنت',from:'جدة',to:'مكة المكرمة',amount:'85',status:'نشطة',added:'3 سبتمبر 2026'},
-    {provider:'مسار',from:'الخبر',to:'الرياض',amount:'140',status:'غير نشطة',added:'21 يوليو 2026'}
+    {from:'الدمام',to:'الأحساء',amount:'400',validFrom:'2026/01/01',validTo:'2026/12/31',status:'نشط'},
+    {from:'الأحساء',to:'الجبيل',amount:'400',validFrom:'2026/01/01',validTo:'2026/12/31',status:'نشط'},
+    {from:'الدمام',to:'الجبيل',amount:'400',validFrom:'2026/01/01',validTo:'2026/12/31',status:'نشط'},
+    {from:'مكة',to:'جدة',amount:'80',validFrom:'2026/01/01',validTo:'2026/08/08',status:'نشط'},
+    {from:'الرياض',to:'جدة',amount:'180',validFrom:'2026/03/01',validTo:'2026/12/31',status:'غير نشط'}
   ];
+  /* ترحيل السجلات القديمة إلى شكل نموذج المزود */
+  state.fees=state.fees.map(f=>({
+    from:f.from||'الرياض',
+    to:f.to||'جدة',
+    amount:String(f.amount??'0'),
+    validFrom:f.validFrom||'2026/01/01',
+    validTo:f.validTo||'2026/12/31',
+    status:(f.status==='نشطة'||f.status==='نشط')?'نشط':'غير نشط'
+  }));
   state.branches=state.branches||[
     {id:'BR-014',name:'مطار الملك خالد',provider:'شركة الصحراء',city:'الرياض',contracts:186,utilization:81,commission:12,status:'نشط',type:'مطار',address:'صالة الوصول'},
     {id:'BR-021',name:'جدة الشمالية',provider:'كي رنت',city:'جدة',contracts:139,utilization:75,commission:10,status:'نشط',type:'داخلي',address:'شارع الأمير سلطان'},
@@ -312,46 +324,80 @@
       render();
       toast(edit?'تم حفظ تعديلات الفرع.':'تم إضافة الفرع بنجاح.');
     },
+    feeFilter:()=>{
+      window.__feeFilter={
+        q:document.getElementById('fee-q')?.value||'',
+        city:document.getElementById('fee-city')?.value||'',
+        status:document.getElementById('fee-status-f')?.value||''
+      };
+      render();
+    },
+    toggleFeeStatus:i=>{
+      const f=(state.fees||[])[i];
+      if(!f)return;
+      f.status=f.status==='نشط'?'غير نشط':'نشط';
+      save(); render(); toast(f.status==='نشط'?'تم تفعيل الرسوم.':'تم إيقاف الرسوم.');
+    },
     addFee:()=>{
       window.__feeEdit=null;
-      openM(dlg('إضافة رسوم تسليم بين المدن',
-        `<div class="frow">${fld('المزود',`<select id="fee-provider" class="native-input"><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}
-         ${fld('الرسوم (ر.س)',`<input id="op-fee" class="native-input" value="150" type="number">`,'تظهر للعميل قبل الدفع وتضاف إلى إجمالي الحجز.')}</div>
-         <div class="frow">${fld('مدينة الاستلام',`<select id="fee-from" class="native-input"><option>الرياض</option><option>جدة</option><option>الدمام</option><option>الخبر</option><option>مكة المكرمة</option><option>المدينة</option></select>`)}
-         ${fld('مدينة التسليم',`<select id="fee-to" class="native-input"><option>الدمام</option><option>الرياض</option><option>جدة</option><option>الخبر</option><option>مكة المكرمة</option><option>المدينة</option></select>`)}</div>
-         ${fld('الحالة',`<select id="fee-status" class="native-input"><option>نشطة</option><option>غير نشطة</option></select>`)}`,
-        `<button class="btn coral" onclick="WafraOps.saveFee()">إضافة الرسوم</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
-      ));
+      WafraOps.openFeeModal();
     },
     editFee:i=>{
       const f=(state.fees||[])[i];
       if(!f)return;
       window.__feeEdit=i;
-      const cities=['الرياض','جدة','الدمام','الخبر','مكة المكرمة','المدينة'];
-      const providers=['شركة الصحراء','كي رنت','مسار'];
-      openM(dlg('تعديل رسوم التسليم بين المدن',
-        `<div class="frow">${fld('المزود',`<select id="fee-provider" class="native-input">${providers.map(p=>`<option ${p===f.provider?'selected':''}>${p}</option>`).join('')}</select>`)}
-         ${fld('الرسوم (ر.س)',`<input id="op-fee" class="native-input" value="${safe(f.amount)}" type="number">`,'تظهر للعميل قبل الدفع وتضاف إلى إجمالي الحجز.')}</div>
-         <div class="frow">${fld('مدينة الاستلام',`<select id="fee-from" class="native-input">${cities.map(c=>`<option ${c===f.from?'selected':''}>${c}</option>`).join('')}</select>`)}
-         ${fld('مدينة التسليم',`<select id="fee-to" class="native-input">${cities.map(c=>`<option ${c===f.to?'selected':''}>${c}</option>`).join('')}</select>`)}</div>
-         ${fld('الحالة',`<select id="fee-status" class="native-input"><option ${f.status==='نشطة'?'selected':''}>نشطة</option><option ${f.status!=='نشطة'?'selected':''}>غير نشطة</option></select>`)}`,
-        `<button class="btn coral" onclick="WafraOps.saveFee()">حفظ التعديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`
-      ));
+      WafraOps.openFeeModal(f);
+    },
+    openFeeModal:f=>{
+      const isEdit=!!f;
+      const title=isEdit?'تعديل رسوم تسليم بين مدينتين':'إضافة رسوم تسليم بين مدينتين';
+      const sub='حدد المدينتين ورسوم التسليم بينهما وفترة السريان';
+      const cityOpts=(sel)=>`<option value="">اختر المدينة</option>`+FEE_CITIES.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
+      const toInputDate=s=>{
+        if(!s) return '';
+        const p=String(s).replace(/-/g,'/').split('/');
+        if(p.length!==3) return '';
+        const [y,m,d]=p[0].length===4?p:[p[2],p[1],p[0]];
+        return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      };
+      openM(`<div class="modal"><div class="modal-h"><div><h3>${title}</h3><p class="vio-msub">${sub}</p></div><span class="x" onclick="closeM()">✕</span></div>
+        <div class="modal-b">
+          <div class="frow">
+            ${fld('من (مدينة الانطلاق)',`<select id="fee-from" class="native-input">${cityOpts(f?.from||'')}</select>`)}
+            ${fld('إلى (مدينة الوجهة)',`<select id="fee-to" class="native-input">${cityOpts(f?.to||'')}</select>`)}
+          </div>
+          ${fld('الرسوم',`<input id="op-fee" class="native-input" type="number" min="0" placeholder="أدخل مبلغ الرسوم" value="${safe(f?.amount||'')}">`)}
+          <div class="frow">
+            ${fld('من',`<input id="fee-valid-from" class="native-input" type="date" value="${toInputDate(f?.validFrom||'')}" placeholder="اختر التاريخ">`)}
+            ${fld('إلى',`<input id="fee-valid-to" class="native-input" type="date" value="${toInputDate(f?.validTo||'')}" placeholder="اختر التاريخ">`)}
+          </div>
+        </div>
+        <div class="modal-f">
+          <button type="button" class="btn coral" onclick="WafraOps.saveFee()">${isEdit?'تعديل':'إضافة'}</button>
+          <button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>
+        </div></div>`);
     },
     saveFee:()=>{
-      const amount=val('op-fee')||'0';
+      const from=val('fee-from'), to=val('fee-to'), amount=val('op-fee');
+      if(!from||!to){toast('اختر مدينتي الانطلاق والوجهة.');return;}
+      if(from===to){toast('مدينة الانطلاق والوجهة يجب أن تختلف.');return;}
+      if(!amount){toast('أدخل مبلغ الرسوم.');return;}
+      const fmtDate=v=>{
+        if(!v) return '';
+        const p=v.includes('-')?v.split('-'):v.split('/');
+        if(p.length===3&&p[0].length===4) return `${p[0]}/${Number(p[1])}/${Number(p[2])}`;
+        return v.replace(/-/g,'/');
+      };
       state.fees=state.fees||[];
       const payload={
-        provider:val('fee-provider')||'شركة الصحراء',
-        from:val('fee-from')||'الرياض',
-        to:val('fee-to')||'الدمام',
-        amount,
-        status:val('fee-status')||'نشطة',
-        added:today()
+        from,to,amount,
+        validFrom:fmtDate(val('fee-valid-from'))||'2026/01/01',
+        validTo:fmtDate(val('fee-valid-to'))||'2026/12/31',
+        status:'نشط'
       };
       const edit=window.__feeEdit;
       if(edit!=null&&state.fees[edit]){
-        payload.added=state.fees[edit].added||payload.added;
+        payload.status=state.fees[edit].status||'نشط';
         state.fees[edit]=payload;
         window.__feeEdit=null;
         save(); closeM(); render(); toast('تم حفظ تعديل الرسوم.');
@@ -378,21 +424,20 @@
     ]);
     const areaActs=(t,name)=>`<button class="btn ghost sm" onclick="WafraOps.viewArea('${t}','${escAttr(name)}')">استعراض</button> <button class="btn ghost sm" onclick="WafraOps.editArea('${t}','${escAttr(name)}')">تعديل</button>`;
     return phead('المناطق والمدن','التغطية الجغرافية للمنصة: المزودون والفروع والأسطول والطلب لكل مدينة.',[],
-      `<button class="btn coral" onclick="WafraOps.addArea('${active}')">＋ تعريف ${active==='regions'?'منطقة':'مدينة'}</button>`)
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent('المناطق-والمدن','Excel')">Excel ⤓</button><button class="btn coral" onclick="WafraOps.addArea('${active}')">＋ تعريف ${active==='regions'?'منطقة':'مدينة'}</button>`)
       +summary
       +card(`<div class="tabs">
         <button class="tab ${active==='regions'?'on':''}" onclick="WafraOps.areasTab('regions')">المناطق</button>
         <button class="tab ${active==='cities'?'on':''}" onclick="WafraOps.areasTab('cities')">المدن</button>
       </div><div class="card-b">${
         active==='regions'
-          ?table(['المنطقة','المدن','المزودون','الفروع','السيارات','الحجوزات','الحالة','الإجراءات'],regions.map(r=>{
+          ?table(['المنطقة','المدن','المزودون','السيارات','الحجوزات','الحالة','الإجراءات'],regions.map(r=>{
               const citiesList=(r.cities&&r.cities.length)?r.cities:citiesOfRegion(r.name);
               const s=sumStats(citiesList);
               return [
                 r.name,
-                citiesList.length?citiesList.join(' · '):'—',
+                citiesList.length?`${citiesList.length} — ${citiesList.join(' · ')}`:'—',
                 fmt(s.providers),
-                fmt(s.branches),
                 fmt(s.cars),
                 fmt(s.bookings),
                 pill(r.status||'نشط'),
@@ -484,31 +529,44 @@
       </div>`;
   };
 
-  /* —— رسوم بين المدن + تاريخ الإضافة —— */
+  /* —— رسوم التسليم بين المدن (نموذج المزود) —— */
   S.intercityFees=()=>{
-    const fees=state.fees||[];
-    return phead('رسوم التسليم بين المدن','إدارة الرسوم لكل مزود مع حالة الرسوم',[],
-      `<button class="btn ghost" onclick="WafraOps.exportCurrent('رسوم-التسليم-بين-المدن','Excel')">⤓ تصدير</button><button class="btn coral" onclick="WafraOps.addFee()">＋ إضافة رسوم</button>`)
-      +card(`<div class="filters" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-        ${fld('المزودون',`<select class="native-input"><option>كل المزودين</option><option>شركة الصحراء</option><option>كي رنت</option><option>مسار</option></select>`)}
-        ${fld('المدن',`<select class="native-input"><option>كل المدن</option><option>الرياض</option><option>جدة</option><option>الدمام</option></select>`)}
-        ${fld('حالة الرسوم',`<select class="native-input"><option>كل الحالات</option><option>نشطة</option><option>غير نشطة</option></select>`)}
+    const f=window.__feeFilter||{};
+    const all=state.fees||[];
+    const rows=all.map((x,i)=>({...x,_i:i})).filter(x=>{
+      const q=(f.q||'').trim();
+      if(q&&!`${x.from} ${x.to}`.includes(q)) return false;
+      if(f.city&&x.from!==f.city&&x.to!==f.city) return false;
+      if(f.status&&x.status!==f.status) return false;
+      return true;
+    });
+    const statusCell=(x,i)=>{
+      const on=x.status==='نشط';
+      return `<div class="fee-status"><button type="button" class="tg ${on?'on':''}" onclick="WafraOps.toggleFeeStatus(${i})" aria-label="تبديل الحالة"></button><span>${on?'نشط':'غير نشط'}</span></div>`;
+    };
+    return phead('رسوم التسليم بين المدن','إدارة موقع الخدمة الخاص بك',[],
+      `<button class="btn coral" onclick="WafraOps.addFee()">＋ إضافة رسوم</button>`)
+      +card(`<div class="filters">
+        <label class="fsearch">⌕ <input id="fee-q" value="${safe(f.q||'').replace(/"/g,'&quot;')}" placeholder="ابحث عن مدينة (من/إلى)" oninput="WafraOps.feeFilter()"></label>
+        ${fld('المدينة',`<select id="fee-city" class="native-input" onchange="WafraOps.feeFilter()"><option value="">كل المدن</option>${FEE_CITIES.map(c=>`<option value="${c}" ${f.city===c?'selected':''}>${c}</option>`).join('')}</select>`)}
+        ${fld('الحالة',`<select id="fee-status-f" class="native-input" onchange="WafraOps.feeFilter()"><option value="">كل الحالات</option><option value="نشط" ${f.status==='نشط'?'selected':''}>نشط</option><option value="غير نشط" ${f.status==='غير نشط'?'selected':''}>غير نشط</option></select>`)}
       </div><div class="card-b">${table(
-        ['المزود','الاستلام','التسليم','الرسوم','تاريخ الإضافة','الحالة','الإجراءات'],
-        fees.map((x,i)=>[
-          x.provider,x.from,x.to,
+        ['من (مدينة الانطلاق)','إلى (المدينة الوجهة)','الرسوم','صالح من','صالح إلى','الحالة','الإجراءات'],
+        rows.map(x=>[
+          x.from,x.to,
           {v:`${x.amount} ر.س`,c:'num'},
-          x.added||'—',
-          bdg(x.status,x.status==='نشطة'?'g':'n'),
-          `<button class="btn ghost sm" onclick="WafraOps.editFee(${i})" title="تعديل">✎</button>`
+          x.validFrom||'—',
+          x.validTo||'—',
+          statusCell(x,x._i),
+          `<button type="button" class="btn ghost sm" onclick="WafraOps.editFee(${x._i})" title="تعديل">✎</button>`
         ])
-      )}</div>`);
+      )}${pager(rows.length,Math.max(1,Math.ceil(rows.length/5)))}</div>`);
   };
 
   if(window.TITLES){
     window.TITLES.branchAreas='المناطق والمدن';
     window.TITLES.branches='قائمة الفروع';
-    window.TITLES.intercityFees='رسوم بين المدن';
+    window.TITLES.intercityFees='رسوم التسليم بين المدن';
     window.TITLES.branchForm='إضافة فرع';
   }
 })();
@@ -517,5 +575,7 @@
 .form-page{max-width:1020px}
 .branch-map{margin-top:12px;min-height:150px;display:grid;place-items:center;text-align:center;border-radius:12px;background:linear-gradient(125deg,#E2E8E3,#E9EEF2);color:var(--navy);font-size:13px}
 .branch-map span{font-size:11px;color:var(--ink-2)}
+.fee-status{display:inline-flex;align-items:center;gap:10px;font:700 13px Cairo;color:var(--ink,#1E2A44);white-space:nowrap}
+.fee-status .tg{cursor:pointer;flex:0 0 auto}
 @media(max-width:800px){.form-page .frow{grid-template-columns:1fr}}
 </style>

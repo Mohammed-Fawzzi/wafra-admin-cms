@@ -58,11 +58,21 @@
     {name:'إم جي',country:'الصين',models:24,cars:'386'}
   ];
   state.fleetModels=state.fleetModels||[
-    {name:'كامري',make:'تويوتا',image:'صورة مضافة',cat:'سيدان',specs:'5 ركاب · أوتوماتيك · بنزين'},
-    {name:'إلنترا',make:'هيونداي',image:'صورة مضافة',cat:'اقتصادية',specs:'5 ركاب · أوتوماتيك · بنزين'},
-    {name:'K5',make:'كيا',image:'صورة مضافة',cat:'سيدان',specs:'5 ركاب · أوتوماتيك · بنزين'},
-    {name:'أكسنت',make:'هيونداي',image:'صورة مضافة',cat:'اقتصادية',specs:'5 ركاب · أوتوماتيك · بنزين'}
+    {name:'كامري',make:'تويوتا',image:'صورة مضافة',cat:'سيدان',year:'2026',seats:'5',trans:'أوتوماتيك',fuel:'بنزين',specs:'5 ركاب · أوتوماتيك · بنزين'},
+    {name:'إلنترا',make:'هيونداي',image:'صورة مضافة',cat:'اقتصادية',year:'2025',seats:'5',trans:'أوتوماتيك',fuel:'بنزين',specs:'5 ركاب · أوتوماتيك · بنزين'},
+    {name:'K5',make:'كيا',image:'صورة مضافة',cat:'سيدان',year:'2026',seats:'5',trans:'أوتوماتيك',fuel:'بنزين',specs:'5 ركاب · أوتوماتيك · بنزين'},
+    {name:'أكسنت',make:'هيونداي',image:'صورة مضافة',cat:'اقتصادية',year:'2025',seats:'5',trans:'أوتوماتيك',fuel:'بنزين',specs:'5 ركاب · أوتوماتيك · بنزين'}
   ];
+  state.fleetModels.forEach(m=>{
+    if(!m.year||!m.seats){
+      const parts=String(m.specs||'').split(/\s*·\s*/);
+      m.seats=m.seats||(parts[0]||'5').replace(/[^\d]/g,'')||'5';
+      m.trans=m.trans||parts[1]||'أوتوماتيك';
+      m.fuel=m.fuel||parts[2]||'بنزين';
+      m.year=m.year||'2026';
+      m.specs=`${m.seats} ركاب · ${m.trans} · ${m.fuel}`;
+    }
+  });
   state.modelRequests=state.modelRequests||[
     {id:'MR-118',make:'كيا',model:'سيلتوس',provider:'كي رنت',status:'قيد المراجعة'},
     {id:'MR-116',make:'إم جي',model:'MG 5',provider:'مسار',status:'بانتظار صورة'},
@@ -93,41 +103,170 @@
   const detailTabs=active=>`<div class="tabs">${['الملخص','تفاصيل الحجز','الخط الزمني','الاستلام','الإرجاع','المحادثة','الفاتورة','سجل الإجراءات'].map(t=>`<button class="tab ${active===t?'on':''}" onclick="WafraOps.bookingTab('${t}')">${t}</button>`).join('')}</div>`;
 
   Object.assign(WafraOps,{
-    /* —— تحديث جماعي للإتاحة: الكل أو مزود واحد —— */
+    /* —— تحديث جماعي للإتاحة: فلاتر + رفع إكسل —— */
     bulkAvailability:()=>{
+      window.__bulkExcelName='';
+      const makes=(state.fleetMakes||[]).map(x=>x.name);
+      const models=(state.fleetModels||[]).map(x=>x.name);
+      const cats=[...(state.fleetCategories||[]).map(x=>x.name),'سيدان','اقتصادية','دفع رباعي','فاخرة'];
+      const cities=['الرياض','جدة','الدمام','الخبر','مكة','المدينة','الأحساء','تبوك'];
+      const branches=['مطار الملك خالد','جدة الشمالية','الخبر التشغيلي','مكة المركزي','طريق الملك عبدالعزيز','جدة الرقمية'];
+      const years=['2026','2025','2024','2023','2022','2021'];
+      const opt=(list,all='الكل')=>`<option value="">${all}</option>`+[...new Set(list)].map(x=>`<option value="${x}">${x}</option>`).join('');
       openM(dlg('تحديث جماعي للإتاحة',
-        `${fld('النطاق',`<select id="bulk-scope" class="native-input" onchange="WafraOps.bulkScopeChange()"><option value="all">كل المزودين</option><option value="one">مزود واحد</option></select>`)}
-         <div id="bulk-provider-wrap" style="display:none">${fld('المزود',`<select id="bulk-provider" class="native-input">${providers.map(p=>`<option>${p}</option>`).join('')}</select>`)}</div>
-         ${fld('الإجراء',`<select id="bulk-action" class="native-input"><option>تفعيل السيارات المطابقة</option><option>إيقاف السيارات المطابقة</option><option>تحديث الإتاحة إلى صفر</option></select>`)}
-         <p class="note info">اختر «كل المزودين» أو مزوداً واحداً، ثم طبّق الإجراء على السيارات المطابقة.</p>`,
+        `${fld('رفع نموذج التحديث (Excel)',`<div class="mdl-upload"><input id="bulk-excel" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onchange="WafraOps.pickBulkExcel()"><div class="drop" onclick="document.getElementById('bulk-excel').click()"><span class="ic">📄</span><b id="bulk-excel-lab">اسحب ملف الإكسل أو اضغط للاختيار</b><span class="sub">XLSX أو CSV · أعمدة: المزود، الفئة، الماركة، الموديل، سنة الصنع، المدينة، الفرع، المتاح</span></div></div>`)}
+         <div style="margin:0 0 12px"><button type="button" class="btn ghost sm" onclick="WafraOps.downloadBulkTemplate()">⤓ تنزيل نموذج فارغ</button></div>
+         <div class="frow">
+           ${fld('المزود',`<select id="bulk-provider" class="native-input">${opt(providers,'كل المزودين')}</select>`)}
+           ${fld('الفئة',`<select id="bulk-cat" class="native-input">${opt(cats,'كل الفئات')}</select>`)}
+         </div>
+         <div class="frow">
+           ${fld('الماركة',`<select id="bulk-make" class="native-input">${opt(makes,'كل الماركات')}</select>`)}
+           ${fld('الموديل',`<select id="bulk-model" class="native-input">${opt(models,'كل الموديلات')}</select>`)}
+         </div>
+         <div class="frow">
+           ${fld('سنة الصنع',`<select id="bulk-year" class="native-input">${opt(years,'كل السنوات')}</select>`)}
+           ${fld('المدينة',`<select id="bulk-city" class="native-input">${opt(cities,'كل المدن')}</select>`)}
+         </div>
+         <div class="frow">
+           ${fld('الفرع',`<select id="bulk-branch" class="native-input">${opt(branches,'كل الفروع')}</select>`)}
+           ${fld('المتاح',`<input id="bulk-available" class="native-input" type="number" min="0" placeholder="عدد السيارات المتاحة" value="0">`)}
+         </div>
+         <p class="note info">حدّد الفلاتر يدوياً أو ارفع ملف إكسل بنفس الأعمدة، ثم طبّق قيمة «المتاح» على السيارات المطابقة.</p>`,
         `<button class="btn coral" onclick="WafraOps.applyBulkAvail()">تطبيق التحديث</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
     },
-    /* —— تحديث جماعي للأسعار: الكل أو مزود واحد —— */
+    pickBulkExcel:()=>{
+      const inp=document.getElementById('bulk-excel');
+      if(!inp||!inp.files||!inp.files[0]) return;
+      const file=inp.files[0];
+      window.__bulkExcelName=file.name;
+      const lab=document.getElementById('bulk-excel-lab');
+      if(lab) lab.textContent=file.name+' — جاهز للتطبيق';
+      toast('تم اختيار ملف التحديث: '+file.name);
+    },
+    downloadBulkTemplate:()=>{
+      const headers=['المزود','الفئة','الماركة','الموديل','سنة الصنع','المدينة','الفرع','المتاح'];
+      const sample=[['شركة الصحراء','سيدان','تويوتا','كامري','2026','الرياض','مطار الملك خالد','12']];
+      const enc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+      const csv='\ufeff'+[headers,...sample].map(r=>r.map(enc).join(',')).join('\n');
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+      a.download='نموذج-تحديث-الإتاحة.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+      toast('تم تنزيل نموذج التحديث.');
+    },
+    /* —— تحديث جماعي للأسعار: فلاتر + أسعار + نسبة/نوع + إكسل —— */
     bulkPriceUpdate:()=>{
+      window.__bulkPriceExcelName='';
+      const makes=(state.fleetMakes||[]).map(x=>x.name);
+      const models=(state.fleetModels||[]).map(x=>x.name);
+      const cats=[...(state.fleetCategories||[]).map(x=>x.name),'سيدان','اقتصادية','دفع رباعي','فاخرة'];
+      const cities=['الرياض','جدة','الدمام','الخبر','مكة','المدينة','الأحساء','تبوك'];
+      const branches=['مطار الملك خالد','جدة الشمالية','الخبر التشغيلي','مكة المركزي','طريق الملك عبدالعزيز','جدة الرقمية'];
+      const years=['2026','2025','2024','2023','2022','2021'];
+      const opt=(list,all='— بدون اختيار')=>`<option value="">${all}</option>`+[...new Set(list)].map(x=>`<option value="${x}">${x}</option>`).join('');
       openM(dlg('تحديث جماعي للأسعار',
-        `${fld('النطاق',`<select id="bulk-scope" class="native-input" onchange="WafraOps.bulkScopeChange()"><option value="all">كل المزودين</option><option value="one">مزود واحد</option></select>`)}
-         <div id="bulk-provider-wrap" style="display:none">${fld('المزود',`<select id="bulk-provider" class="native-input">${providers.map(p=>`<option>${p}</option>`).join('')}</select>`)}</div>
-         ${fld('نسبة التعديل %',`<input id="bulk-percent" class="native-input" type="number" value="5">`)}
-         ${fld('نوع التعديل',`<select id="bulk-type" class="native-input"><option>زيادة الأسعار</option><option>تخفيض الأسعار</option></select>`)}
-         <p class="note info">سيُطبَّق على النطاق المحدد فقط (الكل أو مزود واحد).</p>`,
+        `${fld('رفع نموذج التحديث (Excel)',`<div class="mdl-upload"><input id="bulk-price-excel" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onchange="WafraOps.pickBulkPriceExcel()"><div class="drop" onclick="document.getElementById('bulk-price-excel').click()"><span class="ic">📄</span><b id="bulk-price-excel-lab">اسحب ملف الإكسل أو اضغط للاختيار</b><span class="sub">XLSX أو CSV · يمكن ترك الحقول فارغة والاعتماد على الملف فقط</span></div></div>`)}
+         <div style="margin:0 0 12px"><button type="button" class="btn ghost sm" onclick="WafraOps.downloadBulkPriceTemplate()">⤓ تنزيل نموذج فارغ</button></div>
+         <div class="frow">
+           ${fld('المزود',`<select id="bp-provider" class="native-input">${opt(providers,'— بدون اختيار')}</select>`)}
+           ${fld('الفئة',`<select id="bp-cat" class="native-input">${opt(cats,'— بدون اختيار')}</select>`)}
+         </div>
+         <div class="frow">
+           ${fld('الماركة',`<select id="bp-make" class="native-input">${opt(makes,'— بدون اختيار')}</select>`)}
+           ${fld('الموديل',`<select id="bp-model" class="native-input">${opt(models,'— بدون اختيار')}</select>`)}
+         </div>
+         <div class="frow">
+           ${fld('سنة الصنع',`<select id="bp-year" class="native-input">${opt(years,'— بدون اختيار')}</select>`)}
+           ${fld('المدينة',`<select id="bp-city" class="native-input">${opt(cities,'— بدون اختيار')}</select>`)}
+         </div>
+         <div class="frow">
+           ${fld('الفرع',`<select id="bp-branch" class="native-input">${opt(branches,'— بدون اختيار')}</select>`)}
+           <div></div>
+         </div>
+         <div class="frow">
+           ${fld('يومي',`<input id="bp-daily" class="native-input" type="number" min="0" step="1" placeholder="اختياري">`)}
+           ${fld('أسبوعي',`<input id="bp-weekly" class="native-input" type="number" min="0" step="1" placeholder="اختياري">`)}
+           ${fld('شهري',`<input id="bp-monthly" class="native-input" type="number" min="0" step="1" placeholder="اختياري">`)}
+         </div>
+         <div class="frow">
+           ${fld('نسبة التعديل %',`<input id="bulk-percent" class="native-input" type="number" min="0" step="0.1" placeholder="اختياري">`)}
+           ${fld('نوع التعديل',`<select id="bulk-type" class="native-input"><option value="">— بدون اختيار</option><option>زيادة الأسعار</option><option>تخفيض الأسعار</option></select>`)}
+         </div>
+         <p class="note info">يمكن ترك كل الحقول فارغة والاعتماد على ملف الإكسل فقط، أو تعبئة الفلاتر/الأسعار/نسبة التعديل يدوياً.</p>`,
         `<button class="btn coral" onclick="WafraOps.applyBulkPrice()">تطبيق التعديل</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    pickBulkPriceExcel:()=>{
+      const inp=document.getElementById('bulk-price-excel');
+      if(!inp||!inp.files||!inp.files[0]) return;
+      const file=inp.files[0];
+      window.__bulkPriceExcelName=file.name;
+      const lab=document.getElementById('bulk-price-excel-lab');
+      if(lab) lab.textContent=file.name+' — جاهز للتطبيق';
+      toast('تم اختيار ملف التسعير: '+file.name);
+    },
+    downloadBulkPriceTemplate:()=>{
+      const headers=['المزود','الفئة','الماركة','الموديل','سنة الصنع','المدينة','الفرع','يومي','أسبوعي','شهري','نسبة التعديل %','نوع التعديل'];
+      const sample=[['شركة الصحراء','سيدان','تويوتا','كامري','2026','الرياض','مطار الملك خالد','190','1140','4200','5','زيادة الأسعار']];
+      const enc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+      const csv='\ufeff'+[headers,...sample].map(r=>r.map(enc).join(',')).join('\n');
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+      a.download='نموذج-تحديث-الأسعار.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+      toast('تم تنزيل نموذج تحديث الأسعار.');
     },
     bulkScopeChange:()=>{
       const wrap=document.getElementById('bulk-provider-wrap');
       if(wrap) wrap.style.display=(val('bulk-scope')==='one')?'block':'none';
     },
     applyBulkAvail:()=>{
-      const scope=val('bulk-scope')||'all';
-      const p=scope==='all'?'كل المزودين':(val('bulk-provider')||'مزود');
-      const a=val('bulk-action')||'التحديث';
-      closeM(); toast(`تم ${a} لنطاق: ${p}.`);
+      const filters=[
+        ['المزود',val('bulk-provider')],
+        ['الفئة',val('bulk-cat')],
+        ['الماركة',val('bulk-make')],
+        ['الموديل',val('bulk-model')],
+        ['سنة الصنع',val('bulk-year')],
+        ['المدينة',val('bulk-city')],
+        ['الفرع',val('bulk-branch')]
+      ].filter(([,v])=>v).map(([k,v])=>`${k}: ${v}`);
+      const avail=val('bulk-available');
+      const hasFile=!!window.__bulkExcelName;
+      if(!hasFile&&(avail===''||avail==null)){toast('أدخل عدد المتاح أو ارفع ملف إكسل.');return;}
+      const filePart=hasFile?` عبر الملف «${window.__bulkExcelName}»`:'';
+      const scope=filters.length?filters.join(' · '):'كل السيارات';
+      closeM();
+      toast(hasFile&&!avail?`تم تطبيق تحديث الإتاحة من الملف لنطاق (${scope}).`:`تم تحديث المتاح إلى ${avail} لنطاق (${scope})${filePart}.`);
+      window.__bulkExcelName='';
     },
     applyBulkPrice:()=>{
-      const scope=val('bulk-scope')||'all';
-      const p=scope==='all'?'كل المزودين':(val('bulk-provider')||'مزود');
-      const n=val('bulk-percent')||'0';
-      const t=val('bulk-type')||'تعديل';
-      closeM(); toast(`تم تجهيز ${t} بنسبة ${n}% لنطاق: ${p}.`);
+      const filters=[
+        ['المزود',val('bp-provider')],
+        ['الفئة',val('bp-cat')],
+        ['الماركة',val('bp-make')],
+        ['الموديل',val('bp-model')],
+        ['سنة الصنع',val('bp-year')],
+        ['المدينة',val('bp-city')],
+        ['الفرع',val('bp-branch')]
+      ].filter(([,v])=>v).map(([k,v])=>`${k}: ${v}`);
+      const daily=val('bp-daily'), weekly=val('bp-weekly'), monthly=val('bp-monthly');
+      const pct=val('bulk-percent'), typ=val('bulk-type');
+      const hasFile=!!window.__bulkPriceExcelName;
+      const hasManual=filters.length||daily||weekly||monthly||pct||typ;
+      if(!hasFile&&!hasManual){toast('ارفع ملف إكسل أو عبّئ أحد الحقول على الأقل.');return;}
+      const prices=[];
+      if(daily) prices.push('يومي: '+daily);
+      if(weekly) prices.push('أسبوعي: '+weekly);
+      if(monthly) prices.push('شهري: '+monthly);
+      const adj=pct||typ?`${typ||'تعديل'}${pct?` بنسبة ${pct}%`:''}`:'';
+      const scope=filters.length?filters.join(' · '):'كل السيارات';
+      const filePart=hasFile?` عبر الملف «${window.__bulkPriceExcelName}»`:'';
+      const detail=[prices.join(' · '),adj].filter(Boolean).join(' · ')||'من ملف الإكسل';
+      closeM();
+      toast(`تم تجهيز تحديث الأسعار (${detail}) لنطاق (${scope})${filePart}.`);
+      window.__bulkPriceExcelName='';
     },
     addFleetCategory:()=>{
       openM(dlg('إضافة فئة',
@@ -270,20 +409,91 @@
       Object.assign(m,{name:n,country:val('make-country')||m.country,models:Number(val('make-models')||m.models),cars:val('make-cars')||m.cars});
       persist(); closeM(); render(); toast('تم حفظ الماركة.');
     },
+    pickModelImage:()=>{
+      const inp=document.getElementById('mdl-image-file');
+      if(!inp||!inp.files||!inp.files[0]) return;
+      const file=inp.files[0];
+      if(!file.type.startsWith('image/')){toast('اختر ملف صورة صالح.');inp.value='';return;}
+      const reader=new FileReader();
+      reader.onload=()=>{
+        window.__mdlImageData=reader.result;
+        window.__mdlImageName=file.name;
+        const lab=document.getElementById('mdl-image-lab');
+        const prev=document.getElementById('mdl-image-prev');
+        if(lab) lab.textContent=file.name+' — جاهزة للرفع';
+        if(prev){ prev.src=reader.result; prev.style.display='block'; }
+      };
+      reader.readAsDataURL(file);
+    },
+    addMake:()=>{
+      openM(dlg('إضافة ماركة',
+        `${fld('اسم الماركة',`<input id="make-name" class="native-input" placeholder="مثال: تويوتا">`)}
+         ${fld('بلد المنشأ',`<input id="make-country" class="native-input" placeholder="مثال: اليابان">`)}`,
+        `<button class="btn coral" onclick="WafraOps.saveNewMake()">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveNewMake:()=>{
+      const n=val('make-name'); if(!n){toast('أدخل اسم الماركة.');return;}
+      state.fleetMakes=state.fleetMakes||[];
+      if(state.fleetMakes.some(x=>x.name===n)){toast('الماركة موجودة مسبقاً.');return;}
+      state.fleetMakes.unshift({name:n,country:val('make-country')||'—',models:0,cars:'0'});
+      persist(); closeM(); window.__makeTab='makes'; render(); toast(`تمت إضافة ماركة «${n}».`);
+    },
+    addModel:()=>{
+      const makes=state.fleetMakes||[];
+      if(!makes.length){toast('أضف ماركة أولاً قبل إضافة موديل.');window.__makeTab='makes';render();return;}
+      window.__mdlImageData=''; window.__mdlImageName='';
+      openM(dlg('إضافة موديل',
+        `${fld('اسم الموديل',`<input id="mdl-name" class="native-input" placeholder="مثال: كامري">`)}
+         ${fld('الماركة',`<select id="mdl-make" class="native-input">${makes.map(x=>`<option>${x.name}</option>`).join('')}</select>`)}
+         <div class="frow">${fld('الفئة',`<select id="mdl-cat" class="native-input"><option>اقتصادية</option><option selected>سيدان</option><option>دفع رباعي</option><option>فاخرة</option></select>`)}
+         ${fld('سنة الصنع',`<input id="mdl-year" class="native-input" type="number" min="1990" max="2035" placeholder="مثال: 2026" value="2026">`)}</div>
+         ${fld('صورة السيارة',`<div class="mdl-upload"><input id="mdl-image-file" type="file" accept="image/*" onchange="WafraOps.pickModelImage()"><div class="drop" onclick="document.getElementById('mdl-image-file').click()"><span class="ic">🖼</span><b id="mdl-image-lab">اسحب الصورة أو اضغط للاختيار</b><span class="sub">PNG أو JPG · حتى 2 ميجا</span></div><img id="mdl-image-prev" alt="" style="display:none;max-height:120px;margin-top:10px;border-radius:10px;object-fit:cover"></div>`)}
+         <div class="frow">${fld('عدد الركاب',`<input id="mdl-seats" class="native-input" type="number" min="1" max="15" value="5">`)}
+         ${fld('ناقل الحركة',`<select id="mdl-trans" class="native-input"><option selected>أوتوماتيك</option><option>يدوي</option></select>`)}
+         ${fld('نوع الوقود',`<select id="mdl-fuel" class="native-input"><option selected>بنزين</option><option>ديزل</option><option>هجين</option><option>كهربائي</option></select>`)}</div>`,
+        `<button class="btn coral" onclick="WafraOps.saveNewModel()">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+    },
+    saveNewModel:()=>{
+      const n=val('mdl-name'); if(!n){toast('أدخل اسم الموديل.');return;}
+      const seats=val('mdl-seats')||'5', trans=val('mdl-trans')||'أوتوماتيك', fuel=val('mdl-fuel')||'بنزين';
+      const hasImg=!!window.__mdlImageData;
+      state.fleetModels=state.fleetModels||[];
+      state.fleetModels.unshift({
+        name:n,make:val('mdl-make')||'—',cat:val('mdl-cat')||'سيدان',year:val('mdl-year')||'2026',
+        seats,trans,fuel,specs:`${seats} ركاب · ${trans} · ${fuel}`,
+        image:hasImg?'صورة مضافة':'بانتظار صورة',
+        imageData:window.__mdlImageData||'', imageName:window.__mdlImageName||''
+      });
+      window.__mdlImageData=''; window.__mdlImageName='';
+      persist(); closeM(); window.__makeTab='models'; render(); toast(`تمت إضافة موديل «${n}».`);
+    },
     editModel:name=>{
       const m=(state.fleetModels||[]).find(x=>x.name===name); if(!m)return;
+      window.__mdlImageData=m.imageData||''; window.__mdlImageName=m.imageName||'';
+      const seats=m.seats||'5', trans=m.trans||'أوتوماتيك', fuel=m.fuel||'بنزين';
       openM(dlg(`تعديل موديل: ${safe(m.name)}`,
         `${fld('اسم الموديل',`<input id="mdl-name" class="native-input" value="${safe(m.name)}">`)}
          ${fld('الماركة',`<select id="mdl-make" class="native-input">${(state.fleetMakes||[]).map(x=>`<option ${x.name===m.make?'selected':''}>${x.name}</option>`).join('')}</select>`)}
          <div class="frow">${fld('الفئة',`<select id="mdl-cat" class="native-input">${['اقتصادية','سيدان','دفع رباعي','فاخرة'].map(x=>`<option ${x===m.cat?'selected':''}>${x}</option>`).join('')}</select>`)}
-         ${fld('الصورة',`<select id="mdl-image" class="native-input"><option ${m.image==='صورة مضافة'?'selected':''}>صورة مضافة</option><option ${m.image!=='صورة مضافة'?'selected':''}>بانتظار صورة</option></select>`)}</div>
-         ${fld('المواصفات',`<input id="mdl-specs" class="native-input" value="${safe(m.specs)}">`)}`,
+         ${fld('سنة الصنع',`<input id="mdl-year" class="native-input" type="number" min="1990" max="2035" value="${safe(m.year||'2026')}">`)}</div>
+         ${fld('صورة السيارة',`<div class="mdl-upload"><input id="mdl-image-file" type="file" accept="image/*" onchange="WafraOps.pickModelImage()"><div class="drop" onclick="document.getElementById('mdl-image-file').click()"><span class="ic">🖼</span><b id="mdl-image-lab">${m.imageData||m.image==='صورة مضافة'?(safe(m.imageName)||'صورة مضافة — اضغط للتغيير'):'اسحب الصورة أو اضغط للاختيار'}</b><span class="sub">PNG أو JPG · حتى 2 ميجا</span></div><img id="mdl-image-prev" alt="" src="${m.imageData||''}" style="${m.imageData?'':'display:none;'}max-height:120px;margin-top:10px;border-radius:10px;object-fit:cover"></div>`)}
+         <div class="frow">${fld('عدد الركاب',`<input id="mdl-seats" class="native-input" type="number" min="1" max="15" value="${safe(seats)}">`)}
+         ${fld('ناقل الحركة',`<select id="mdl-trans" class="native-input"><option ${trans==='أوتوماتيك'?'selected':''}>أوتوماتيك</option><option ${trans==='يدوي'?'selected':''}>يدوي</option></select>`)}
+         ${fld('نوع الوقود',`<select id="mdl-fuel" class="native-input">${['بنزين','ديزل','هجين','كهربائي'].map(x=>`<option ${x===fuel?'selected':''}>${x}</option>`).join('')}</select>`)}</div>`,
         `<button class="btn coral" onclick="WafraOps.saveModel('${escAttr(name)}')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
     },
     saveModel:old=>{
       const m=(state.fleetModels||[]).find(x=>x.name===old); if(!m)return;
       const n=val('mdl-name'); if(!n){toast('أدخل اسم الموديل.');return;}
-      Object.assign(m,{name:n,make:val('mdl-make')||m.make,cat:val('mdl-cat')||m.cat,image:val('mdl-image')||m.image,specs:val('mdl-specs')||m.specs});
+      const seats=val('mdl-seats')||m.seats||'5', trans=val('mdl-trans')||m.trans||'أوتوماتيك', fuel=val('mdl-fuel')||m.fuel||'بنزين';
+      const hasImg=!!(window.__mdlImageData||m.imageData);
+      Object.assign(m,{
+        name:n,make:val('mdl-make')||m.make,cat:val('mdl-cat')||m.cat,year:val('mdl-year')||m.year||'2026',
+        seats,trans,fuel,specs:`${seats} ركاب · ${trans} · ${fuel}`,
+        image:hasImg||m.image==='صورة مضافة'?'صورة مضافة':'بانتظار صورة',
+        imageData:window.__mdlImageData||m.imageData||'', imageName:window.__mdlImageName||m.imageName||''
+      });
+      window.__mdlImageData=''; window.__mdlImageName='';
       persist(); closeM(); render(); toast('تم حفظ الموديل.');
     },
     requestAction:status=>{
@@ -629,8 +839,8 @@
         (state.fleetMakes||[]).map(m=>[m.name,m.country,String(m.models),m.cars,
           `<button class="btn ghost sm" onclick="WafraOps.editMake('${escAttr(m.name)}')">تعديل</button>`]));
     }else if(active==='models'){
-      content=table(['الموديل','الماركة','الصورة','الفئة','المواصفات','الإجراء'],
-        (state.fleetModels||[]).map(m=>[m.name,m.make,m.image,m.cat,m.specs,
+      content=table(['الموديل','الماركة','سنة الصنع','الصورة','الفئة','المواصفات','الإجراء'],
+        (state.fleetModels||[]).map(m=>[m.name,m.make,m.year||'—',m.image,m.cat,m.specs||`${m.seats||'5'} ركاب · ${m.trans||'أوتوماتيك'} · ${m.fuel||'بنزين'}`,
           `<button class="btn ghost sm" onclick="WafraOps.editModel('${escAttr(m.name)}')">تعديل</button>`]));
     }else{
       content=table(['الطلب','الماركة','الموديل','المزود','الحالة','الإجراءات'],
@@ -642,7 +852,7 @@
               :`<button class="btn ghost sm" onclick="WafraOps.requestAction('rejected')">دمج أو رفض</button>`]));
     }
     return phead('الماركات والموديلات','الماركة هي الشركة المصنّعة، والموديل هو المركبة التابعة لها',[],
-      `<button class="btn coral" onclick="openM(M.newModel())">＋ إضافة موديل</button>`)
+      `<button class="btn coral" onclick="WafraOps.addModel()">＋ إضافة موديل</button>`)
       +card(tabBar+content);
   };
   S.models=S.fleetMakesModels;

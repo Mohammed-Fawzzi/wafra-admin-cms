@@ -4,6 +4,34 @@
 .ix-kpis{display:grid;gap:12px}
 .ix-kpis.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .ix-kpis.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ix-kpis.c5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.vio-grace{display:inline-flex;align-items:center;gap:6px;border:1px solid #E2E8F4;background:#F5F7FC;border-radius:10px;padding:8px 12px;font:700 12.5px Cairo;color:#3A4663;white-space:nowrap}
+.vio-auto{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:10px;background:#293B85;color:#fff;padding:10px 14px;font:800 12.5px Cairo;cursor:pointer}
+.vio-auto.off{background:#fff;color:#293B85;border:1px solid #D7DEEE}
+.vio-auto .vio-dot{width:8px;height:8px;border-radius:99px;background:#7CFFB2;flex:0 0 8px}
+.vio-auto.off .vio-dot{background:#C5CCD9}
+.vio-board .tw{overflow-x:auto}
+.vio-board table{min-width:1240px;width:100%}
+.vio-board thead th{position:sticky;top:0;z-index:1;background:#F8FAFD;white-space:nowrap;padding:12px 12px;font:800 12px Cairo}
+.vio-board tbody td{padding:14px 12px;vertical-align:middle;border-bottom:1px solid #EEF1F7;font:600 12.8px Cairo;color:#1E2A44}
+.vio-board tbody tr:hover{background:#FBFCFE}
+.vio-board td.vio-id{font-weight:800;color:#293B85;direction:ltr;text-align:right}
+.vio-board td.vio-amt{direction:ltr;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vio-board td.vio-acts-cell{min-width:300px;white-space:normal}
+.vio-acts{display:inline-flex;flex-wrap:wrap;gap:5px;align-items:center}
+.vio-btn{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 10px;border-radius:8px;border:1px solid #D7DEEE;background:#fff;color:#3A4663;font:800 11.5px Cairo;cursor:pointer;white-space:nowrap}
+.vio-btn:hover{background:#F5F7FC}
+.vio-collect{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 12px;border:0;border-radius:8px;background:#20A16E;color:#fff;font:800 11.5px Cairo;cursor:pointer;white-space:nowrap}
+.vio-collect:hover{filter:brightness(.96)}
+.vio-deadline{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;background:#FFF1E0;color:#B86A00;font:800 12px Cairo;white-space:nowrap}
+.vio-deadline.expired{background:#FDECEC;color:#C62828}
+.vio-deadline.muted{background:transparent;color:#9AA3B5;padding:0}
+.vio-detail{color:#148A5A;font:700 12px Cairo;white-space:nowrap}
+.vio-detail.empty{color:#9AA3B5;font-weight:600}
+.vio-chk{width:15px;height:15px;accent-color:#293B85;cursor:pointer}
+.modal.vio-modal{width:min(520px,100%)}
+.modal-h .vio-msub{margin:4px 0 0;font:600 12.5px Cairo;color:#7A869E;line-height:1.4}
+.vio-info{margin-top:14px;padding:12px 14px;border-radius:10px;background:#F3F6FB;color:#44506A;font:600 12.5px Cairo;line-height:1.7;text-align:center}
 .ix-kpi{background:#fff;border:1px solid #E8ECF3;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(25,42,84,.05);display:flex;flex-direction:column}
 .ix-kpi .top{background:#F5C518;padding:10px 14px;display:flex;align-items:center;gap:8px;font:800 13px Cairo;color:#1E2A44}
 .ix-kpi .top .ic{width:22px;height:22px;display:grid;place-items:center;font-size:14px}
@@ -46,10 +74,10 @@
 .ix-gbtn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:#20A16E;color:#fff;padding:8px 12px;font:800 12px Cairo;cursor:pointer;white-space:nowrap}
 .ix-gbtn:hover{filter:brightness(.96)}
 @media(max-width:980px){
-  .ix-kpis.c3,.ix-kpis.c4{grid-template-columns:1fr 1fr}
+  .ix-kpis.c3,.ix-kpis.c4,.ix-kpis.c5{grid-template-columns:1fr 1fr}
 }
 @media(max-width:620px){
-  .ix-kpis.c3,.ix-kpis.c4{grid-template-columns:1fr}
+  .ix-kpis.c3,.ix-kpis.c4,.ix-kpis.c5{grid-template-columns:1fr}
 }
 </style>
 <script>
@@ -143,6 +171,69 @@
     openReport:k=>{
       const map={supply:'supplyDemand',readiness:'fleetReadiness',utilization:'fleetUtil',forecast:'demandForecast',lifecycle:'bookingLifecycle',loyalty:'customerLoyalty',commission:'commissionTiers',violations:'violationsDeposits'};
       location.hash='#'+(map[k]||'supplyDemand');
+    },
+    vioEnsure:()=>{
+      if(!window.__vioRowsV2) window.__vioRowsV2=[
+        {id:'VIO-1',customer:'أحمد القحطاني',plate:'ر ط ق 7320',type:'عدم ربط الحزام',amount:'150 ر.س',daysLeft:6,deposit:'1.5 ألف ر.س',depositOk:true,status:'ضمن المهلة',detail:''},
+        {id:'VIO-2',customer:'ناصر الدوسري',plate:'د ع م 5521',type:'وقوف خاطئ',amount:'300 ر.س',daysLeft:4,deposit:'2.1 ألف ر.س',depositOk:true,status:'ضمن المهلة',detail:''},
+        {id:'VIO-3',customer:'سارة الحربي',plate:'ج د ة 7788',type:'تجاوز سرعة',amount:'500 ر.س',daysLeft:0,deposit:'900 ر.س',depositOk:false,status:'انتهت المهلة',detail:''},
+        {id:'VIO-4',customer:'فهد الرشيدي',plate:'ر ي ض 4410',type:'قطع إشارة',amount:'900 ر.س',daysLeft:7,deposit:'1.8 ألف ر.س',depositOk:true,status:'ضمن المهلة',detail:''},
+        {id:'VIO-5',customer:'نورة العتيبي',plate:'خ ب ر 3344',type:'وقوف خاطئ',amount:'150 ر.س',daysLeft:null,deposit:'1.0 ألف ر.س',depositOk:true,status:'محصلة',detail:'خصمت من الوديعة — 10 أكتوبر 2026'},
+        {id:'VIO-6',customer:'خالد المطيري',plate:'م د ن 9901',type:'تجاوز سرعة',amount:'500 ر.س',daysLeft:2,deposit:'650 ر.س',depositOk:false,status:'ضمن المهلة',detail:''},
+        {id:'VIO-7',customer:'ريم الشمري',plate:'ر ط ق 6273',type:'عدم ربط الحزام',amount:'150 ر.س',daysLeft:null,deposit:'2.4 ألف ر.س',depositOk:true,status:'محصلة',detail:'خصمت من الوديعة — 8 أكتوبر 2026'},
+        {id:'VIO-8',customer:'وليد العنزي',plate:'أ ب ج 1204',type:'قطع إشارة',amount:'900 ر.س',daysLeft:0,deposit:'400 ر.س',depositOk:false,status:'انتهت المهلة',detail:''},
+        {id:'VIO-9',customer:'مشعل العتيبي',plate:'س ع و 4412',type:'تجاوز سرعة',amount:'500 ر.س',daysLeft:5,deposit:'3.2 ألف ر.س',depositOk:true,status:'ضمن المهلة',detail:''},
+        {id:'VIO-10',customer:'هند القحطاني',plate:'ق ح ط 8811',type:'وقوف خاطئ',amount:'150 ر.س',daysLeft:null,deposit:'1.2 ألف ر.س',depositOk:true,status:'محصلة',detail:'خصمت من الوديعة — 5 أكتوبر 2026'}
+      ];
+      if(window.__vioAuto==null) window.__vioAuto=true;
+      if(window.__vioGrace==null) window.__vioGrace=7;
+      return window.__vioRowsV2;
+    },
+    toggleVioAuto:()=>{window.__vioAuto=!window.__vioAuto;render();toast(window.__vioAuto?'تم تشغيل الخصم التلقائي بعد المهلة':'تم إيقاف الخصم التلقائي');},
+    openVioObjection:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const reasons=['العميل لم يكن قائد المركبة','خطأ في نسبة/قيمة المخالفة','المخالفة مكررة','المركبة كانت مُسلّمة للمزود','سبب آخر'];
+      openM(`<div class="modal vio-modal"><div class="modal-h"><div><h3>اعتراض على مخالفة – ${row.id}</h3><p class="vio-msub">${row.customer} · ${row.type} · ${row.amount}</p></div><span class="x" onclick="closeM()">✕</span></div>
+        <div class="modal-b">
+          ${fld('سبب الاعتراض',`<select id="vio-obj-reason" class="native-input">${reasons.map((r,i)=>`<option ${i===0?'selected':''}>${r}</option>`).join('')}</select>`)}
+          ${fld('تفاصيل إضافية',`<textarea id="vio-obj-details" class="native-input" rows="4" placeholder="اكتب تفاصيل الاعتراض..."></textarea>`)}
+          <div class="vio-info">يُسجَّل الاعتراض مع سببه في سجل التدقيق، ويُعلَّق التحصيل حتى البتّ فيه.</div>
+        </div>
+        <div class="modal-f"><button type="button" class="btn" onclick="WafraOps.submitVioObjection('${row.id}')">تسجيل الاعتراض</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button></div></div>`);
+    },
+    submitVioObjection:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const reason=document.getElementById('vio-obj-reason')?.value||'';
+      const details=(document.getElementById('vio-obj-details')?.value||'').trim();
+      row.status='معترض عليها';
+      row.detail='اعتراض: '+reason+(details?' — '+details:'');
+      row.daysLeft=null;
+      closeM(); toast('تم تسجيل الاعتراض على '+id+' وتعليق التحصيل'); render();
+    },
+    openVioExtend:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const left=row.daysLeft==null?0:Math.max(0,row.daysLeft);
+      openM(`<div class="modal vio-modal"><div class="modal-h"><div><h3>تمديد المهلة يدوياً – ${row.id}</h3><p class="vio-msub">${row.customer} · ${row.type}</p></div><span class="x" onclick="closeM()">✕</span></div>
+        <div class="modal-b">
+          <div class="vio-info">المتبقي حالياً: ${left} يوم. حدد مهلة إضافية بالأيام من اليوم.</div>
+          ${fld('مهلة إضافية (أيام من اليوم)',`<input id="vio-ext-days" class="native-input" type="number" min="1" max="60" value="7">`)}
+        </div>
+        <div class="modal-f"><button type="button" class="btn" onclick="WafraOps.applyVioExtend('${row.id}')">تطبيق</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button></div></div>`);
+    },
+    applyVioExtend:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const days=Math.max(1,parseInt(document.getElementById('vio-ext-days')?.value||'7',10)||7);
+      row.daysLeft=days;
+      row.status='ضمن المهلة';
+      row.detail='';
+      closeM(); toast('تم تمديد مهلة '+id+' إلى '+days+' يوم'); render();
+    },
+    collectVio:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      row.status='محصلة';
+      row.daysLeft=null;
+      row.detail='خصمت من الوديعة — اليوم';
+      toast('تم تحصيل '+id+' من الوديعة'); render();
     }
   });
 
@@ -318,23 +409,91 @@
 
   /* 8 — المخالفات والودائع */
   S.violationsDeposits=()=>{
+    const rows=WafraOps.vioEnsure();
     const st=window.__ixSel?.vioSt||'';
-    const all=[
-      ['VIO-1','BK-20099','عمر الرشيدي','ر ط ق 6273','تجاوز سرعة','-300 ر.س','6 أغسطس 2021',`<span class="ix-pct-g">1.7 ألف ر.س</span>`,bdg('متأخر','a')],
-      ['VIO-2','BK-20088','شهد الرشيدي','د ع م 5521','قطع إشارة','-900 ر.س','5 أغسطس 2021',`<span class="ix-pct-r">833 ر.س</span>`,bdg('متأخر','a')],
-      ['VIO-3','BK-20076','فهد العتيبي','ر ي ض 4410','وقوف خاطئ','-150 ر.س','4 أغسطس 2021',`<span class="ix-pct-g">500 ر.س</span>`,bdg('متأخر','a')],
-      ['VIO-4','BK-20065','سارة الحربي','ج د ة 7788','تجاوز سرعة','-500 ر.س','3 أغسطس 2021',`<span class="ix-pct-g">2.0 ألف ر.س</span>`,bdg('متأخر','a')],
-      ['VIO-5','BK-20054','خالد الدوسري','م د ن 9901','قطع إشارة','-900 ر.س','2 أغسطس 2021',`<span class="ix-pct-r">700 ر.س</span>`,bdg('متأخر','a')],
-      ['VIO-6','BK-20043','ريم المطيري','خ ب ر 3344','وقوف خاطئ','-200 ر.س','1 أغسطس 2021',`<span class="ix-pct-g">1.0 ألف ر.س</span>`,bdg('متأخر','a')]
-    ];
-    let rows=sf(all,[0,2,3]);
-    if(st==='غير محصلة') rows=rows.filter(r=>String(r[8]).includes('متأخر'));
-    if(st==='محصلة'||st==='معترض عليها') rows=[];
-    return phead('المخالفات المرورية والودائع','مخالفات ساهر المرتبطة بالعقود وتحصيلها من ودائع العملاء',[])
+    const qv=(window.__ixQ||'').toLowerCase();
+    let list=rows.slice();
+    if(qv) list=list.filter(r=>[r.id,r.customer,r.plate,r.type].join(' ').toLowerCase().includes(qv));
+    if(st==='غير محصلة') list=list.filter(r=>r.status!=='محصلة'&&r.status!=='معترض عليها');
+    else if(st==='محصلة') list=list.filter(r=>r.status==='محصلة');
+    else if(st==='انتهت المهلة') list=list.filter(r=>r.status==='انتهت المهلة');
+    else if(st==='ضمن المهلة') list=list.filter(r=>r.status==='ضمن المهلة');
+    else if(st==='معترض عليها') list=list.filter(r=>r.status==='معترض عليها');
+    const open=rows.filter(r=>r.status!=='محصلة'&&r.status!=='معترض عليها');
+    const expired=rows.filter(r=>r.status==='انتهت المهلة').length;
+    const within=rows.filter(r=>r.status==='ضمن المهلة').length;
+    const collected=rows.filter(r=>r.status==='محصلة').length;
+    const autoOn=!!window.__vioAuto;
+    const grace=window.__vioGrace||7;
+    const deadlineCell=r=>{
+      if(r.status==='محصلة'||r.status==='معترض عليها'||r.daysLeft==null) return `<span class="vio-deadline muted">—</span>`;
+      if(r.status==='انتهت المهلة'||r.daysLeft===0) return `<span class="vio-deadline expired">انتهت المهلة</span>`;
+      return `<span class="vio-deadline">متبقي ${r.daysLeft} يوم</span>`;
+    };
+    const statusCell=r=>{
+      if(r.status==='محصلة') return bdg('محصلة','g');
+      if(r.status==='معترض عليها') return bdg('معترض عليها','a');
+      return bdg('متأخر','a');
+    };
+    const detailCell=r=>{
+      if(!r.detail) return `<span class="vio-detail empty">—</span>`;
+      return `<span class="vio-detail">${r.detail}</span>`;
+    };
+    const actsCell=r=>{
+      if(r.status==='محصلة'){
+        return `<div class="vio-acts">
+          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
+          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('إشعار عميل ${r.id}')">إشعار العميل</button>
+        </div>`;
+      }
+      if(r.status==='معترض عليها'){
+        return `<div class="vio-acts">
+          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
+          <button type="button" class="vio-btn" onclick="WafraOps.openVioObjection('${r.id}')">عرض الاعتراض</button>
+        </div>`;
+      }
+      return `<div class="vio-acts">
+        <button type="button" class="vio-collect" onclick="WafraOps.collectVio('${r.id}')">تحصيل من الوديعة</button>
+        <button type="button" class="vio-btn" onclick="WafraOps.ixAction('إشعار عميل ${r.id}')">إشعار العميل</button>
+        <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
+        <button type="button" class="vio-btn" onclick="WafraOps.openVioExtend('${r.id}')">تمديد المهلة</button>
+        <button type="button" class="vio-btn" onclick="WafraOps.openVioObjection('${r.id}')">اعتراض</button>
+      </div>`;
+    };
+    const headActs=`<span class="vio-grace">مهلة السداد: ${grace} يوم</span>
+      <button type="button" class="vio-auto ${autoOn?'':'off'}" onclick="WafraOps.toggleVioAuto()"><span class="vio-dot"></span>${autoOn?'تشغيل':'إيقاف'} الخصم التلقائي (بعد المهلة)</button>`;
+    const bodyRows=list.map(r=>`<tr>
+      <td><input type="checkbox" class="vio-chk" aria-label="${r.id}"></td>
+      <td class="vio-id">${r.id}</td>
+      <td>${r.customer}</td>
+      <td style="white-space:nowrap">${r.plate}</td>
+      <td>${r.type}</td>
+      <td class="vio-amt">${r.amount}</td>
+      <td>${deadlineCell(r)}</td>
+      <td><span class="${r.depositOk?'ix-pct-g':'ix-pct-r'}">${r.deposit}</span></td>
+      <td>${statusCell(r)}</td>
+      <td>${detailCell(r)}</td>
+      <td class="vio-acts-cell">${actsCell(r)}</td>
+    </tr>`).join('');
+    return phead('المخالفات المرورية والودائع','مخالفات ساهر المرتبطة بالعقود وتحصيلها من ودائع العملاء',[],headActs)
       +`<div class="ix-wrap">
-        <div class="ix-kpis c4">${kpi('⚠','غير محصلة','34')}${kpi('💵','قيمة غير محصلة','23.5 ألف ر.س')}${kpi('✓','محصلة','0')}${kpi('⚖','معترض عليها','0')}</div>
-        ${tools('بحث بالعميل أو اللوحة',sel('vioSt',['غير محصلة','محصلة','معترض عليها'],'كل الحالات'))}
-        <div class="ix-panel"><div class="ix-panel-b">${table(['☐','المخالفة','السجل','العميل','اللوحة','النوع','المبلغ','التاريخ','الوديعة','الحالة',''],rows.map(r=>['☐',...r,`<button class="ix-gbtn" onclick="WafraOps.ixAction('تحصيل ${r[0]} من الوديعة')">تحصيل من الوديعة</button> <button class="ix-wbtn" onclick="WafraOps.ixAction('اعتراض على ${r[0]}')">اعتراض</button>`]))}${foot(34,3)}</div></div>
+        <div class="ix-kpis c5">
+          ${kpi('⚠','غير محصلة',String(open.length))}
+          ${kpi('⏱','انتهت مهلتها — قابلة للخصم',String(expired))}
+          ${kpi('◷','ضمن المهلة',String(within))}
+          ${kpi('💵','قيمة غير محصلة','1.3 ألف ر.س')}
+          ${kpi('✓','محصلة',String(collected))}
+        </div>
+        ${tools('بحث بالعميل أو اللوحة...',sel('vioSt',['غير محصلة','انتهت المهلة','ضمن المهلة','محصلة','معترض عليها'],'كل الحالات'))}
+        <div class="ix-panel vio-board"><div class="ix-panel-b">
+          <div class="tw"><table>
+            <thead><tr>
+              <th>☐</th><th>المخالفة</th><th>العميل</th><th>اللوحة</th><th>النوع</th><th>المبلغ</th><th>المهلة</th><th>الوديعة</th><th>الحالة</th><th>تفاصيل</th><th>إجراءات</th>
+            </tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table></div>
+          ${foot(list.length,2)}
+        </div></div>
       </div>`;
   };
 

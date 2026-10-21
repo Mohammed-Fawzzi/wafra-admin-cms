@@ -12,7 +12,8 @@
     return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
   };
   const HIST_KEY='wafra-finance-history-v1';
-  const REF_KEY='wafra-refunds-v1';
+  const REF_KEY='wafra-refunds-v2';
+  const CANCEL_FEE_RATE=0.15; /* سياسة رسوم الإلغاء الافتراضية: 15% من المتبقي */
 
   const defaultHist=()=>({
     disputes:[
@@ -55,22 +56,46 @@
   };
 
   const defaultRefunds=()=>[
-    {id:'RF-7000',booking:'BK-28076',customer:'سلطان القحطاني',amount:'3,000.00',reason:'عدم توفر السيارة',status:'بانتظار المراجعة',date:'2026-09-28'},
-    {id:'RF-7001',booking:'BK-31864',customer:'شهد الشهري',amount:'1,500.00',reason:'خصم مضاعف',status:'بانتظار المراجعة',date:'2026-09-27'},
-    {id:'RF-7002',booking:'BK-29110',customer:'فهد العتيبي',amount:'99.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-26'},
-    {id:'RF-7003',booking:'BK-30542',customer:'نورة الدوسري',amount:'2,200.00',reason:'عطل السيارة',status:'بانتظار المراجعة',date:'2026-09-25'},
-    {id:'RF-7004',booking:'BK-27481',customer:'ماجد السبيعي',amount:'450.00',reason:'عدم توفر السيارة',status:'معتمد',date:'2026-09-22'},
-    {id:'RF-7005',booking:'BK-31209',customer:'ريم الزهراني',amount:'1,100.00',reason:'خصم مضاعف',status:'مرفوض',date:'2026-09-20'},
-    {id:'RF-7006',booking:'BK-29833',customer:'خالد المطيري',amount:'780.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-18'},
-    {id:'RF-7007',booking:'BK-32155',customer:'سارة العتيبي',amount:'1,800.00',reason:'عطل السيارة',status:'مكتمل',date:'2026-09-15'},
-    {id:'RF-7008',booking:'BK-26740',customer:'وليد الحربي',amount:'320.00',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-12'}
+    {id:'RF-7000',booking:'BK-28076',customer:'سلطان القحطاني',amount:'3,000.00',paid:'4,200.00',daysUsed:2,daysBooked:7,cancelFee:'180.00',method:'نفس طريقة الدفع',reason:'عدم توفر السيارة',status:'بانتظار المراجعة',date:'2026-09-28'},
+    {id:'RF-7001',booking:'BK-31864',customer:'شهد الشهري',amount:'1,500.00',paid:'2,000.00',daysUsed:1,daysBooked:4,cancelFee:'75.00',method:'المحفظة',reason:'خصم مضاعف',status:'بانتظار المراجعة',date:'2026-09-27'},
+    {id:'RF-7002',booking:'BK-29110',customer:'فهد العتيبي',amount:'99.00',paid:'450.00',daysUsed:1,daysBooked:3,cancelFee:'52.65',method:'نفس طريقة الدفع',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-26'},
+    {id:'RF-7003',booking:'BK-30542',customer:'نورة الدوسري',amount:'2,200.00',paid:'3,000.00',daysUsed:2,daysBooked:8,cancelFee:'120.00',method:'المحفظة',reason:'عطل السيارة',status:'بانتظار المراجعة',date:'2026-09-25'},
+    {id:'RF-7004',booking:'BK-27481',customer:'ماجد السبيعي',amount:'450.00',paid:'900.00',daysUsed:2,daysBooked:4,cancelFee:'67.50',method:'نفس طريقة الدفع',reason:'عدم توفر السيارة',status:'معتمد',date:'2026-09-22'},
+    {id:'RF-7005',booking:'BK-31209',customer:'ريم الزهراني',amount:'1,100.00',paid:'1,500.00',daysUsed:1,daysBooked:5,cancelFee:'60.00',method:'المحفظة',reason:'خصم مضاعف',status:'مرفوض',date:'2026-09-20'},
+    {id:'RF-7006',booking:'BK-29833',customer:'خالد المطيري',amount:'780.00',paid:'1,200.00',daysUsed:2,daysBooked:6,cancelFee:'84.00',method:'نفس طريقة الدفع',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-18'},
+    {id:'RF-7007',booking:'BK-32155',customer:'سارة العتيبي',amount:'1,800.00',paid:'2,400.00',daysUsed:1,daysBooked:5,cancelFee:'90.00',method:'المحفظة',reason:'عطل السيارة',status:'مكتمل',date:'2026-09-15'},
+    {id:'RF-7008',booking:'BK-26740',customer:'وليد الحربي',amount:'320.00',paid:'800.00',daysUsed:2,daysBooked:4,cancelFee:'72.00',method:'نفس طريقة الدفع',reason:'إلغاء الحجز',status:'بانتظار المراجعة',date:'2026-09-12'}
   ];
-  const eligibleEarlyReturns=()=>[
-    {booking:'BK-33012',customer:'عبدالله الغامدي',provider:'شركة الصحراء',paid:'2,400.00',daysBooked:7,daysUsed:3,remain:'1,371.00',received:'2026-09-20'},
-    {booking:'BK-32988',customer:'منى القحطاني',provider:'كي رنت',paid:'1,800.00',daysBooked:5,daysUsed:2,remain:'1,080.00',received:'2026-09-22'},
-    {booking:'BK-32840',customer:'تركي العنزي',provider:'مسار',paid:'3,150.00',daysBooked:10,daysUsed:4,remain:'1,890.00',received:'2026-09-18'},
-    {booking:'BK-32755',customer:'هند الشهري',provider:'الوسام كار',paid:'960.00',daysBooked:4,daysUsed:1,remain:'720.00',received:'2026-09-24'}
+  const refundBookings=()=>[
+    {booking:'BK-33012',customer:'عبدالله الغامدي',provider:'شركة الصحراء',paid:2400,daysBooked:7,daysUsed:3,payMethod:'بطاقة مدى'},
+    {booking:'BK-32988',customer:'منى القحطاني',provider:'كي رنت',paid:1800,daysBooked:5,daysUsed:2,payMethod:'بطاقة ائتمان'},
+    {booking:'BK-32840',customer:'تركي العنزي',provider:'مسار',paid:3150,daysBooked:10,daysUsed:4,payMethod:'Apple Pay'},
+    {booking:'BK-32755',customer:'هند الشهري',provider:'الوسام كار',paid:960,daysBooked:4,daysUsed:1,payMethod:'المحفظة'},
+    {booking:'BK-28076',customer:'سلطان القحطاني',provider:'شركة الصحراء',paid:4200,daysBooked:7,daysUsed:2,payMethod:'بطاقة مدى'},
+    {booking:'BK-31864',customer:'شهد الشهري',provider:'مسار',paid:2000,daysBooked:4,daysUsed:1,payMethod:'بطاقة ائتمان'}
   ];
+  const moneyFmt=n=>{
+    const v=Math.max(0,Number(n)||0);
+    return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  };
+  const parseMoney=s=>Number(String(s??'').replace(/,/g,''))||0;
+  const calcRefund=({paid,daysBooked,daysUsed,cancelFeeOverride})=>{
+    const p=Number(paid)||0;
+    const booked=Math.max(1,Number(daysBooked)||1);
+    const used=Math.min(Math.max(0,Number(daysUsed)||0),booked);
+    const daily=p/booked;
+    const usedAmt=daily*used;
+    const remain=Math.max(0,p-usedAmt);
+    const policyFee=Math.round(remain*CANCEL_FEE_RATE*100)/100;
+    const fee=cancelFeeOverride!=null&&cancelFeeOverride!==''?Math.max(0,Number(cancelFeeOverride)):policyFee;
+    const due=Math.max(0,Math.round((remain-fee)*100)/100);
+    return {daily,usedAmt,remain,policyFee,fee,due,used,booked};
+  };
+  const findBooking=id=>(refundBookings().find(b=>b.booking===id)||null);
+  const activeRefundForBooking=(store,booking,exceptId)=>{
+    const block=new Set(['بانتظار المراجعة','معتمد','مكتمل']);
+    return (store.items||[]).find(x=>x.booking===booking&&block.has(x.status)&&x.id!==exceptId);
+  };
   const loadRefunds=()=>{
     try{const raw=JSON.parse(localStorage.getItem(REF_KEY)||'null'); if(raw&&Array.isArray(raw.items)) return raw;}catch(e){}
     return {items:defaultRefunds()};
@@ -219,55 +244,46 @@
 
   S.settlements=()=>{
     const sub=window.__settleSubTab||'list';
-    const head=phead('تسويات المزوّدين','دورة التسوية الأسبوعية — الاعتماد على خطوتين قبل التحويل',['FR-ADP-04','FR-ADP-05'],
-      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('تسويات-المزودين','Excel')">⤓ تصدير</button><button class="btn" onclick="WafraOps.openCreateSettlement&&WafraOps.openCreateSettlement()">إنشاء دورة تسوية</button>`)
-      +note('info','دورة 22 – 28 أغسطس 2026 جاهزة للاعتماد','11 كشفاً بإجمالي 486,300 ر.س. لا يتم التحويل قبل اعتماد المسؤول الأعلى وتسجيل مرجع الحوالة.');
-    const topTabs=`<div class="tabs">
-      <button type="button" class="tab ${sub==='list'?'on':''}" onclick="window.__settleSubTab='list';render()">التسويات <span class="n">11</span></button>
-      <button type="button" class="tab ${sub==='history'?'on':''}" onclick="window.__settleSubTab='history';render()">السجل</button>
-    </div>`;
     if(sub==='history'){
-      return head+card(`${topTabs}<div class="card-b">
+      const raw=typeof O.settlements==='function'?O.settlements():'';
+      const {head}=splitShell(raw);
+      return head+card(`<div class="tabs">
+        <button type="button" class="tab" onclick="window.__settleSubTab='list';location.hash='compDisputes'">المنازعات</button>
+        <button type="button" class="tab" onclick="window.__settleSubTab='list';render()">التسويات</button>
+        <button type="button" class="tab" onclick="window.__settleSubTab='list';location.hash='invoices'">الفواتير</button>
+        <button type="button" class="tab" onclick="window.__settleSubTab='list';location.hash='fines'">الغرامات</button>
+        <button type="button" class="tab on" onclick="window.__settleSubTab='history';render()">السجل</button>
+      </div><div class="card-b">
         <div class="st-sec"><div><h3>سجل التسويات</h3><p>تاريخ إنشاء واعتماد وتحويل دورات التسوية</p></div></div>
         ${histTable(loadHist().settlements||[])}
       </div>`);
     }
-    const listBody=tabs([{t:'قيد المراجعة',n:11,on:1},{t:'معتمدة',n:3},{t:'محوّلة',n:142},{t:'مرفوضة',n:2}])
-      +filters(['الدورة','المزوّد','الحالة'],'ابحث باسم المزوّد أو رقم الكشف…')
-      +table(['رقم الكشف','المزوّد','الحجوزات','إجمالي الإيراد','العمولة','خصومات وتظلّمات','الصافي المستحقّ','الحالة','الإجراءات'],[
-        [{v:'ST-2214',c:'strong num'},'شركة الصحراء','168',{v:'286,400',c:'num'},{v:'34,368',c:'num'},{v:'— 0',c:'num'},{v:'252,032',c:'strong num'},bdg('قيد المراجعة','a'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
-        [{v:'ST-2215',c:'strong num'},'كي رنت','121',{v:'241,900',c:'num'},{v:'33,866',c:'num'},{v:'— 960',c:'num'},{v:'207,074',c:'strong num'},bdg('قيد المراجعة','a'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
-        [{v:'ST-2216',c:'strong num'},'الوسام كار','74',{v:'96,200',c:'num'},{v:'14,430',c:'num'},{v:'— 1,850 (محتجز)',c:'num'},{v:'79,920',c:'strong num'},bdg('محتجز — تظلّم','r'),`<a class="btn sm" href="#settlement">فتح الكشف</a>`],
-        [{v:'ST-2217',c:'strong num'},'مسار','96',{v:'188,200',c:'num'},{v:'26,348',c:'num'},{v:'— 420',c:'num'},{v:'161,432',c:'strong num'},bdg('معتمدة','b'),`<button class="btn sm ghost">تسجيل التحويل</button>`],
-      ])
-      +pager(28,1);
-    return head+card(`${topTabs}<div class="card-b">${listBody}</div>`);
+    /* الإبقاء على واجهة المدفوعات والتسوية (نموذج المزود) مع إضافة تبويب السجل */
+    let html=typeof O.settlements==='function'?O.settlements():'';
+    html=addTabAfterFines(html,`<button type="button" class="tab" onclick="window.__settleSubTab='history';render()">السجل</button>`);
+    return html;
   };
 
   S.invoices=()=>{
     const sub=window.__invSubTab||'list';
-    const head=phead('الفواتير','كل الفواتير الصادرة وإشعارات التعديل',['FR-ADP-08'],
-      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('متابعة-الفواتير','Excel')">⤓ تصدير</button>`);
-    const topTabs=`<div class="tabs">
-      <button type="button" class="tab ${sub==='list'?'on':''}" onclick="window.__invSubTab='list';render()">الفواتير <span class="n">3,540</span></button>
-      <button type="button" class="tab ${sub==='history'?'on':''}" onclick="window.__invSubTab='history';render()">السجل</button>
-    </div>`;
     if(sub==='history'){
-      return head+card(`${topTabs}<div class="card-b">
+      const raw=typeof O.invoices==='function'?O.invoices():'';
+      const {head}=splitShell(raw);
+      return head+card(`<div class="tabs">
+        <button type="button" class="tab" onclick="window.__invSubTab='list';location.hash='compDisputes'">المنازعات</button>
+        <button type="button" class="tab" onclick="window.__invSubTab='list';location.hash='settlements'">التسويات</button>
+        <button type="button" class="tab" onclick="window.__invSubTab='list';render()">الفواتير</button>
+        <button type="button" class="tab" onclick="window.__invSubTab='list';location.hash='fines'">الغرامات</button>
+        <button type="button" class="tab on" onclick="window.__invSubTab='history';render()">السجل</button>
+      </div><div class="card-b">
         <div class="st-sec"><div><h3>سجل الفواتير</h3><p>تاريخ إصدار المطالبات وتأكيد التحويلات البنكية</p></div></div>
         ${histTable(loadHist().invoices||[])}
       </div>`);
     }
-    const listBody=tabs([{t:'الكل',n:'3,540',on:1},{t:'صادرة',n:'3,486'},{t:'مُعدَّلة',n:38},{t:'ملغاة',n:16}])
-      +filters(['المزوّد','الحالة','التاريخ'],'ابحث برقم الفاتورة أو الحجز…')
-      +table(['رقم الفاتورة','الحجز','العميل','المزوّد','الإجمالي','ضريبة القيمة المضافة','تاريخ الإصدار','الحالة','الإجراءات'],[
-        [{v:'INV-10245',c:'strong num'},{v:'BK-20411',c:'num'},'منى القحطاني','مسار',{v:'2,480.00',c:'num'},{v:'323.48',c:'num'},'2026/08/26',bdg('صادرة','g'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
-        [{v:'INV-10244',c:'strong num'},{v:'BK-20396',c:'num'},'وليد الحربي','مسار',{v:'1,090.00',c:'num'},{v:'142.17',c:'num'},'2026/08/26',bdg('مُعدَّلة — إشعار مدين','a'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
-        [{v:'INV-10243',c:'strong num'},{v:'BK-20388',c:'num'},'ماجد السبيعي','مسار',{v:'620.00',c:'num'},{v:'80.87',c:'num'},'2026/08/24',bdg('صادرة','g'),acts([{i:'👁'},{i:'⤓'},{i:'✉'}])],
-        [{v:'INV-10240',c:'strong num'},{v:'BK-20355',c:'num'},'تركي العنزي','الوسام كار',{v:'1,960.00',c:'num'},{v:'255.65',c:'num'},'2026/08/21',bdg('قيد المراجعة — تظلّم','r'),acts([{i:'👁'},{i:'⤓'}])],
-      ])
-      +pager(60,12);
-    return head+card(`${topTabs}<div class="card-b">${listBody}</div>`);
+    /* الإبقاء على واجهة متابعة الفواتير (نموذج المزود) مع إضافة تبويب السجل */
+    let html=typeof O.invoices==='function'?O.invoices():'';
+    html=addTabAfterFines(html,`<button type="button" class="tab" onclick="window.__invSubTab='history';render()">السجل</button>`);
+    return html;
   };
 
   /* —— استردادات العملاء —— */
@@ -283,34 +299,207 @@
       render();
     },
     openCreateRefund:()=>{
-      const rows=eligibleEarlyReturns();
+      const books=refundBookings();
+      const opts=books.map(b=>`<option value="${b.booking}">${b.booking} — ${b.customer}</option>`).join('');
       openM(modal('إنشاء استرداد',`
-        ${note('info','الحجوزات المؤهّلة','حجوزات تم استلامها ولم يُكمل العميل مدة الحجز كاملة، ويتبقّى مبلغ من الدفعة الأصلية.')}
-        <div class="st-board" style="margin-top:12px"><div class="st-scroll"><table class="st-table">
-          <thead><tr><th></th><th>الحجز</th><th>العميل</th><th>المزود</th><th>الدفعة</th><th>المستخدم/المحجوز</th><th>المتبقي</th></tr></thead>
-          <tbody>${rows.map((r,i)=>`<tr>
-            <td><input type="radio" name="rf-elig" value="${i}" ${i===0?'checked':''}></td>
-            <td class="num">${r.booking}</td><td>${r.customer}</td><td>${r.provider}</td>
-            <td class="num">${r.paid}</td><td>${r.daysUsed}/${r.daysBooked} يوم</td>
-            <td class="num" style="color:#148A5A;font-weight:800">${r.remain} ر.س</td>
-          </tr>`).join('')}</tbody>
-        </table></div></div>
-        ${fld('سبب الاسترداد',`<select id="rf-new-reason" class="native-input"><option>إرجاع مبكر — متبقي من الدفعة</option><option>إلغاء بعد الاستلام</option><option>عطل السيارة</option><option>أخرى</option></select>`)}
-        ${fld('ملاحظات',`<textarea id="rf-new-notes" class="native-input" rows="2" placeholder="اختياري…"></textarea>`)}
+        ${note('info','نموذج ثابت','اختر الحجز أو اكتبه، ثم أدخل الأيام المستخدمة. رسوم الإلغاء تُحسب وفق السياسة (15% من المتبقي) مع إمكانية التعديل بتدخل إداري.')}
+        <div class="grid2" style="gap:12px;margin-top:12px">
+          ${fld('رقم الحجز',`<div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="rf-booking" class="native-input" list="rf-booking-list" placeholder="اكتب رقم الحجز أو اختر من القائمة" style="flex:1;min-width:160px" oninput="WafraOps.onRefundBookingChange()" onchange="WafraOps.onRefundBookingChange()">
+            <select id="rf-booking-sel" class="native-input" style="flex:1;min-width:160px" onchange="document.getElementById('rf-booking').value=this.value;WafraOps.onRefundBookingChange()">
+              <option value="">— اختر من قائمة الحجوزات —</option>${opts}
+            </select>
+            <datalist id="rf-booking-list">${books.map(b=>`<option value="${b.booking}">`).join('')}</datalist>
+          </div>`)}
+          ${fld('إجمالي المبلغ المدفوع (اطلاع فقط)',`<input id="rf-paid" class="native-input" readonly value="" placeholder="يُقرأ من بيانات الدفع المسجّلة بالحجز" style="background:#F5F7FB;color:var(--ink)">`)}
+          ${fld('عدد الأيام المستخدمة فعلياً',`<input id="rf-days-used" class="native-input" type="number" min="0" step="1" value="0" oninput="WafraOps.recalcRefundForm()">`)}
+          ${fld('قيمة الأيام المستخدمة (تلقائي)',`<input id="rf-used-amt" class="native-input" readonly value="0.00" style="background:#F5F7FB">`)}
+          ${fld('رسوم الإلغاء (وفق السياسة)',`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input id="rf-cancel-fee" class="native-input" type="number" min="0" step="0.01" value="0" style="flex:1;min-width:120px" oninput="WafraOps.onRefundFeeEdit()">
+            <label style="display:inline-flex;align-items:center;gap:6px;font:700 12px Cairo;white-space:nowrap"><input type="checkbox" id="rf-fee-override" onchange="WafraOps.onRefundFeeOverrideToggle()"> تدخل إداري / استثناء</label>
+          </div>
+          <div class="sub" id="rf-fee-hint" style="margin-top:6px">السياسة: ${Math.round(CANCEL_FEE_RATE*100)}% من المتبقي غير المستخدم</div>`)}
+          ${fld('المبلغ المستحق للاسترداد',`<input id="rf-due" class="native-input" readonly value="0.00" style="background:#E8F8F0;color:#148A5A;font-weight:800">`)}
+          ${fld('سبب الاسترداد',`<select id="rf-new-reason" class="native-input">
+            <option>إرجاع مبكر — متبقي من الدفعة</option>
+            <option>إلغاء بعد الاستلام</option>
+            <option>عدم توفر السيارة</option>
+            <option>عطل السيارة</option>
+            <option>خصم مضاعف</option>
+            <option>أخرى</option>
+          </select>`)}
+          ${fld('طريقة الاسترداد',`<select id="rf-method" class="native-input">
+            <option value="نفس طريقة الدفع">نفس طريقة الدفع</option>
+            <option value="المحفظة">المحفظة</option>
+          </select>
+          <div class="sub" id="rf-pay-method" style="margin-top:6px"></div>`)}
+        </div>
+        <div id="rf-dup-box" style="display:none;margin-top:12px">
+          ${note('warn','طلب قائم أو مكتمل لهذا الحجز','النظام يمنع إنشاء طلب استرداد ثانٍ لنفس الحجز إلا بتدخل إداري.')}
+          <label style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;font:700 12.5px Cairo">
+            <input type="checkbox" id="rf-admin-force"> السماح بإنشاء طلب إضافي بتدخل إداري
+          </label>
+          <input id="rf-admin-note" class="native-input" style="margin-top:8px" placeholder="سبب التدخل الإداري (إلزامي عند الاستثناء)">
+        </div>
+        <input type="hidden" id="rf-days-booked" value="1">
+        <input type="hidden" id="rf-customer" value="">
+        <input type="hidden" id="rf-policy-fee" value="0">
       `,`<button class="btn ghost" onclick="closeM()">إلغاء</button><button class="btn coral" onclick="WafraOps.saveCreateRefund()">إنشاء الاسترداد</button>`));
+      if(books[0]){document.getElementById('rf-booking').value=books[0].booking;document.getElementById('rf-booking-sel').value=books[0].booking;WafraOps.onRefundBookingChange();}
+    },
+    onRefundBookingChange:()=>{
+      const id=(document.getElementById('rf-booking')?.value||'').trim();
+      const b=findBooking(id);
+      const dupBox=document.getElementById('rf-dup-box');
+      if(!b){
+        document.getElementById('rf-paid').value='';
+        document.getElementById('rf-days-booked').value='1';
+        document.getElementById('rf-customer').value='';
+        document.getElementById('rf-pay-method').textContent='';
+        if(dupBox) dupBox.style.display='none';
+        WafraOps.recalcRefundForm();
+        return;
+      }
+      document.getElementById('rf-paid').value=moneyFmt(b.paid)+' ر.س';
+      document.getElementById('rf-days-booked').value=String(b.daysBooked);
+      document.getElementById('rf-days-used').value=String(b.daysUsed);
+      document.getElementById('rf-customer').value=b.customer;
+      document.getElementById('rf-pay-method').textContent=`طريقة الدفع الأصلية: ${b.payMethod}`;
+      const store=loadRefunds();
+      const existing=activeRefundForBooking(store,b.booking);
+      if(dupBox){
+        dupBox.style.display=existing?'block':'none';
+        if(existing){
+          const force=document.getElementById('rf-admin-force');
+          const noteEl=document.getElementById('rf-admin-note');
+          if(force) force.checked=false;
+          if(noteEl) noteEl.value='';
+        }
+      }
+      const feeEl=document.getElementById('rf-cancel-fee');
+      const ov=document.getElementById('rf-fee-override');
+      if(ov) ov.checked=false;
+      if(feeEl) feeEl.readOnly=true;
+      WafraOps.recalcRefundForm();
+    },
+    onRefundFeeOverrideToggle:()=>{
+      const ov=document.getElementById('rf-fee-override')?.checked;
+      const feeEl=document.getElementById('rf-cancel-fee');
+      if(!feeEl) return;
+      feeEl.readOnly=!ov;
+      if(!ov){
+        const policy=parseMoney(document.getElementById('rf-policy-fee')?.value);
+        feeEl.value=String(policy);
+      }
+      WafraOps.recalcRefundForm();
+    },
+    onRefundFeeEdit:()=>{
+      const ov=document.getElementById('rf-fee-override');
+      if(ov&&!ov.checked){ov.checked=true;document.getElementById('rf-cancel-fee').readOnly=false;}
+      WafraOps.recalcRefundForm();
+    },
+    recalcRefundForm:()=>{
+      const paid=parseMoney(document.getElementById('rf-paid')?.value);
+      const daysBooked=Number(document.getElementById('rf-days-booked')?.value)||1;
+      const daysUsed=Number(document.getElementById('rf-days-used')?.value)||0;
+      const ov=document.getElementById('rf-fee-override')?.checked;
+      const feeInput=document.getElementById('rf-cancel-fee');
+      const overrideVal=ov?Number(feeInput?.value):null;
+      const c=calcRefund({paid,daysBooked,daysUsed,cancelFeeOverride:overrideVal});
+      document.getElementById('rf-used-amt').value=moneyFmt(c.usedAmt)+' ر.س';
+      document.getElementById('rf-policy-fee').value=String(c.policyFee);
+      if(!ov&&feeInput) feeInput.value=String(c.policyFee);
+      document.getElementById('rf-due').value=moneyFmt(c.due)+' ر.س';
+      const hint=document.getElementById('rf-fee-hint');
+      if(hint) hint.textContent=ov
+        ? `استثناء إداري مفعّل · السياسة كانت ${moneyFmt(c.policyFee)} ر.س`
+        : `السياسة: ${Math.round(CANCEL_FEE_RATE*100)}% من المتبقي (${moneyFmt(c.remain)} ر.س) = ${moneyFmt(c.policyFee)} ر.س`;
     },
     saveCreateRefund:()=>{
-      const idx=Number(document.querySelector('input[name="rf-elig"]:checked')?.value);
-      const r=eligibleEarlyReturns()[idx];
-      if(!r){toast('اختر حجزاً أولاً.');return;}
+      const booking=(document.getElementById('rf-booking')?.value||'').trim();
+      if(!booking){toast('أدخل أو اختر رقم الحجز.');return;}
+      const b=findBooking(booking);
+      const paid=b?b.paid:parseMoney(document.getElementById('rf-paid')?.value);
+      if(!paid){toast('لا توجد بيانات دفع مسجّلة لهذا الحجز.');return;}
+      const daysBooked=b?b.daysBooked:Number(document.getElementById('rf-days-booked')?.value)||1;
+      const daysUsed=Number(document.getElementById('rf-days-used')?.value)||0;
+      if(daysUsed<0||daysUsed>daysBooked){toast('عدد الأيام المستخدمة غير صالح.');return;}
+      const ov=document.getElementById('rf-fee-override')?.checked;
+      const feeInput=Number(document.getElementById('rf-cancel-fee')?.value);
+      const c=calcRefund({paid,daysBooked,daysUsed,cancelFeeOverride:ov?feeInput:null});
       const reason=document.getElementById('rf-new-reason')?.value||'إرجاع مبكر — متبقي من الدفعة';
+      const method=document.getElementById('rf-method')?.value||'نفس طريقة الدفع';
+      const customer=b?.customer||document.getElementById('rf-customer')?.value||'—';
       const store=loadRefunds();
+      const existing=activeRefundForBooking(store,booking);
+      if(existing){
+        const force=document.getElementById('rf-admin-force')?.checked;
+        const adminNote=(document.getElementById('rf-admin-note')?.value||'').trim();
+        if(!force){toast(`يوجد طلب ${existing.id} (${existing.status}) لنفس الحجز. فعّل التدخل الإداري للمتابعة.`);return;}
+        if(!adminNote){toast('اكتب سبب التدخل الإداري أولاً.');return;}
+      }
       const n=store.items.reduce((m,x)=>Math.max(m,Number(String(x.id).replace(/\D/g,''))||0),7008)+1;
-      const row={id:`RF-${n}`,booking:r.booking,customer:r.customer,amount:r.remain,reason,status:'بانتظار المراجعة',date:new Date().toISOString().slice(0,10)};
+      const row={
+        id:`RF-${n}`,booking,customer,
+        amount:moneyFmt(c.due),paid:moneyFmt(paid),
+        daysUsed:c.used,daysBooked:c.booked,
+        cancelFee:moneyFmt(c.fee),feeOverride:!!ov,
+        method,reason,status:'بانتظار المراجعة',
+        date:new Date().toISOString().slice(0,10),
+        adminForce:!!existing,adminNote:existing?(document.getElementById('rf-admin-note')?.value||'').trim():''
+      };
       store.items=[row,...store.items];
       saveRefunds(store);
-      pushHist('refunds',{id:row.id,action:'إنشاء استرداد',detail:`${r.booking} · متبقي ${r.remain} ر.س`});
+      pushHist('refunds',{id:row.id,action:existing?'إنشاء استرداد (تدخل إداري)':'إنشاء استرداد',detail:`${booking} · مستحق ${row.amount} ر.س · رسوم ${row.cancelFee}`});
       closeM(); toast(`تم إنشاء طلب الاسترداد ${row.id}.`); render();
+    },
+    openEditRefundAmount:id=>{
+      const store=loadRefunds();
+      const row=store.items.find(x=>x.id===id); if(!row) return;
+      const paid=parseMoney(row.paid)||parseMoney(row.amount)*1.3;
+      const daysBooked=row.daysBooked||5;
+      const daysUsed=row.daysUsed||1;
+      const c=calcRefund({paid,daysBooked,daysUsed,cancelFeeOverride:parseMoney(row.cancelFee)});
+      openM(modal(`تعديل مبلغ الاسترداد — ${id}`,`
+        ${note('warn','تدخل إداري','يمكنك تعديل رسوم الإلغاء أو المبلغ المستحق كاستثناء من السياسة (مثال: إعفاء من رسوم الإلغاء).')}
+        <div class="dl-grid" style="margin-bottom:12px">
+          <div class="it"><div class="k">الحجز</div><div class="v">${row.booking}</div></div>
+          <div class="it"><div class="k">المدفوع</div><div class="v">${moneyFmt(paid)} ر.س</div></div>
+          <div class="it"><div class="k">الأيام المستخدمة</div><div class="v">${daysUsed} / ${daysBooked}</div></div>
+          <div class="it"><div class="k">رسوم السياسة</div><div class="v">${moneyFmt(c.policyFee)} ر.س</div></div>
+        </div>
+        ${fld('رسوم الإلغاء (ر.س)',`<input id="rf-edit-fee" class="native-input" type="number" min="0" step="0.01" value="${parseMoney(row.cancelFee)||c.fee}" oninput="WafraOps.recalcEditRefund('${id}')">`)}
+        ${fld('المبلغ المستحق للاسترداد (ر.س)',`<input id="rf-edit-due" class="native-input" type="number" min="0" step="0.01" value="${parseMoney(row.amount)}">`)}
+        ${fld('سبب الاستثناء الإداري',`<textarea id="rf-edit-note" class="native-input" rows="2" placeholder="مثال: إعفاء من رسوم الإلغاء لشكوى موثّقة…">${row.adminEditNote||''}</textarea>`)}
+      `,`<button class="btn ghost" onclick="closeM()">إلغاء</button><button class="btn coral" onclick="WafraOps.saveEditRefundAmount('${id}')">حفظ التعديل</button>`));
+    },
+    recalcEditRefund:id=>{
+      const store=loadRefunds();
+      const row=store.items.find(x=>x.id===id); if(!row) return;
+      const paid=parseMoney(row.paid)||parseMoney(row.amount)*1.3;
+      const daysBooked=row.daysBooked||5;
+      const daysUsed=row.daysUsed||1;
+      const fee=Number(document.getElementById('rf-edit-fee')?.value);
+      const c=calcRefund({paid,daysBooked,daysUsed,cancelFeeOverride:fee});
+      const dueEl=document.getElementById('rf-edit-due');
+      if(dueEl) dueEl.value=String(c.due);
+    },
+    saveEditRefundAmount:id=>{
+      const store=loadRefunds();
+      const row=store.items.find(x=>x.id===id); if(!row) return;
+      const noteTxt=(document.getElementById('rf-edit-note')?.value||'').trim();
+      if(!noteTxt){toast('اكتب سبب الاستثناء الإداري أولاً.');return;}
+      const fee=Number(document.getElementById('rf-edit-fee')?.value);
+      const due=Number(document.getElementById('rf-edit-due')?.value);
+      if(isNaN(fee)||isNaN(due)||due<0||fee<0){toast('تحقق من المبالغ المدخلة.');return;}
+      const prev=row.amount;
+      row.cancelFee=moneyFmt(fee);
+      row.amount=moneyFmt(due);
+      row.feeOverride=true;
+      row.adminEditNote=noteTxt;
+      saveRefunds(store);
+      pushHist('refunds',{id,action:'تعديل مبلغ الاسترداد (تدخل إداري)',detail:`من ${prev} إلى ${row.amount} ر.س · ${noteTxt}`});
+      closeM(); toast(`تم تحديث مبلغ الاسترداد ${id}.`); render();
     },
     approveRefund:id=>{
       const store=loadRefunds();
@@ -349,7 +538,7 @@
   wrapPush('collectFine','fines','تحصيل غرامة');
   wrapPush('waiveFine','fines','إعفاء غرامة');
   wrapPush('saveSettlement','settlements','إنشاء دورة تسوية');
-  wrapPush('approveSettlementRow','settlements','اعتماد وإرسال للتحويل');
+  wrapPush('confirmApproveSettlement','settlements','اعتماد وإرسال للتحويل');
   wrapPush('saveBankTransfer','invoices','تأكيد التحويل البنكي');
 
   S.refunds=()=>{
@@ -364,8 +553,10 @@
     if(to) items=items.filter(x=>x.date<=to);
 
     const acts=(rf,bk,status)=>{
-      if(status!=='بانتظار المراجعة') return `<div class="st-actions"><a class="btn ghost sm" href="#booking">تفاصيل الحجز</a></div>`;
+      const editBtn=`<button class="btn ghost sm" onclick="WafraOps.openEditRefundAmount('${rf}')" title="تعديل مبلغ الاسترداد بتدخل إداري">تعديل المبلغ</button>`;
+      if(status!=='بانتظار المراجعة') return `<div class="st-actions">${editBtn}<a class="btn ghost sm" href="#booking">تفاصيل الحجز</a></div>`;
       return `<div class="st-actions rf-acts">
+        ${editBtn}
         <a class="btn ghost sm" href="#booking">تفاصيل الحجز</a>
         <button class="btn sm st-approve" onclick="WafraOps.approveRefund('${rf}')">موافقة</button>
         <button class="btn danger sm" onclick="WafraOps.rejectRefund('${rf}')">رفض</button>
@@ -401,12 +592,15 @@
           <div class="fsearch" style="flex:1;min-width:180px">⌕ <input placeholder="بحث برقم الطلب أو الحجز أو العميل…"></div>
         </div>
         <div class="card-b">${table(
-          ['الطلب','الحجز','العميل','المبلغ','السبب','التاريخ','الحالة','إجراءات'],
+          ['الطلب','الحجز','العميل','المدفوع','رسوم الإلغاء','المستحق','الطريقة','السبب','التاريخ','الحالة','إجراءات'],
           items.map(r=>[
             {v:r.id,c:'strong num'},
             {v:`<a class="st-link" href="#booking">${r.booking}</a>`,c:'num'},
             r.customer,
-            {v:r.amount+' ر.س',c:'num'},
+            {v:(r.paid||'—')+(r.paid?' ر.س':''),c:'num'},
+            {v:(r.cancelFee||'—')+(r.cancelFee?' ر.س':''),c:'num'},
+            {v:`<span style="color:#148A5A;font-weight:800">${r.amount} ر.س</span>${r.feeOverride?' <span class="sub">(استثناء)</span>':''}`,c:'num'},
+            r.method||'—',
             r.reason,
             {v:r.date,c:'num'},
             statusPill(r.status),

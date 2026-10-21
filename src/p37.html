@@ -34,7 +34,7 @@
 <script>
 /* التحليل الفني — معرض الرسوم مطابق لنموذج التصميم. */
 (function(){
-  const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['financial','النظرة المالية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
+  const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
   const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
   const C={navy:'#293B85',red:'#E23D3D',amber:'#EAA631',green:'#20A16E',blue:'#2C68D8',purple:'#8367C7',teal:'#1AA6A6',pink:'#E85D8E',ink:'#1E2A44',muted:'#7A869E',line:'#E4E9F3'};
 
@@ -190,7 +190,7 @@
 
   const baseAnalytics=S.analytics;
   S.analytics=()=>{
-    const active=window.__analyticsTab||'search';
+    const active=(window.__analyticsTab==='financial'?'search':(window.__analyticsTab||'search'));
     if(active!=='technical') return baseAnalytics();
 
     const body=`<div class="ta-wrap">

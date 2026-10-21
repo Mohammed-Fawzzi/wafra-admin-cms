@@ -55,7 +55,7 @@
 <script>
 /* المقارنات — واجهة مطابقة لنموذج التصميم (كيانات / فترات). */
 (function(){
-  const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['financial','النظرة المالية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
+  const tabs=[['search','البحث والتحليل'],['compare','المقارنات'],['technical','التحليل الفني'],['operations','المؤشرات التشغيلية'],['map','الخريطة التفاعلية'],['delivery','خدمة التوصيل'],['scheduled','التقارير المجدولة'],['sla','مراقبة مستوى الخدمة'],['transfer','النقل بين الفروع']];
   const tabbar=active=>`<div class="tabs">${tabs.map(([key,label])=>`<button class="tab ${active===key?'on':''}" onclick="WafraOps.switchAnalyticsTab('${key}')">${label}</button>`).join('')}</div>`;
 
   const TYPES=[
@@ -229,7 +229,7 @@
 
   const baseAnalytics=S.analytics;
   S.analytics=()=>{
-    const active=window.__analyticsTab||'search';
+    const active=(window.__analyticsTab==='financial'?'search':(window.__analyticsTab||'search'));
     if(active!=='compare') return baseAnalytics();
 
     const st=state();

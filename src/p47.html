@@ -36,7 +36,26 @@
 
   Object.assign(WafraOps,{
     disputesTab:t=>{window.__disputesTab=t;render();},
+    disputeFilter:()=>{
+      window.__disputeFilter=Object.assign({},window.__disputeFilter||{},{
+        status:document.getElementById('dispute-status')?.value||'',
+        q:document.getElementById('dispute-q')?.value||''
+      });
+      render();
+    },
+    disputeHistoryFilter:()=>{
+      window.__disputeHistFilter={q:document.getElementById('dispute-hist-q')?.value||''};
+      render();
+    },
     objectionsTab:t=>{window.__objectionsTab=t;render();},
+    objectionFilter:()=>{
+      window.__objectionFilter={q:document.getElementById('objection-q')?.value||''};
+      render();
+    },
+    objectionHistoryFilter:()=>{
+      window.__objectionHistFilter={q:document.getElementById('objection-hist-q')?.value||''};
+      render();
+    },
     openDispute:id=>{
       const d=state.disputesList.find(x=>x.id===id); if(!d) return;
       openM(dlg(`تفاصيل التظلم ${d.id}`,
@@ -199,12 +218,15 @@
   S.disputes=()=>{
     const tab=window.__disputesTab||'list';
     const f=window.__disputeFilter||{};
+    const hf=window.__disputeHistFilter||{};
     const rows=state.disputesList.filter(d=>!f.status||d.status===f.status);
-    const hist=state.disputeHistory||[];
+    const histAll=state.disputeHistory||[];
+    const hist=histAll.filter(h=>!hf.q||`${h.id} ${h.action} ${h.by} ${h.detail} ${h.when}`.includes(hf.q));
     const tabBtn=(k,t,n)=>`<button class="tab ${tab===k?'on':''}" onclick="WafraOps.disputesTab('${k}')">${t}${n!=null?` <span class="sub">(${n})</span>`:''}</button>`;
     let body='';
     if(tab==='history'){
-      body=`<div class="note info">سجل كل الإجراءات على التظلمات: إصدار قرارات، طلبات رد، وإغلاق.</div>`
+      body=`<div class="filters"><label class="fsearch">⌕ <input id="dispute-hist-q" value="${safe(hf.q||'')}" placeholder="ابحث برقم التظلم أو الإجراء أو التفاصيل" oninput="WafraOps.disputeHistoryFilter()"></label></div>
+        <div class="note info">سجل كل الإجراءات على التظلمات: إصدار قرارات، طلبات رد، وإغلاق.</div>`
         +table(['التاريخ','رقم التظلم','الإجراء','بواسطة','التفاصيل'],
           hist.map(h=>[h.when,h.id,{v:h.action,c:'strong'},h.by,h.detail]));
     }else{
@@ -215,19 +237,22 @@
     return phead('قائمة التظلمات','البحث برقم الحجز أو المزود أو رقم العميل مع ردود التظلم وإصدار القرار',[],
       `<button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('قائمة التظلمات','Excel')">Excel ⤓</button>
        <button class="btn ghost sm" onclick="WafraOps.exportLocal&&WafraOps.exportLocal('قائمة التظلمات','PDF')">PDF ⤓</button>`)
-      +card(`<div class="tabs">${tabBtn('list','قائمة التظلمات',rows.length)}${tabBtn('history','سجل التظلمات',hist.length)}</div>
+      +card(`<div class="tabs">${tabBtn('list','قائمة التظلمات',rows.length)}${tabBtn('history','سجل التظلمات',histAll.length)}</div>
         <div class="card-b">${body}</div>`);
   };
 
   S.objections=()=>{
     const active=window.__objectionsTab||'الكل';
     const isHistory=active==='السجل';
+    const of=window.__objectionHistFilter||{};
     const items=isHistory?[]:state.objections.filter(x=>active==='الكل'||x.status===active);
-    const hist=state.objectionHistory||[];
+    const histAll=state.objectionHistory||[];
+    const hist=histAll.filter(h=>!of.q||`${h.id} ${h.action} ${h.by} ${h.detail} ${h.when}`.includes(of.q));
     const tone=s=>s==='مغلقة'?'g':s==='بانتظار قرار'?'a':'r';
     let body='';
     if(isHistory){
-      body=`<div class="note info">سجل الاعتراضات: فتح، طلب معلومات، قبول، رفض، وإغلاق.</div>`
+      body=`<div class="filters"><label class="fsearch">⌕ <input id="objection-hist-q" value="${safe(of.q||'')}" placeholder="ابحث برقم الاعتراض أو الإجراء أو التفاصيل" oninput="WafraOps.objectionHistoryFilter()"></label></div>
+        <div class="note info">سجل الاعتراضات: فتح، طلب معلومات، قبول، رفض، وإغلاق.</div>`
         +table(['التاريخ','رقم الاعتراض','الإجراء','بواسطة','التفاصيل'],
           hist.map(h=>[h.when,h.id,{v:h.action,c:'strong'},h.by,h.detail]));
     }else{
@@ -238,7 +263,7 @@
     }
     return phead('اعتراضات الرسوم والغرامات','مراجعة الاعتراضات وقراراتها مع سجل كامل للإجراءات',[],
       `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('اعتراضات-الرسوم','Excel')">Excel ⤓</button>`)
-      +card(`<div class="tabs">${['الكل','مفتوحة','بانتظار قرار','مغلقة','السجل'].map(x=>`<button class="tab ${active===x?'on':''}" onclick="WafraOps.objectionsTab('${x}')">${x}${x==='السجل'?` <span class="sub">(${hist.length})</span>`:''}</button>`).join('')}</div>
+      +card(`<div class="tabs">${['الكل','مفتوحة','بانتظار قرار','مغلقة','السجل'].map(x=>`<button class="tab ${active===x?'on':''}" onclick="WafraOps.objectionsTab('${x}')">${x}${x==='السجل'?` <span class="sub">(${histAll.length})</span>`:''}</button>`).join('')}</div>
         <div class="card-b">${body}</div>`);
   };
 })();

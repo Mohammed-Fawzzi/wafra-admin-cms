@@ -116,24 +116,67 @@
   };
 
   /* —— الإعدادات التشغيلية —— */
-  const cancelTiers=`
-    <div class="cancel-tiers">
-      <div class="ct-row free">
-        <div class="ct-badge">مجاني</div>
-        <div><b>الإلغاء قبل موعد الاستلام بـ 6 ساعات أو أكثر</b>
-        <span class="sub">لا تُحتسب أي رسوم على العميل · استرداد كامل للدفعة</span></div>
-      </div>
-      <div class="ct-row mid">
-        <div class="ct-badge">25%</div>
-        <div><b>الإلغاء خلال 6 ساعات من موعد الاستلام</b>
-        <span class="sub">خصم 25% من قيمة اليوم الأول · يُسترد الباقي للعميل</span></div>
-      </div>
-      <div class="ct-row full">
-        <div class="ct-badge">يوم كامل</div>
-        <div><b>عدم الحضور أو الإلغاء بعد الموعد</b>
-        <span class="sub">خصم قيمة يوم كامل من الدفعة الأصلية</span></div>
-      </div>
-    </div>`;
+  const OPS_KEY='wafra-ops-settings-v1';
+  const escAttr=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const defaultOps=()=>({
+    cancel:[
+      {tone:'free',badge:'مجاني',title:'الإلغاء قبل موعد الاستلام بـ 6 ساعات أو أكثر',hours:'6',fee:'0',note:'لا تُحتسب أي رسوم على العميل · استرداد كامل للدفعة'},
+      {tone:'mid',badge:'25%',title:'الإلغاء خلال 6 ساعات من موعد الاستلام',hours:'6',fee:'25',note:'خصم 25% من قيمة اليوم الأول · يُسترد الباقي للعميل'},
+      {tone:'full',badge:'يوم كامل',title:'عدم الحضور أو الإلغاء بعد الموعد',hours:'0',fee:'100',note:'خصم قيمة يوم كامل من الدفعة الأصلية'}
+    ],
+    booking:{providerReply:'30 دقيقة',noShowWindow:'60 دقيقة',minDays:'يوم واحد',maxDays:'90 يوماً',editHours:'24 ساعة',lateGrace:'59 دقيقة'},
+    finance:{commission:'15%',lateFine:'100% من السعر اليومي',settleCycle:'أسبوعية',vat:'15%'},
+    slaOps:[
+      {name:'قبول / رفض الحجز',type:'تشغيلي',sla:'30 دقيقة',escalation:'تذكير للمزود ← إلغاء واسترداد كامل'},
+      {name:'تسليم المركبة',type:'تشغيلي',sla:'ساعتان من الموعد',escalation:'تصعيد لمدير العمليات'},
+      {name:'اعتماد التسوية',type:'مالي',sla:'48 ساعة',escalation:'تصعيد للمالية'},
+      {name:'تنفيذ التحويل البنكي',type:'مالي',sla:'72 ساعة بعد الاعتماد',escalation:'تنبيه المدير المالي'},
+      {name:'صرف الاسترداد المعتمد',type:'مالي',sla:'5 أيام عمل',escalation:'تصعيد للمالية + إشعار العميل'}
+    ],
+    slaSupport:{firstReply:'60 دقيقة',ticketNormal:'48 ساعة',ticketUrgent:'8 ساعات',disputeReply:'36 ساعة'},
+    escalate:[
+      {status:'تذكرة دعم',cond:'تجاوز مهلة الحل أو أولوية عاجلة بلا رد',to:'مشرف الدعم',action:'إعادة إسناد + تنبيه'},
+      {status:'شكوى عميل',cond:'تكرار الشكوى مرتين أو تقييم ≤ 2',to:'مدير العمليات',action:'فتح تحقيق'},
+      {status:'نزاع / تظلّم',cond:'انتهاء مهلة رد المزود دون رد',to:'اعتماد آلي للخصم',action:'إغلاق وإدراج في التسوية'},
+      {status:'نزاع معترض عليه',cond:'المزود اعترض خلال المهلة',to:'لجنة الحسم',action:'قرار نهائي خلال 24 ساعة'}
+    ],
+    refunds:[
+      {case:'إلغاء ≥ 6 ساعات قبل الاستلام',cond:'حسب شريحة الإلغاء',value:'100%',note:'مجاني'},
+      {case:'إلغاء خلال 6 ساعات',cond:'حسب شريحة الإلغاء',value:'استرداد بعد خصم 25% من اليوم الأول',note:'—'},
+      {case:'عدم حضور / إلغاء بعد الموعد',cond:'حسب شريحة الإلغاء',value:'استرداد بعد خصم يوم كامل',note:'—'},
+      {case:'إرجاع مبكر بعد الاستلام',cond:'تم الاستلام ولم تُكمل المدة',value:'المتبقي من الدفعة غير المستخدم',note:'عبر إنشاء استرداد'},
+      {case:'عطل سيارة / عدم توفر',cond:'مثبت من الدعم أو المزود',value:'100% أو بديل',note:'تعويض اختياري بكوبون'},
+      {case:'خصم مزدوج / خطأ تحصيل',cond:'مثبت محاسبياً',value:'كامل الفرق',note:'أولوية عاجلة'}
+    ],
+    channels:{push:true,email:true,sms:true,wa:false},
+    payments:{mada:true,visa:true,apple:true,stc:true,wallet:false},
+    peak:{periods:'الخميس والجمعة · مواسم الإجازات',uplift:'حتى 40%'},
+    access:{license:true,guests:false,hideExpired:true}
+  });
+  const loadOps=()=>{
+    try{
+      const raw=JSON.parse(localStorage.getItem(OPS_KEY)||'null');
+      if(raw&&typeof raw==='object') return Object.assign(defaultOps(),raw,{
+        cancel:raw.cancel||defaultOps().cancel,
+        booking:Object.assign(defaultOps().booking,raw.booking||{}),
+        finance:Object.assign(defaultOps().finance,raw.finance||{}),
+        slaOps:raw.slaOps||defaultOps().slaOps,
+        slaSupport:Object.assign(defaultOps().slaSupport,raw.slaSupport||{}),
+        escalate:raw.escalate||defaultOps().escalate,
+        refunds:raw.refunds||defaultOps().refunds,
+        channels:Object.assign(defaultOps().channels,raw.channels||{}),
+        payments:Object.assign(defaultOps().payments,raw.payments||{}),
+        peak:Object.assign(defaultOps().peak,raw.peak||{}),
+        access:Object.assign(defaultOps().access,raw.access||{})
+      });
+    }catch(e){}
+    return defaultOps();
+  };
+  const saveOps=s=>{try{localStorage.setItem(OPS_KEY,JSON.stringify(s));}catch(e){}};
+  const inpV=(id,val,type='text')=>`<input id="${id}" class="native-input" type="${type}" value="${escAttr(val)}">`;
+  const selV=(id,val,opts)=>`<select id="${id}" class="native-input">${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>`;
+  const tgBtn=(id,on)=>`<button type="button" class="tg ${on?'on':''}" id="${id}" data-on="${on?1:0}" onclick="this.classList.toggle('on');this.dataset.on=this.classList.contains('on')?'1':'0'"></button>`;
+  const swEdit=(id,title,sub,on)=>`<div class="sw-row"><div class="tx"><b>${title}</b><span>${sub}</span></div>${tgBtn(id,!!on)}</div>`;
 
   if(!document.getElementById('wafra-settings-p51')){
     const st=document.createElement('style');
@@ -144,101 +187,181 @@
       .ct-row.free{border-color:#C6EBD8;background:#F3FBF7}
       .ct-row.mid{border-color:#F3E2B3;background:#FFFBF0}
       .ct-row.full{border-color:#F5C6C6;background:#FFF5F5}
-      .ct-badge{flex:0 0 auto;min-width:72px;text-align:center;font:800 12px Cairo;padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #E6EAF3}
+      .ct-badge{flex:0 0 auto;min-width:88px;text-align:center;font:800 12px Cairo;padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #E6EAF3}
       .ct-row.free .ct-badge{color:#148A5A;border-color:#C6EBD8}
       .ct-row.mid .ct-badge{color:#9A6B00;border-color:#F3E2B3}
       .ct-row.full .ct-badge{color:#C62828;border-color:#F5C6C6}
-      .ct-row b{display:block;font:800 13.5px Cairo;margin-bottom:4px}
+      .ct-row .ct-fields{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+      .ct-row .ct-fields .native-input{width:100%}
       .set-sec{margin-bottom:16px}
       .pay-row,.ch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #EEF1F6}
       .pay-row:last-child,.ch-row:last-child{border-bottom:0}
+      .set-edit-table input.native-input,.set-edit-table select.native-input{min-width:110px;font-size:12.5px;padding:7px 10px}
     `;
     document.head.appendChild(st);
   }
 
   Object.assign(WafraOps,{
-    saveOpsSettings:()=>{toast('تم حفظ الإعدادات التشغيلية.');},
-    togglePayMethod:(id)=>{
-      const el=document.getElementById('pay-'+id);
-      if(!el) return;
-      const on=el.classList.toggle('on');
-      toast((on?'تفعيل':'إيقاف')+' وسيلة الدفع.');
+    saveOpsSettings:()=>{
+      const s=loadOps();
+      s.cancel=s.cancel.map((c,i)=>({
+        ...c,
+        badge:document.getElementById('cn-badge-'+i)?.value??c.badge,
+        title:document.getElementById('cn-title-'+i)?.value??c.title,
+        hours:document.getElementById('cn-hours-'+i)?.value??c.hours,
+        fee:document.getElementById('cn-fee-'+i)?.value??c.fee,
+        note:document.getElementById('cn-note-'+i)?.value??c.note
+      }));
+      s.booking={
+        providerReply:document.getElementById('bk-providerReply')?.value||s.booking.providerReply,
+        noShowWindow:document.getElementById('bk-noShowWindow')?.value||s.booking.noShowWindow,
+        minDays:document.getElementById('bk-minDays')?.value||s.booking.minDays,
+        maxDays:document.getElementById('bk-maxDays')?.value||s.booking.maxDays,
+        editHours:document.getElementById('bk-editHours')?.value||s.booking.editHours,
+        lateGrace:document.getElementById('bk-lateGrace')?.value||s.booking.lateGrace
+      };
+      s.finance={
+        commission:document.getElementById('fn-commission')?.value||s.finance.commission,
+        lateFine:document.getElementById('fn-lateFine')?.value||s.finance.lateFine,
+        settleCycle:document.getElementById('fn-settleCycle')?.value||s.finance.settleCycle,
+        vat:document.getElementById('fn-vat')?.value||s.finance.vat
+      };
+      s.slaOps=s.slaOps.map((r,i)=>({
+        name:document.getElementById('sla-name-'+i)?.value??r.name,
+        type:document.getElementById('sla-type-'+i)?.value??r.type,
+        sla:document.getElementById('sla-sla-'+i)?.value??r.sla,
+        escalation:document.getElementById('sla-esc-'+i)?.value??r.escalation
+      }));
+      s.slaSupport={
+        firstReply:document.getElementById('ss-firstReply')?.value||s.slaSupport.firstReply,
+        ticketNormal:document.getElementById('ss-ticketNormal')?.value||s.slaSupport.ticketNormal,
+        ticketUrgent:document.getElementById('ss-ticketUrgent')?.value||s.slaSupport.ticketUrgent,
+        disputeReply:document.getElementById('ss-disputeReply')?.value||s.slaSupport.disputeReply
+      };
+      s.escalate=s.escalate.map((r,i)=>({
+        status:document.getElementById('es-status-'+i)?.value??r.status,
+        cond:document.getElementById('es-cond-'+i)?.value??r.cond,
+        to:document.getElementById('es-to-'+i)?.value??r.to,
+        action:document.getElementById('es-action-'+i)?.value??r.action
+      }));
+      s.refunds=s.refunds.map((r,i)=>({
+        case:document.getElementById('rf-case-'+i)?.value??r.case,
+        cond:document.getElementById('rf-cond-'+i)?.value??r.cond,
+        value:document.getElementById('rf-value-'+i)?.value??r.value,
+        note:document.getElementById('rf-note-'+i)?.value??r.note
+      }));
+      s.channels={
+        push:document.getElementById('ch-push')?.dataset.on==='1',
+        email:document.getElementById('ch-email')?.dataset.on==='1',
+        sms:document.getElementById('ch-sms')?.dataset.on==='1',
+        wa:document.getElementById('ch-wa')?.dataset.on==='1'
+      };
+      s.payments={
+        mada:document.getElementById('pay-mada')?.dataset.on==='1',
+        visa:document.getElementById('pay-visa')?.dataset.on==='1',
+        apple:document.getElementById('pay-apple')?.dataset.on==='1',
+        stc:document.getElementById('pay-stc')?.dataset.on==='1',
+        wallet:document.getElementById('pay-wallet')?.dataset.on==='1'
+      };
+      s.peak={
+        periods:document.getElementById('pk-periods')?.value||s.peak.periods,
+        uplift:document.getElementById('pk-uplift')?.value||s.peak.uplift
+      };
+      s.access={
+        license:document.getElementById('ac-license')?.dataset.on==='1',
+        guests:document.getElementById('ac-guests')?.dataset.on==='1',
+        hideExpired:document.getElementById('ac-hideExpired')?.dataset.on==='1'
+      };
+      saveOps(s);
+      toast('تم حفظ الإعدادات التشغيلية.');
+      render();
     },
-    toggleNotifChannel:(id)=>{
-      const el=document.getElementById('ch-'+id);
-      if(!el) return;
-      const on=el.classList.toggle('on');
-      toast((on?'تفعيل':'إيقاف')+' قناة الإشعار.');
+    resetOpsSettings:()=>{
+      try{localStorage.removeItem(OPS_KEY);}catch(e){}
+      toast('أُعيدت القيم الافتراضية.');
+      render();
     },
     editPayMethod:id=>{
       openM(modal('تعديل وسيلة الدفع',`
-        ${fld('الاسم',`<input id="pm-name" class="native-input" value="${id}">`)}
+        ${fld('الاسم',`<input id="pm-name" class="native-input" value="${escAttr(id)}">`)}
         ${fld('رسوم البوابة (%)',`<input id="pm-fee" class="native-input" type="number" value="1.5" step="0.1">`)}
         ${fld('الحالة',`<select id="pm-st" class="native-input"><option>مفعّلة</option><option>موقوفة</option></select>`)}
-      `,`<button class="btn" onclick="closeM();WafraOps.demoAction('حفظ وسيلة الدفع')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
+      `,`<button class="btn coral" onclick="closeM();WafraOps.demoAction('تم حفظ وسيلة الدفع')">حفظ</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
     }
   });
 
   S.settings=()=>{
-    const tg=(id,on)=>`<button type="button" class="tg ${on?'on':''}" id="${id}" onclick="this.classList.toggle('on')"></button>`;
-    return phead('الإعدادات التشغيلية','القيم التي يعمل بها النظام — أي تعديل يحتاج اعتماد المسؤول الأعلى',[],
-      `<button class="btn ghost" onclick="render()">إلغاء</button><button class="btn coral" onclick="WafraOps.saveOpsSettings()">حفظ التغييرات</button>`)
+    const o=loadOps();
+    const cancelUI=`<div class="cancel-tiers">${o.cancel.map((c,i)=>`
+      <div class="ct-row ${c.tone}">
+        <div class="ct-badge"><input id="cn-badge-${i}" class="native-input" value="${escAttr(c.badge)}" style="text-align:center;font-weight:800;border:0;background:transparent;padding:0"></div>
+        <div class="ct-fields">
+          ${fld('العنوان',inpV('cn-title-'+i,c.title))}
+          <div class="frow">${fld('الحد (ساعات قبل الاستلام)',inpV('cn-hours-'+i,c.hours,'number'))}${fld('نسبة / قيمة الرسوم %',inpV('cn-fee-'+i,c.fee,'number'))}</div>
+          ${fld('التفاصيل',inpV('cn-note-'+i,c.note))}
+        </div>
+      </div>`).join('')}</div>`;
+
+    return phead('الإعدادات التشغيلية','جميع القيم قابلة للتعديل من الإدارة — يُحفظ التعديل في سجل التدقيق',[],
+      `<button class="btn ghost" onclick="WafraOps.resetOpsSettings()">إعادة الافتراضي</button>
+       <button class="btn ghost" onclick="render()">إلغاء</button>
+       <button class="btn coral" onclick="WafraOps.saveOpsSettings()">حفظ التغييرات</button>`)
       +note('warn','هذه القيم تؤثّر على كل الحجوزات الجديدة','التعديل لا يسري على الحجوزات القائمة، ويُسجَّل في سجل التدقيق بالقيمة قبل وبعد.')
 
-      +card(cardH('شرائح تطبيق الخصم عند الإلغاء','السياسة المعتمدة للإلغاء وعدم الحضور')+`<div class="card-b">${cancelTiers}</div>`)
+      +card(cardH('شرائح تطبيق الخصم عند الإلغاء','يمكن تعديل العتبات والنسب والتفاصيل من الإدارة')+`<div class="card-b">${cancelUI}</div>`)
 
       +`<div class="grid2 set-sec">`
       +card(cardH('الحجز والردّ')+`<div class="card-b">
-        <div class="frow">${fld('مهلة ردّ المزوّد',`<input class="native-input" value="30 دقيقة">`)}${fld('نافذة تسجيل عدم الحضور',`<input class="native-input" value="60 دقيقة">`)}</div>
-        <div class="frow">${fld('أقل مدة حجز',`<input class="native-input" value="يوم واحد">`)}${fld('أقصى مدة حجز',`<input class="native-input" value="90 يوماً">`)}</div>
-        <div class="frow">${fld('عدد الساعات المسموحة للتعديل',`<input class="native-input" value="24 ساعة">`)}${fld('مدة السماح قبل احتساب التأخير',`<input class="native-input" value="59 دقيقة">`)}</div>
+        <div class="frow">${fld('مهلة ردّ المزوّد',inpV('bk-providerReply',o.booking.providerReply))}${fld('نافذة تسجيل عدم الحضور',inpV('bk-noShowWindow',o.booking.noShowWindow))}</div>
+        <div class="frow">${fld('أقل مدة حجز',inpV('bk-minDays',o.booking.minDays))}${fld('أقصى مدة حجز',inpV('bk-maxDays',o.booking.maxDays))}</div>
+        <div class="frow">${fld('عدد الساعات المسموحة للتعديل',inpV('bk-editHours',o.booking.editHours))}${fld('مدة السماح قبل احتساب التأخير',inpV('bk-lateGrace',o.booking.lateGrace))}</div>
       </div>`)
       +card(cardH('المالية')+`<div class="card-b">
-        <div class="frow">${fld('نسبة العمولة العامة',`<input class="native-input" value="15%">`)}${fld('حد غرامة التأخير اليومية',`<input class="native-input" value="100% من السعر اليومي">`)}</div>
-        <div class="frow">${fld('دورة التسوية الافتراضية',`<select class="native-input"><option>أسبوعية</option><option>شهرية</option></select>`)}${fld('ضريبة القيمة المضافة',`<input class="native-input" value="15%">`)}</div>
+        <div class="frow">${fld('نسبة العمولة العامة',inpV('fn-commission',o.finance.commission))}${fld('حد غرامة التأخير اليومية',inpV('fn-lateFine',o.finance.lateFine))}</div>
+        <div class="frow">${fld('دورة التسوية الافتراضية',selV('fn-settleCycle',o.finance.settleCycle,['أسبوعية','شهرية','نصف شهرية']))}${fld('ضريبة القيمة المضافة',inpV('fn-vat',o.finance.vat))}</div>
       </div>`)
       +`</div>`
 
-      +card(cardH('SLA — المعايير التشغيلية والمالية','مهل الرد والإنجاز حسب نوع العملية')+`<div class="card-b">${table(['المعيار','النوع','المهلة','التصعيد عند التجاوز'],[
-        ['قبول / رفض الحجز','تشغيلي','30 دقيقة','تذكير للمزود ← إلغاء واسترداد كامل'],
-        ['تسليم المركبة','تشغيلي','ساعتان من الموعد','تصعيد لمدير العمليات'],
-        ['اعتماد التسوية','مالي','48 ساعة','تصعيد للمالية'],
-        ['تنفيذ التحويل البنكي','مالي','72 ساعة بعد الاعتماد','تنبيه المدير المالي'],
-        ['صرف الاسترداد المعتمد','مالي','5 أيام عمل','تصعيد للمالية + إشعار العميل']
-      ])}</div>`)
+      +card(cardH('SLA — المعايير التشغيلية والمالية','مهل الرد والإنجاز قابلة للتعديل')+`<div class="card-b set-edit-table">${table(['المعيار','النوع','المهلة','التصعيد عند التجاوز'],
+        o.slaOps.map((r,i)=>[
+          inpV('sla-name-'+i,r.name),
+          selV('sla-type-'+i,r.type,['تشغيلي','مالي','دعم']),
+          inpV('sla-sla-'+i,r.sla),
+          inpV('sla-esc-'+i,r.escalation)
+        ]))}</div>`)
 
-      +card(cardH('SLA — خدمة العملاء ومعالجة الشكاوى والمنازلات','متى يُصعَّد الطلب ومهلة رد المزود')+`<div class="card-b">
+      +card(cardH('SLA — خدمة العملاء ومعالجة الشكاوى والمنازلات','مهل الرد وقواعد التصعيد قابلة للتعديل')+`<div class="card-b">
         <div class="frow">
-          ${fld('مهلة أول رد للدعم',`<input class="native-input" value="60 دقيقة">`)}
-          ${fld('مهلة حل التذكرة (عادية)',`<input class="native-input" value="48 ساعة">`)}
+          ${fld('مهلة أول رد للدعم',inpV('ss-firstReply',o.slaSupport.firstReply))}
+          ${fld('مهلة حل التذكرة (عادية)',inpV('ss-ticketNormal',o.slaSupport.ticketNormal))}
         </div>
         <div class="frow">
-          ${fld('مهلة حل التذكرة (عاجلة)',`<input class="native-input" value="8 ساعات">`)}
-          ${fld('مهلة رد المزود على النزاع / التظلّم',`<input class="native-input" value="36 ساعة">`)}
+          ${fld('مهلة حل التذكرة (عاجلة)',inpV('ss-ticketUrgent',o.slaSupport.ticketUrgent))}
+          ${fld('مهلة رد المزود على النزاع / التظلّم',inpV('ss-disputeReply',o.slaSupport.disputeReply))}
         </div>
-        ${table(['الحالة','شرط التصعيد','إلى','الإجراء'],[
-          ['تذكرة دعم','تجاوز مهلة الحل أو أولوية عاجلة بلا رد','مشرف الدعم','إعادة إسناد + تنبيه'],
-          ['شكوى عميل','تكرار الشكوى مرتين أو تقييم ≤ 2','مدير العمليات','فتح تحقيق'],
-          ['نزاع / تظلّم','انتهاء مهلة رد المزود دون رد','اعتماد آلي للخصم','إغلاق وإدراج في التسوية'],
-          ['نزاع معترض عليه','المزود اعترض خلال المهلة','لجنة الحسم','قرار نهائي خلال 24 ساعة']
-        ])}
+        <div class="set-edit-table">${table(['الحالة','شرط التصعيد','إلى','الإجراء'],
+          o.escalate.map((r,i)=>[
+            inpV('es-status-'+i,r.status),
+            inpV('es-cond-'+i,r.cond),
+            inpV('es-to-'+i,r.to),
+            inpV('es-action-'+i,r.action)
+          ]))}</div>
       </div>`)
 
-      +card(cardH('معايير استرداد العملاء','حالات الاسترداد المسموحة وشروطها')+`<div class="card-b">${table(['الحالة','الشرط','نسبة / قيمة الاسترداد','ملاحظة'],[
-        ['إلغاء ≥ 6 ساعات قبل الاستلام','حسب شريحة الإلغاء','100%','مجاني'],
-        ['إلغاء خلال 6 ساعات','حسب شريحة الإلغاء','استرداد بعد خصم 25% من اليوم الأول','—'],
-        ['عدم حضور / إلغاء بعد الموعد','حسب شريحة الإلغاء','استرداد بعد خصم يوم كامل','—'],
-        ['إرجاع مبكر بعد الاستلام','تم الاستلام ولم تُكمل المدة','المتبقي من الدفعة غير المستخدم','عبر إنشاء استرداد'],
-        ['عطل سيارة / عدم توفر','مثبت من الدعم أو المزود','100% أو بديل','تعويض اختياري بكوبون'],
-        ['خصم مزدوج / خطأ تحصيل','مثبت محاسبياً','كامل الفرق','أولوية عاجلة']
-      ])}</div>`)
+      +card(cardH('معايير استرداد العملاء','حالات الاسترداد والنسب قابلة للتعديل')+`<div class="card-b set-edit-table">${table(['الحالة','الشرط','نسبة / قيمة الاسترداد','ملاحظة'],
+        o.refunds.map((r,i)=>[
+          inpV('rf-case-'+i,r.case),
+          inpV('rf-cond-'+i,r.cond),
+          inpV('rf-value-'+i,r.value),
+          inpV('rf-note-'+i,r.note)
+        ]))}</div>`)
 
       +`<div class="grid2">`
       +card(cardH('قنوات الإشعارات','تفعيل أو إيقاف كل قناة')+`<div class="card-b">
-        <div class="ch-row"><div><b>إشعار داخل التطبيق (Push)</b><span class="sub">للحجوزات والتنبيهات الفورية</span></div>${tg('ch-push',true)}</div>
-        <div class="ch-row"><div><b>البريد الإلكتروني</b><span class="sub">الملخصات والفواتير</span></div>${tg('ch-email',true)}</div>
-        <div class="ch-row"><div><b>رسالة نصية SMS</b><span class="sub">OTP والتنبيهات الحرجة</span></div>${tg('ch-sms',true)}</div>
-        <div class="ch-row"><div><b>واتساب للأعمال</b><span class="sub">اختياري — حملات وتذكير</span></div>${tg('ch-wa',false)}</div>
+        <div class="ch-row"><div><b>إشعار داخل التطبيق (Push)</b><span class="sub">للحجوزات والتنبيهات الفورية</span></div>${tgBtn('ch-push',o.channels.push)}</div>
+        <div class="ch-row"><div><b>البريد الإلكتروني</b><span class="sub">الملخصات والفواتير</span></div>${tgBtn('ch-email',o.channels.email)}</div>
+        <div class="ch-row"><div><b>رسالة نصية SMS</b><span class="sub">OTP والتنبيهات الحرجة</span></div>${tgBtn('ch-sms',o.channels.sms)}</div>
+        <div class="ch-row"><div><b>واتساب للأعمال</b><span class="sub">اختياري — حملات وتذكير</span></div>${tgBtn('ch-wa',o.channels.wa)}</div>
       </div>`)
       +card(cardH('وسائل الدفع المتاحة','التحكم والتعديل على البوابات')+`<div class="card-b">
         ${[['mada','مدى'],['visa','Visa / Mastercard'],['apple','Apple Pay'],['stc','STC Pay'],['wallet','محفظة وفرا']].map(([id,name])=>`
@@ -246,7 +369,7 @@
             <div><b>${name}</b><span class="sub">بوابة نشطة</span></div>
             <div style="display:flex;gap:8px;align-items:center">
               <button class="btn ghost sm" onclick="WafraOps.editPayMethod('${name}')">تعديل</button>
-              ${tg('pay-'+id,id!=='wallet')}
+              ${tgBtn('pay-'+id,!!o.payments[id])}
             </div>
           </div>`).join('')}
       </div>`)
@@ -254,13 +377,13 @@
 
       +`<div class="grid2">`
       +card(cardH('أوقات الذروة')+`<div class="card-b">
-        ${fld('فترات الذروة',`<input class="native-input" value="الخميس والجمعة · مواسم الإجازات">`)}
-        ${fld('نسبة الزيادة المسموحة في الذروة',`<input class="native-input" value="حتى 40%">`)}
+        ${fld('فترات الذروة',inpV('pk-periods',o.peak.periods))}
+        ${fld('نسبة الزيادة المسموحة في الذروة',inpV('pk-uplift',o.peak.uplift))}
       </div>`)
       +card(cardH('التوثيق والوصول')+`<div class="card-b">
-        ${swRow('إلزام توثيق رخصة القيادة قبل الحجز','يمنع إتمام الحجز قبل قبول الوثيقة',1)}
-        ${swRow('السماح بالحجز للزوّار','بدون إنشاء حساب',0)}
-        ${swRow('الإخفاء التلقائي عند انتهاء الاستمارة','تُخفى السيارة فور انتهاء وثيقتها',1)}
+        ${swEdit('ac-license','إلزام توثيق رخصة القيادة قبل الحجز','يمنع إتمام الحجز قبل قبول الوثيقة',o.access.license)}
+        ${swEdit('ac-guests','السماح بالحجز للزوّار','بدون إنشاء حساب',o.access.guests)}
+        ${swEdit('ac-hideExpired','الإخفاء التلقائي عند انتهاء الاستمارة','تُخفى السيارة فور انتهاء وثيقتها',o.access.hideExpired)}
       </div>`)
       +`</div>`;
   };

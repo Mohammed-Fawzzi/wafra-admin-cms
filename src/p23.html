@@ -21,6 +21,9 @@
   };
   const saved=(()=>{try{return JSON.parse(localStorage.getItem('wafra-admin-state-v2')||'null')}catch(_){return null}})();
   const state=window.WAFRA_DATA=window.WAFRA_DATA||saved||seed;
+  if(!state.approvals) state.approvals=seed.approvals.slice();
+  if(!state.documents) state.documents=seed.documents.slice();
+  if(!state.branches) state.branches=seed.branches.slice();
   const persist=()=>localStorage.setItem('wafra-admin-state-v2',JSON.stringify(state));
   const badge=s=>bdg(s,s==='معتمد'||s==='مكتمل'||s==='نشط'?'g':s==='مرفوض'||s==='غير نشط'?'r':'a');
   const modal=(title,body,foot='')=>`<div class="modal"><div class="modal-h"><h3>${title}</h3><span class="x" onclick="closeM()">✕</span></div><div class="modal-b">${body}</div>${foot?`<div class="modal-f">${foot}</div>`:''}</div>`;
@@ -34,7 +37,25 @@
   Object.assign(WafraOps,{
     exportApprovals:()=>{const a=filteredApprovals();csv('طلبات-الاعتماد',['الطلب','المزود','المدينة','السجل التجاري','المستندات','الحالة','تاريخ التقديم'],a.map(x=>[x.id,x.provider,x.city,x.commercial,`${x.docs}/${x.total}`,x.status,x.date]));window.__toast(`تم تصدير ${a.length} طلباً حسب الفلاتر الحالية.`);},
     approvalFilter:()=>{window.__approvalFilter={q:document.getElementById('approval-q')?.value||'',status:document.getElementById('approval-status')?.value||'',city:document.getElementById('approval-city')?.value||''}; render();},
-    viewApproval:id=>{const a=state.approvals.find(x=>x.id===id); if(!a)return;openM(modal(`طلب الاعتماد ${a.id}`,`<div class="prev-row"><span class="k">المزود</span><span class="v">${safe(a.provider)}</span></div><div class="prev-row"><span class="k">المدينة</span><span class="v">${a.city}</span></div><div class="prev-row"><span class="k">السجل التجاري</span><span class="v">${a.commercial}</span></div><div class="prev-row"><span class="k">الحالة</span><span class="v">${a.status}</span></div><div class="prev-row"><span class="k">الملاحظات / سبب القرار</span><span class="v">${safe(a.note||'لا توجد ملاحظات')}</span></div><h4 style="margin:16px 0 8px">المستندات المرفقة</h4>${state.documents.map(d=>`<div class="prev-row"><span class="k">${d.name}</span><span class="v">${d.file} · ${d.status}</span></div>`).join('')}`,`<button class="btn" onclick="closeM();location.hash='vendorFile'">فتح ملف المزود</button><button class="btn ghost" onclick="closeM()">إغلاق</button>`));},
+    viewApproval:id=>{
+      const data=window.WAFRA_DATA||state;
+      const a=(data.approvals||state.approvals||[]).find(x=>x.id===id);
+      if(!a){window.__toast&&window.__toast('تعذّر العثور على الطلب '+id);return;}
+      const docs=data.documents||state.documents||[];
+      const docsHtml=docs.length
+        ? docs.map(d=>`<div class="prev-row"><span class="k">${safe(d.name)}</span><span class="v">${safe(d.file||'—')} · ${safe(d.status||'')}</span></div>`).join('')
+        : `<div class="prev-row"><span class="k">المستندات</span><span class="v">${a.docs||0} / ${a.total||0} مرفوعة</span></div>`;
+      openM(modal(`طلب الاعتماد ${a.id}`,
+        `<div class="prev-row"><span class="k">المزود</span><span class="v">${safe(a.provider)}</span></div>
+         <div class="prev-row"><span class="k">المدينة</span><span class="v">${safe(a.city||'—')}</span></div>
+         <div class="prev-row"><span class="k">السجل التجاري</span><span class="v">${safe(a.commercial||'—')}</span></div>
+         <div class="prev-row"><span class="k">المستندات</span><span class="v">${a.docs||0} / ${a.total||0}</span></div>
+         <div class="prev-row"><span class="k">الحالة</span><span class="v">${safe(a.status)}</span></div>
+         <div class="prev-row"><span class="k">تاريخ التقديم</span><span class="v">${safe(a.date||'—')}</span></div>
+         <div class="prev-row"><span class="k">الملاحظات / سبب القرار</span><span class="v">${safe(a.note||'لا توجد ملاحظات')}</span></div>
+         <h4 style="margin:16px 0 8px">المستندات المرفقة</h4>${docsHtml}`,
+        `<button type="button" class="btn" onclick="closeM();location.hash='vendorFile'">فتح ملف المزود</button><button type="button" class="btn ghost" onclick="closeM()">إغلاق</button>`));
+    },
     requestDocs:id=>{const a=state.approvals.find(x=>x.id===id);if(!a)return;openM(modal('طلب وثائق إضافية',`<p class="sub">ستظهر هذه الملاحظة للمزود وتُحفظ في سجل طلب الاعتماد.</p><label class="fl">الملاحظات المطلوبة</label><textarea id="approval-note" class="native-input" style="min-height:100px" placeholder="اكتب المستندات أو التعديلات المطلوبة…">${safe(a.note||'')}</textarea>`,`<button class="btn coral" onclick="WafraOps.saveDocumentRequest('${id}')">إرسال الطلب</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));},
     saveDocumentRequest:id=>{const a=state.approvals.find(x=>x.id===id);const note=document.getElementById('approval-note')?.value.trim();if(!a||!note){window.__toast('أضف ملاحظة قبل الإرسال.');return;}a.status='طلب وثائق';a.note=note;persist();closeM();render();window.__toast('تم إرسال طلب الوثائق وحفظ الملاحظة.');},
     changeApproval:(id,status)=>{const a=state.approvals.find(x=>x.id===id);if(!a)return;a.status=status;if(status==='معتمد')a.note='تم اعتماد الطلب بعد اكتمال المراجعة.';persist();render();window.__toast(`تم تغيير حالة الطلب إلى ${status}.`);},

@@ -60,6 +60,12 @@
   const histTable=rows=>rows&&rows.length
     ? table(['الوقت','المرجع','الإجراء','بواسطة','التفاصيل'],rows.map(r=>[{v:r.when,c:'num'},{v:r.id,c:'strong num'},r.action,r.by||'—',r.detail||'—']))
     : `<p class="note info">لا توجد سجلات بعد.</p>`;
+  const filterHist=(rows,q)=>{
+    const s=String(q||'').trim();
+    if(!s) return rows||[];
+    return (rows||[]).filter(r=>`${r.when||''} ${r.id||''} ${r.action||''} ${r.by||''} ${r.detail||''}`.includes(s));
+  };
+  const histSearch=(inputId,q,handler,ph)=>`<div class="filters" style="padding:0 0 12px"><label class="fsearch">⌕ <input id="${inputId}" value="${String(q||'').replace(/"/g,'&quot;')}" placeholder="${ph||'ابحث في السجل…'}" oninput="${handler}"></label></div>`;
   const mkpi=(items)=>`<div class="kpis" style="grid-template-columns:repeat(${Math.min(items.length,6)},minmax(0,1fr))">${items.map(k=>`<div class="kpi"><div class="lb"><span class="ic gh-ic ${k.tone||'blue'}">${k.i}</span>${k.l}</div><div class="vl">${k.v}</div></div>`).join('')}</div>`;
 
   /* —— تنقل القائمة —— */
@@ -71,6 +77,9 @@
       const bi=mkt.items.findIndex(x=>x.k==='banners');
       mkt.items.splice(bi>=0?bi+1:5,0,{k:'featuredSlots',t:'الظهور المميز',i:'★'});
     }
+    if(!mkt.items.some(x=>x.k==='cohortLtv')){
+      mkt.items.push({k:'cohortLtv',t:'تحليل الأفواج – LTV / CAC',i:'📊'});
+    }
   }
   const system=NAV.find(x=>x.g==='النظام');
   if(system){
@@ -81,6 +90,7 @@
     window.TITLES.coupons='العروض';
     window.TITLES.banners='إدارة المحتوى';
     window.TITLES.featuredSlots='الظهور المميز';
+    window.TITLES.cohortLtv='تحليل الأفواج – LTV / CAC';
   }
 
   const cities=['كل العملاء','عملاء جدد','عملاء VIP','مدينة الرياض','مدينة جدة','مدينة مكة المكرمة','مدينة الدمام','مدينة الخبر','مدينة المدينة المنورة','مدينة الطائف','مدينة بريدة','مدينة تبوك','مدينة أبها','مدينة حائل','مدينة نجران'];
@@ -159,11 +169,15 @@
     setWelcomeTab:t=>{window.__welcomeTab=t;render();},
     setGovTab:t=>{window.__govTab=t;render();},
     setCampTab:t=>{window.__campTab=t;render();},
+    campHistFilter:()=>{window.__campHistFilter={q:document.getElementById('camp-hist-q')?.value||''};render();},
     setContentTab:t=>{window.__contentTab=t;render();},
     setAbTab:t=>{window.__abTab=t;render();},
     setJourneyTab:t=>{window.__jrTab=t;render();},
+    journeyHistFilter:()=>{window.__jrHistFilter={q:document.getElementById('jr-hist-q')?.value||''};render();},
     setVendorAdsTab:t=>{window.__vAdsTab=t;render();},
+    vendorAdsHistFilter:()=>{window.__vAdsHistFilter={q:document.getElementById('vads-hist-q')?.value||''};render();},
     setRoasTab:t=>{window.__roasTab=t;render();},
+    roasHistFilter:()=>{window.__roasHistFilter={q:document.getElementById('roas-hist-q')?.value||''};render();},
     setRoasPeriod:d=>{window.__roasPeriod=d;render();},
     removeFeaturedSlot:n=>{
       window.__featuredSlots=(window.__featuredSlots||defaultSlots()).map(s=>s.n===n?Object.assign({},s,{co:'— فارغة —',tier:'',since:'',empty:true}):s);
@@ -629,10 +643,12 @@
       {i:'💵',l:'إجمالي الميزانيات',v:'٤٥٢ ألف ر.س',tone:'red'}
     ]);
     if(tab==='history'){
+      const hf=window.__campHistFilter||{};
+      const rows=filterHist(loadH().campaigns,hf.q);
       return head+kpis+card(`<div class="tabs">
         <button class="tab" onclick="WafraOps.setCampTab('list')">الحملات</button>
         <button class="tab on" onclick="WafraOps.setCampTab('history')">السجل</button>
-      </div><div class="card-b">${histTable(loadH().campaigns)}</div>`);
+      </div><div class="card-b">${histSearch('camp-hist-q',hf.q,'WafraOps.campHistFilter()','ابحث برقم الحملة أو الإجراء أو التفاصيل')}${histTable(rows)}</div>`);
     }
     return head+kpis+card(`<div class="tabs">
       <button class="tab on" onclick="WafraOps.setCampTab('list')">نشطة</button>
@@ -798,10 +814,12 @@
       `<button class="btn coral" onclick="WafraOps.openMassRetention()">＋ حملة استرجاع جماعية</button>
        <button class="btn ghost" onclick="WafraOps.setJourneyTab('history')">سجل الحملات</button>`);
     if(tab==='history'){
+      const hf=window.__jrHistFilter||{};
+      const rows=filterHist(loadH().journey,hf.q);
       return head+card(`<div class="tabs">
         <button class="tab" onclick="WafraOps.setJourneyTab('list')">العملاء</button>
         <button class="tab on" onclick="WafraOps.setJourneyTab('history')">سجل الحملات</button>
-      </div><div class="card-b">${histTable(loadH().journey)}</div>`);
+      </div><div class="card-b">${histSearch('jr-hist-q',hf.q,'WafraOps.journeyHistFilter()','ابحث بالعميل أو الإجراء أو التفاصيل')}${histTable(rows)}</div>`);
     }
     return head
       +`<div class="kpis jr-kpis">
@@ -845,10 +863,12 @@
       {i:'🏦',l:'إيراد المنصة (إعلانات)',v:'186 ألف',tone:'red'}
     ]);
     if(tab==='history'){
+      const hf=window.__vAdsHistFilter||{};
+      const rows=filterHist(loadH().vendorAds,hf.q);
       return head+kpis+card(`<div class="tabs">
         <button class="tab" onclick="WafraOps.setVendorAdsTab('ads')">الإعلانات</button>
         <button class="tab on" onclick="WafraOps.setVendorAdsTab('history')">السجل</button>
-      </div><div class="card-b">${histTable(loadH().vendorAds)}</div>`);
+      </div><div class="card-b">${histSearch('vads-hist-q',hf.q,'WafraOps.vendorAdsHistFilter()','ابحث برقم الإعلان أو المزوّد أو الإجراء')}${histTable(rows)}</div>`);
     }
     return head+kpis+card(`<div class="tabs">
       <button class="tab on" onclick="WafraOps.setVendorAdsTab('ads')">بانتظار الموافقة</button>
@@ -938,10 +958,12 @@
       periodBtns+` <button class="btn ghost" onclick="WafraOps.setRoasTab('history')">سجل تغيير الميزانية</button>
        <button class="btn ghost" onclick="WafraOps.exportCurrent('ROAS','Excel')">Excel ⤓</button>`);
     if(tab==='history'){
+      const hf=window.__roasHistFilter||{};
+      const rows=filterHist(loadH().roasBudget,hf.q);
       return head+card(`<div class="tabs">
         <button class="tab" onclick="WafraOps.setRoasTab('list')">القنوات</button>
         <button class="tab on" onclick="WafraOps.setRoasTab('history')">سجل تغيير الميزانية</button>
-      </div><div class="card-b">${histTable(loadH().roasBudget)}</div>`);
+      </div><div class="card-b">${histSearch('roas-hist-q',hf.q,'WafraOps.roasHistFilter()','ابحث بالقناة أو الإجراء أو التفاصيل')}${histTable(rows)}</div>`);
     }
     const rows=[
       ['Direct / Organic','عضوي','—','6,888','61.3 م ر.س','متفوق','نشطة'],
@@ -982,6 +1004,104 @@
     st.textContent=`.roas-impact{background:#F7F9FC;border:1px solid #E6EAF3;border-radius:12px;padding:12px 14px}.roas-imp-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;font:700 13px Cairo;border-bottom:1px dashed #E6EAF3}.roas-imp-row:last-child{border:0}.roas-pct-btn.on{background:var(--navy)!important;color:#fff!important;border-color:var(--navy)!important}.gh-ic.teal{background:#E7F7F5!important;color:#1AA6A6!important}`;
     document.head.appendChild(st);
   }
+
+  /* —— تحليل الأفواج LTV / CAC —— */
+  if(!document.getElementById('wafra-cohort-ltv-css')){
+    const st=document.createElement('style');
+    st.id='wafra-cohort-ltv-css';
+    st.textContent=`
+      .coh-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px 4px}
+      .coh-pos{color:#148A5A;font-weight:800}
+      .coh-chart{padding:8px 12px 4px}
+      .coh-legend{display:flex;justify-content:center;gap:22px;margin:4px 0 14px;font:700 12.5px Cairo;color:var(--ink-2)}
+      .coh-legend i{display:inline-block;width:10px;height:10px;border-radius:99px;margin-inline-end:6px;vertical-align:middle}
+      .coh-legend .ltv{background:#E8A23A}.coh-legend .cac{background:#20A16E}
+      .coh-plot{display:flex;gap:10px;align-items:stretch;min-height:260px}
+      .coh-y{display:flex;flex-direction:column;justify-content:space-between;font:700 11px Cairo;color:var(--muted);padding:4px 0;min-width:52px;text-align:left;direction:ltr}
+      .coh-area{flex:1;display:flex;align-items:flex-end;justify-content:space-around;gap:10px;border-bottom:1px solid var(--line);border-inline-start:1px solid var(--line);padding:0 6px 0 10px;position:relative;background:linear-gradient(to top,transparent 0,transparent calc(100% - 1px),#EEF1F6 calc(100% - 1px))}
+      .coh-col{flex:1;max-width:72px;display:flex;flex-direction:column;align-items:center;gap:8px}
+      .coh-bars{width:100%;height:220px;display:flex;align-items:flex-end;justify-content:center;gap:5px}
+      .coh-bar{width:18px;border-radius:6px 6px 0 0;min-height:2px}
+      .coh-bar.ltv{background:#E8A23A}.coh-bar.cac{background:#20A16E}
+      .coh-lab{font:700 11.5px Cairo;color:var(--ink-2);white-space:nowrap}
+    `;
+    document.head.appendChild(st);
+  }
+
+  const cohortRows=()=>[
+    {m:'أبريل 26',short:'أبر 26',newC:412,ltv:386200,cac:333},
+    {m:'مايو 26',short:'ماي 26',newC:398,ltv:340500,cac:328},
+    {m:'يونيو 26',short:'يون 26',newC:371,ltv:301800,cac:335},
+    {m:'يوليو 26',short:'يول 26',newC:355,ltv:268400,cac:340},
+    {m:'أغسطس 26',short:'أغس 26',newC:342,ltv:229700,cac:330},
+    {m:'سبتمبر 26',short:'سبت 26',newC:318,ltv:188900,cac:336},
+    {m:'أكتوبر 26',short:'أكت 26',newC:296,ltv:154600,cac:329}
+  ];
+  const fmtK=n=>{
+    const v=n/1000;
+    return (Math.round(v*10)/10).toLocaleString('en-US',{maximumFractionDigits:1})+' ألف ر.س';
+  };
+  const fmtSar=n=>Math.round(n).toLocaleString('en-US')+' ر.س';
+  const fmtRatio=r=>'x'+(Math.round(r*10)/10).toLocaleString('en-US',{maximumFractionDigits:1});
+
+  S.cohortLtv=()=>{
+    const rows=cohortRows();
+    const avgLtv=rows.reduce((s,r)=>s+r.ltv,0)/rows.length;
+    const avgCac=rows.reduce((s,r)=>s+r.cac,0)/rows.length;
+    const avgRatio=avgLtv/avgCac;
+    const maxLtv=400000;
+    const chart=rows.map(r=>{
+      const ltvH=Math.max(2,Math.round((r.ltv/maxLtv)*100));
+      const cacH=Math.max(2,Math.round((r.cac/maxLtv)*100));
+      return `<div class="coh-col">
+        <div class="coh-bars">
+          <div class="coh-bar ltv" style="height:${ltvH}%" title="LTV ${fmtK(r.ltv)}"></div>
+          <div class="coh-bar cac" style="height:${cacH}%" title="CAC ${fmtSar(r.cac)}"></div>
+        </div>
+        <div class="coh-lab">${r.short}</div>
+      </div>`;
+    }).join('');
+    const yTicks=[400000,350000,300000,250000,200000,150000,100000,50000,0]
+      .map(v=>`<span>${v.toLocaleString('en-US')}</span>`).join('');
+    return phead('تحليل الأفواج – LTV / CAC','القيمة الدائمة للعميل مقابل تكلفة اكتسابه وبقاء كل فوج شهري',[],
+      `<button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('تحليل-الأفواج-LTV-CAC','Excel')">Excel ⤓</button>
+       <button class="btn ghost" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('تحليل-الأفواج-LTV-CAC','PDF')">PDF ⤓</button>`)
+      +mkpi([
+        {i:'💎',l:'متوسط LTV',v:fmtK(avgLtv).replace(' ر.س',''),tone:'amber'},
+        {i:'🎯',l:'متوسط CAC',v:fmtSar(avgCac).replace(' ر.س',''),tone:'green'},
+        {i:'📈',l:'LTV / CAC',v:fmtRatio(avgRatio),tone:'blue'},
+        {i:'🔁',l:'متوسط الاحتفاظ',v:'100%',tone:'green'}
+      ])
+      +card(`<div class="coh-toolbar">
+          <div style="font:800 15px Cairo;color:var(--ink)">أفواج العملاء الشهرية</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost sm" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('تحليل-الأفواج','PDF')">PDF</button>
+            <button class="btn ghost sm" onclick="WafraOps.exportCurrent&&WafraOps.exportCurrent('تحليل-الأفواج','Excel')">Excel</button>
+            <button class="btn sm" style="background:var(--navy);color:#fff;border:0" onclick="WafraOps.demoAction&&WafraOps.demoAction('تم حفظ العرض الحالي.')">حفظ العرض</button>
+          </div>
+        </div>`
+        +table(['الفوج','عملاء جدد','LTV','CAC','الاحتفاظ','LTV / CAC'],
+          rows.map(r=>{
+            const ratio=r.ltv/r.cac;
+            return [
+              {v:r.m,c:'strong'},
+              {v:r.newC.toLocaleString('en-US'),c:'num'},
+              {v:fmtK(r.ltv),c:'num'},
+              {v:fmtSar(r.cac),c:'num'},
+              {v:`<span class="coh-pos">100%</span>`},
+              {v:`<span class="coh-pos">${fmtRatio(ratio)}</span>`}
+            ];
+          }))
+        +`<div class="rf-foot"><span>${rows.length} سجل</span></div>`)
+      +card(cardH('LTV مقابل CAC لكل فوج')
+        +`<div class="card-b coh-chart">
+          <div class="coh-legend"><span><i class="cac"></i>CAC</span><span><i class="ltv"></i>LTV</span></div>
+          <div class="coh-plot">
+            <div class="coh-y">${yTicks}</div>
+            <div class="coh-area">${chart}</div>
+          </div>
+        </div>`);
+  };
 
   NAV.forEach(g=>g.items&&g.items.forEach(i=>{if(window.TITLES) window.TITLES[i.k]=i.t;}));
 })();
