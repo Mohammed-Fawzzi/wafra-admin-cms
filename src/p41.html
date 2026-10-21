@@ -30,8 +30,20 @@
 .vio-detail.empty{color:#9AA3B5;font-weight:600}
 .vio-chk{width:15px;height:15px;accent-color:#293B85;cursor:pointer}
 .modal.vio-modal{width:min(520px,100%)}
+.modal.vio-modal.wide{width:min(560px,100%)}
 .modal-h .vio-msub{margin:4px 0 0;font:600 12.5px Cairo;color:#7A869E;line-height:1.4}
 .vio-info{margin-top:14px;padding:12px 14px;border-radius:10px;background:#F3F6FB;color:#44506A;font:600 12.5px Cairo;line-height:1.7;text-align:center}
+.vio-notify-ta{min-height:140px;resize:vertical;line-height:1.85}
+.vio-log-list{display:flex;flex-direction:column;gap:0}
+.vio-log-item{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid #EEF1F7}
+.vio-log-item:last-child{border-bottom:0}
+.vio-log-item .side-r{text-align:right}
+.vio-log-item .side-l{text-align:left;flex:0 0 auto;direction:ltr}
+.vio-log-item .kind{font:800 14px Cairo;color:#1E2A44}
+.vio-log-item .why{margin-top:4px;font:600 12.5px Cairo;color:#7A869E;line-height:1.5}
+.vio-log-item .amt{font:800 14px Cairo;color:#1E2A44;white-space:nowrap}
+.vio-log-item .when{margin-top:4px;font:600 12px Cairo;color:#9AA3B5;white-space:nowrap}
+.vio-log-empty{padding:22px 8px;text-align:center;color:#9AA3B5;font:600 13px Cairo}
 .ix-kpi{background:#fff;border:1px solid #E8ECF3;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(25,42,84,.05);display:flex;flex-direction:column}
 .ix-kpi .top{background:#F5C518;padding:10px 14px;display:flex;align-items:center;gap:8px;font:800 13px Cairo;color:#1E2A44}
 .ix-kpi .top .ic{width:22px;height:22px;display:grid;place-items:center;font-size:14px}
@@ -234,6 +246,36 @@
       row.daysLeft=null;
       row.detail='خصمت من الوديعة — اليوم';
       toast('تم تحصيل '+id+' من الوديعة'); render();
+    },
+    openVioNotify:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const amt=(row.amount||'').replace(/\s*ر\.س\s*/g,'').trim()||'0';
+      const msg=`لديك مخالفة مرورية «${row.type}» بقيمة ${amt} ر.س مرتبطة بالحجز BK-20128. يُرجى المبادرة بالسداد قبل انتهاء المهلة لتجنّب الخصم من وديعتك.`;
+      openM(`<div class="modal vio-modal"><div class="modal-h"><div><h3>إشعار العميل – ${row.customer}</h3><p class="vio-msub">${row.id} · ${row.type}</p></div><span class="x" onclick="closeM()">✕</span></div>
+        <div class="modal-b">
+          ${fld('نص الإشعار',`<textarea id="vio-notify-text" class="native-input vio-notify-ta" rows="5">${msg.replace(/</g,'&lt;')}</textarea>`)}
+        </div>
+        <div class="modal-f"><button type="button" class="btn" onclick="WafraOps.sendVioNotify('${row.id}')">إرسال الإشعار</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button></div></div>`);
+    },
+    sendVioNotify:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const text=(document.getElementById('vio-notify-text')?.value||'').trim();
+      if(!text){toast('أدخل نص الإشعار');return;}
+      closeM(); toast('تم إرسال إشعار إلى '+row.customer+' بخصوص '+id);
+    },
+    openVioDepositLog:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const reserved=row.deposit||'—';
+      const avail='0 ر.س';
+      const amtNum=(row.amount||'').replace(/\s*ر\.س\s*/g,'').trim()||'0';
+      let when='21 أكتوبر 2026 20:56';
+      const dm=row.detail&&row.detail.match(/(\d+\s*أكتوبر\s*\d{4})/);
+      if(dm) when=dm[1]+' 20:56';
+      const entries=[{kind:'خصم',why:'مخالفة مرورية: '+row.type,amt:amtNum+' ر.س',when}];
+      const listHtml=entries.map(e=>`<div class="vio-log-item"><div class="side-r"><div class="kind">${e.kind}</div><div class="why">${e.why}</div></div><div class="side-l"><div class="amt">${e.amt}</div><div class="when">${e.when}</div></div></div>`).join('');
+      openM(`<div class="modal vio-modal wide"><div class="modal-h"><div><h3>سجل الوديعة</h3><p class="vio-msub">${row.customer} — محجوز ${reserved} — متاح ${avail}</p></div><span class="x" onclick="closeM()">✕</span></div>
+        <div class="modal-b"><div class="vio-log-list">${listHtml}</div></div>
+        <div class="modal-f"><button type="button" class="btn ghost" onclick="closeM()">إغلاق</button></div></div>`);
     }
   });
 
@@ -442,20 +484,20 @@
     const actsCell=r=>{
       if(r.status==='محصلة'){
         return `<div class="vio-acts">
-          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
-          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('إشعار عميل ${r.id}')">إشعار العميل</button>
+          <button type="button" class="vio-btn" onclick="WafraOps.openVioDepositLog('${r.id}')">سجل الوديعة</button>
+          <button type="button" class="vio-btn" onclick="WafraOps.openVioNotify('${r.id}')">إشعار العميل</button>
         </div>`;
       }
       if(r.status==='معترض عليها'){
         return `<div class="vio-acts">
-          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
+          <button type="button" class="vio-btn" onclick="WafraOps.openVioDepositLog('${r.id}')">سجل الوديعة</button>
           <button type="button" class="vio-btn" onclick="WafraOps.openVioObjection('${r.id}')">عرض الاعتراض</button>
         </div>`;
       }
       return `<div class="vio-acts">
         <button type="button" class="vio-collect" onclick="WafraOps.collectVio('${r.id}')">تحصيل من الوديعة</button>
-        <button type="button" class="vio-btn" onclick="WafraOps.ixAction('إشعار عميل ${r.id}')">إشعار العميل</button>
-        <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
+        <button type="button" class="vio-btn" onclick="WafraOps.openVioNotify('${r.id}')">إشعار العميل</button>
+        <button type="button" class="vio-btn" onclick="WafraOps.openVioDepositLog('${r.id}')">سجل الوديعة</button>
         <button type="button" class="vio-btn" onclick="WafraOps.openVioExtend('${r.id}')">تمديد المهلة</button>
         <button type="button" class="vio-btn" onclick="WafraOps.openVioObjection('${r.id}')">اعتراض</button>
       </div>`;

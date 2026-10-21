@@ -7017,15 +7017,15 @@ function pill(value){
 </script>
 
 <style id="wafra-intel">
-/* تقارير الذكاء — هوية وفرا (كحلي / أحمر) بدل الأصفر */
+/* تقارير الذكاء — مطابقة لنماذج التصميم (أصفر / بطاقات علوية / جداول) */
 .ix-wrap{display:flex;flex-direction:column;gap:14px}
 .ix-kpis{display:grid;gap:12px}
 .ix-kpis.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .ix-kpis.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .ix-kpis.c5{grid-template-columns:repeat(5,minmax(0,1fr))}
 .vio-grace{display:inline-flex;align-items:center;gap:6px;border:1px solid #E2E8F4;background:#F5F7FC;border-radius:10px;padding:8px 12px;font:700 12.5px Cairo;color:#3A4663;white-space:nowrap}
-.vio-auto{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:10px;background:var(--navy);color:#fff;padding:10px 14px;font:800 12.5px Cairo;cursor:pointer}
-.vio-auto.off{background:#fff;color:var(--navy);border:1px solid #D7DEEE}
+.vio-auto{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:10px;background:#293B85;color:#fff;padding:10px 14px;font:800 12.5px Cairo;cursor:pointer}
+.vio-auto.off{background:#fff;color:#293B85;border:1px solid #D7DEEE}
 .vio-auto .vio-dot{width:8px;height:8px;border-radius:99px;background:#7CFFB2;flex:0 0 8px}
 .vio-auto.off .vio-dot{background:#C5CCD9}
 .vio-board .tw{overflow-x:auto}
@@ -7033,7 +7033,7 @@ function pill(value){
 .vio-board thead th{position:sticky;top:0;z-index:1;background:#F8FAFD;white-space:nowrap;padding:12px 12px;font:800 12px Cairo}
 .vio-board tbody td{padding:14px 12px;vertical-align:middle;border-bottom:1px solid #EEF1F7;font:600 12.8px Cairo;color:#1E2A44}
 .vio-board tbody tr:hover{background:#FBFCFE}
-.vio-board td.vio-id{font-weight:800;color:var(--navy);direction:ltr;text-align:right}
+.vio-board td.vio-id{font-weight:800;color:#293B85;direction:ltr;text-align:right}
 .vio-board td.vio-amt{direction:ltr;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .vio-board td.vio-acts-cell{min-width:300px;white-space:normal}
 .vio-acts{display:inline-flex;flex-wrap:wrap;gap:5px;align-items:center}
@@ -7046,51 +7046,62 @@ function pill(value){
 .vio-deadline.muted{background:transparent;color:#9AA3B5;padding:0}
 .vio-detail{color:#148A5A;font:700 12px Cairo;white-space:nowrap}
 .vio-detail.empty{color:#9AA3B5;font-weight:600}
-.vio-chk{width:15px;height:15px;accent-color:var(--navy);cursor:pointer}
+.vio-chk{width:15px;height:15px;accent-color:#293B85;cursor:pointer}
 .modal.vio-modal{width:min(520px,100%)}
-.modal-h .vio-msub{margin:4px 0 0;font:600 12.5px Cairo;color:var(--muted);line-height:1.4}
+.modal.vio-modal.wide{width:min(560px,100%)}
+.modal-h .vio-msub{margin:4px 0 0;font:600 12.5px Cairo;color:#7A869E;line-height:1.4}
 .vio-info{margin-top:14px;padding:12px 14px;border-radius:10px;background:#F3F6FB;color:#44506A;font:600 12.5px Cairo;line-height:1.7;text-align:center}
+.vio-notify-ta{min-height:140px;resize:vertical;line-height:1.85}
+.vio-log-list{display:flex;flex-direction:column;gap:0}
+.vio-log-item{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid #EEF1F7}
+.vio-log-item:last-child{border-bottom:0}
+.vio-log-item .side-r{text-align:right}
+.vio-log-item .side-l{text-align:left;flex:0 0 auto;direction:ltr}
+.vio-log-item .kind{font:800 14px Cairo;color:#1E2A44}
+.vio-log-item .why{margin-top:4px;font:600 12.5px Cairo;color:#7A869E;line-height:1.5}
+.vio-log-item .amt{font:800 14px Cairo;color:#1E2A44;white-space:nowrap}
+.vio-log-item .when{margin-top:4px;font:600 12px Cairo;color:#9AA3B5;white-space:nowrap}
+.vio-log-empty{padding:22px 8px;text-align:center;color:#9AA3B5;font:600 13px Cairo}
 .ix-kpi{background:#fff;border:1px solid #E8ECF3;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(25,42,84,.05);display:flex;flex-direction:column}
-.ix-kpi .top{background:var(--navy);padding:10px 14px;display:flex;align-items:center;gap:8px;font:800 13px Cairo;color:#fff}
+.ix-kpi .top{background:#F5C518;padding:10px 14px;display:flex;align-items:center;gap:8px;font:800 13px Cairo;color:#1E2A44}
 .ix-kpi .top .ic{width:22px;height:22px;display:grid;place-items:center;font-size:14px}
 .ix-kpi .bot{padding:14px 16px 16px}
-.ix-kpi .bot .v{font:800 28px Cairo;color:var(--ink);line-height:1.1}
+.ix-kpi .bot .v{font:800 28px Cairo;color:#1E2A44;line-height:1.1}
 .ix-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .ix-tools .grow{flex:1;min-width:200px}
 .ix-tools .acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.ix-search{display:flex;align-items:center;gap:8px;width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;padding:11px 14px;box-shadow:var(--sh-s);color:var(--navy)}
-.ix-search input{border:0;outline:0;font:700 13px Cairo;width:100%;background:transparent;color:var(--ink)}
-.ix-search input::placeholder{color:var(--muted);opacity:.9}
-.ix-ybtn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:8px;background:var(--coral);color:#fff;padding:9px 14px;font:800 12.5px Cairo;cursor:pointer;box-shadow:0 4px 12px rgba(250,0,1,.22)}
+.ix-search{display:flex;align-items:center;gap:8px;width:100%;border:0;border-radius:8px;background:#F5C518;padding:11px 14px;box-shadow:0 2px 8px rgba(245,197,24,.25)}
+.ix-search input{border:0;outline:0;font:700 13px Cairo;width:100%;background:transparent;color:#1E2A44}
+.ix-search input::placeholder{color:#6B5A14;opacity:.85}
+.ix-ybtn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:8px;background:#F5C518;color:#1E2A44;padding:9px 14px;font:800 12.5px Cairo;cursor:pointer;box-shadow:0 2px 8px rgba(245,197,24,.2)}
 .ix-ybtn:hover{filter:brightness(.97)}
 .ix-wbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid #D7DEEE;border-radius:8px;background:#fff;color:#3A4663;padding:9px 14px;font:800 12.5px Cairo;cursor:pointer}
-.ix-ysel{border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);padding:10px 14px;font:800 12.5px Cairo;cursor:pointer;min-width:140px}
-.ix-ysel:focus{border-color:var(--navy);outline:0;box-shadow:0 0 0 3px rgba(34,56,111,.12)}
+.ix-ysel{border:0;border-radius:8px;background:#F5C518;color:#1E2A44;padding:10px 14px;font:800 12.5px Cairo;cursor:pointer;min-width:140px}
 .ix-panel{background:#fff;border:1px solid #E8ECF3;border-radius:14px;overflow:hidden;box-shadow:0 6px 18px rgba(25,42,84,.05)}
-.ix-panel-h{background:var(--navy);padding:12px 16px;font:800 14px Cairo;color:#fff}
+.ix-panel-h{background:#F5C518;padding:12px 16px;font:800 14px Cairo;color:#1E2A44}
 .ix-panel-b{padding:0}
 .ix-panel-b .tw{margin:0;border:0}
 .ix-panel-b table{width:100%}
 .ix-panel-b thead th{background:#F8FAFD;color:#44506A;font:800 12px Cairo;border-bottom:1px solid #EEF1F7}
 .ix-panel .pad{padding:14px 16px}
-.ix-events{display:flex;flex-wrap:wrap;gap:10px;background:var(--navy-700);padding:10px 14px;font:700 12px Cairo;color:#fff}
+.ix-events{display:flex;flex-wrap:wrap;gap:10px;background:#F5C518;padding:10px 14px;font:700 12px Cairo;color:#1E2A44}
 .ix-events span{opacity:.95}
 .ix-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:#7A869E;font:700 12px Cairo;padding:12px 16px;border-top:1px solid #EEF1F7}
 .ix-pages{display:flex;gap:6px}
-.ix-pages button{min-width:34px;height:34px;border-radius:99px;border:1px solid #D7DEEE;background:#fff;font:800 12px Cairo;cursor:pointer;color:var(--navy)}
-.ix-pages button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ix-pages button{min-width:34px;height:34px;border-radius:99px;border:1px solid #D7DEEE;background:#fff;font:800 12px Cairo;cursor:pointer;color:#293B85}
+.ix-pages button.on{background:#293B85;color:#fff;border-color:#293B85}
 .ix-dot{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:99px;font:800 12px Cairo;padding:0 8px}
 .ix-dot.g{background:#E8F8F0;color:#148A5A}
 .ix-dot.r{background:#FDECEC;color:#C62828}
-.ix-dot.a{background:var(--blue-bg);color:var(--blue-ink)}
+.ix-dot.a{background:#FFF1E0;color:#B86A00}
 .ix-pct-r{color:#C62828;font-weight:800}
 .ix-pct-g{color:#148A5A;font-weight:800}
 .ix-chart-box{min-height:220px;padding:16px;position:relative}
 .ix-chart-box .axis{position:absolute;top:16px;inset-inline-start:16px;font:700 12px Cairo;color:#7A869E}
 .ix-chart-box .leg{position:absolute;top:16px;left:50%;transform:translateX(-50%);font:700 12px Cairo;color:#44506A;display:flex;align-items:center;gap:6px}
-.ix-chart-box .leg i{width:10px;height:10px;border:2px solid var(--navy);border-radius:99px;display:inline-block}
-.ix-barfoot{background:var(--navy);border-radius:10px;padding:12px 16px;font:800 14px Cairo;color:#fff;text-align:center}
-.ix-gbtn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:var(--coral);color:#fff;padding:8px 12px;font:800 12px Cairo;cursor:pointer;white-space:nowrap}
+.ix-chart-box .leg i{width:10px;height:10px;border:2px solid #293B85;border-radius:99px;display:inline-block}
+.ix-barfoot{background:#F5C518;border-radius:10px;padding:12px 16px;font:800 14px Cairo;color:#1E2A44;text-align:center}
+.ix-gbtn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;background:#20A16E;color:#fff;padding:8px 12px;font:800 12px Cairo;cursor:pointer;white-space:nowrap}
 .ix-gbtn:hover{filter:brightness(.96)}
 @media(max-width:980px){
   .ix-kpis.c3,.ix-kpis.c4,.ix-kpis.c5{grid-template-columns:1fr 1fr}
@@ -7098,18 +7109,6 @@ function pill(value){
 @media(max-width:620px){
   .ix-kpis.c3,.ix-kpis.c4,.ix-kpis.c5{grid-template-columns:1fr}
 }
-
-.sd-acts{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
-.sd-btn{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 12px;border-radius:99px;font:800 11.5px Cairo;cursor:pointer;white-space:nowrap;border:1px solid transparent}
-.sd-btn.primary{background:#293B85;border-color:#293B85;color:#fff}
-.sd-btn.primary:hover{filter:brightness(1.06)}
-.sd-btn.danger{background:#fff;border-color:#F3B4B4;color:#C62828}
-.sd-btn.danger:hover{background:#FFF5F5}
-.ix-fcity{width:100%;border-collapse:collapse;font:700 13px Cairo}
-.ix-fcity th{background:#F8FAFD;color:#5A657C;font:800 12px Cairo;padding:12px 14px;border-bottom:1px solid #EEF1F7;text-align:center}
-.ix-fcity th:first-child,.ix-fcity td:first-child{text-align:start}
-.ix-fcity td{padding:12px 14px;border-bottom:1px solid #EEF1F7;color:#1E2A44;text-align:center}
-.ix-fcity .hot{display:inline-flex;min-width:42px;justify-content:center;padding:4px 10px;border-radius:99px;background:#FDECEC;color:#C62828;font-weight:800}
 </style>
 <script>
 /* تقارير الذكاء — نفس النصوص والألوان من نماذج التصميم. */
@@ -7265,6 +7264,36 @@ function pill(value){
       row.daysLeft=null;
       row.detail='خصمت من الوديعة — اليوم';
       toast('تم تحصيل '+id+' من الوديعة'); render();
+    },
+    openVioNotify:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const amt=(row.amount||'').replace(/\s*ر\.س\s*/g,'').trim()||'0';
+      const msg=`لديك مخالفة مرورية «${row.type}» بقيمة ${amt} ر.س مرتبطة بالحجز BK-20128. يُرجى المبادرة بالسداد قبل انتهاء المهلة لتجنّب الخصم من وديعتك.`;
+      openM(`<div class="modal vio-modal"><div class="modal-h"><div><h3>إشعار العميل – ${row.customer}</h3><p class="vio-msub">${row.id} · ${row.type}</p></div><span class="x" onclick="closeM()">✕</span></div>
+        <div class="modal-b">
+          ${fld('نص الإشعار',`<textarea id="vio-notify-text" class="native-input vio-notify-ta" rows="5">${msg.replace(/</g,'&lt;')}</textarea>`)}
+        </div>
+        <div class="modal-f"><button type="button" class="btn" onclick="WafraOps.sendVioNotify('${row.id}')">إرسال الإشعار</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button></div></div>`);
+    },
+    sendVioNotify:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const text=(document.getElementById('vio-notify-text')?.value||'').trim();
+      if(!text){toast('أدخل نص الإشعار');return;}
+      closeM(); toast('تم إرسال إشعار إلى '+row.customer+' بخصوص '+id);
+    },
+    openVioDepositLog:id=>{
+      const row=WafraOps.vioEnsure().find(x=>x.id===id); if(!row) return;
+      const reserved=row.deposit||'—';
+      const avail='0 ر.س';
+      const amtNum=(row.amount||'').replace(/\s*ر\.س\s*/g,'').trim()||'0';
+      let when='21 أكتوبر 2026 20:56';
+      const dm=row.detail&&row.detail.match(/(\d+\s*أكتوبر\s*\d{4})/);
+      if(dm) when=dm[1]+' 20:56';
+      const entries=[{kind:'خصم',why:'مخالفة مرورية: '+row.type,amt:amtNum+' ر.س',when}];
+      const listHtml=entries.map(e=>`<div class="vio-log-item"><div class="side-r"><div class="kind">${e.kind}</div><div class="why">${e.why}</div></div><div class="side-l"><div class="amt">${e.amt}</div><div class="when">${e.when}</div></div></div>`).join('');
+      openM(`<div class="modal vio-modal wide"><div class="modal-h"><div><h3>سجل الوديعة</h3><p class="vio-msub">${row.customer} — محجوز ${reserved} — متاح ${avail}</p></div><span class="x" onclick="closeM()">✕</span></div>
+        <div class="modal-b"><div class="vio-log-list">${listHtml}</div></div>
+        <div class="modal-f"><button type="button" class="btn ghost" onclick="closeM()">إغلاق</button></div></div>`);
     }
   });
 
@@ -7292,296 +7321,29 @@ function pill(value){
       +`<div class="ix-wrap">
         <div class="ix-kpis c3">${kpi('⚠','مدن بها عجز','12')}${kpi('📍','أعلى عجز','تبوك')}${kpi('☺','المدن المغطاة','12')}</div>
         ${toolsNoSearch()}
-        <div class="ix-panel"><div class="ix-panel-b">${table(['المدينة','الطلب (عقود)','المعروض (متاح)','نسبة الطلب/العرض','الإشغال','الفجوة','إجراءات'],data.map(r=>[...r,`<div class="sd-acts"><button type="button" class="sd-btn primary" onclick="WafraOps.ixAction('تنبيه شركات — ${r[0]}')">تنبيه شركات</button><button type="button" class="sd-btn danger" onclick="WafraOps.ixAction('توصية بإعادة توزيع — ${r[0]}')">توصية بإعادة توزيع</button></div>`]))}<div class="ix-foot" style="justify-content:center"><span>12 سجل</span></div></div></div>
+        <div class="ix-panel"><div class="ix-panel-b">${table(['المدينة','الطلب (عقود)','المعروض (متاح)','نسبة الطلب/العرض','الإشغال','الجودة','إجراءات'],data.map(r=>[...r,'']))}<div class="ix-foot" style="justify-content:center"><span>12 سجل</span></div></div></div>
         <div class="ix-barfoot">الطلب مقابل المعروض (أعلى 10 مدن)</div>
       </div>`;
   };
 
   /* 2 — جاهزية الأسطول */
-  const FR_KEY='wafra-fleet-readiness-v1';
-  const FR_COLORS=['أبيض','أسود','فضي','رمادي','أزرق','أحمر','بني','بيج'];
-  const FR_CATS=['اقتصادية','عائلية','فاخرة','دفع رباعي','تجارية','تنفيذية'];
-  const FR_STATUS=['متاحة','مؤجرة','بالصيانة','محجوزة'];
-  const defaultFrProviders=()=>[
-    {id:'fr-speed',name:'شركة السرعة لتأجير السيارات',cars:62,ready:4,licExp:8,insExp:4,maint:9,soon:1},
-    {id:'fr-yanbu',name:'شركة الينبوع لتأجير السيارات',cars:129,ready:8,licExp:12,insExp:8,maint:11,soon:3},
-    {id:'fr-aseel',name:'شركة الأصيل لتأجير السيارات',cars:86,ready:7,licExp:9,insExp:5,maint:6,soon:2},
-    {id:'fr-mustaqbal',name:'شركة المستقبل لتأجير السيارات',cars:86,ready:8,licExp:7,insExp:4,maint:11,soon:2},
-    {id:'fr-wafra',name:'شركة الوفرة لتأجير السيارات',cars:575,ready:46,licExp:40,insExp:17,maint:57,soon:13},
-    {id:'fr-tamayuz',name:'شركة التميّز لتأجير السيارات',cars:214,ready:28,licExp:14,insExp:8,maint:22,soon:5},
-    {id:'fr-sahara',name:'شركة الصحراء لتأجير السيارات',cars:320,ready:48,licExp:18,insExp:12,maint:30,soon:8},
-    {id:'fr-watani',name:'شركة الوطنية لتأجير السيارات',cars:100,ready:11,licExp:8,insExp:4,maint:12,soon:3},
-    {id:'fr-baraka',name:'شركة البركة لتأجير السيارات',cars:16,ready:0,licExp:3,insExp:2,maint:5,soon:1},
-    {id:'fr-ruwwad',name:'شركة الرواد لتأجير السيارات',cars:38,ready:5,licExp:4,insExp:3,maint:6,soon:2}
-  ];
-  const defaultFrCars=()=>({
-    'fr-yanbu':[
-      {id:'yc1',car:'Ford Taurus',brand:'فورد',model:'تورس',year:2021,branch:'فرع الحمراء',cat:'تنفيذية',price:186,status:'مؤجرة',color:'أبيض',licExp:false,insExp:true,maint:false,notes:''},
-      {id:'yc2',car:'MG 5',brand:'إم جي',model:'5',year:2023,branch:'فرع السلامة',cat:'اقتصادية',price:107.5,status:'محجوزة',color:'رمادي',licExp:false,insExp:true,maint:false,notes:''},
-      {id:'yc3',car:'Toyota Land Cruiser',brand:'تويوتا',model:'لاندكروزر',year:2020,branch:'فرع الحمراء',cat:'فاخرة',price:420,status:'بالصيانة',color:'أسود',licExp:false,insExp:false,maint:true,notes:''},
-      {id:'yc4',car:'Genesis GV70',brand:'جينيسيس',model:'GV70',year:2019,branch:'فرع السلامة',cat:'فاخرة',price:310,status:'مؤجرة',color:'فضي',licExp:true,insExp:false,maint:false,notes:''},
-      {id:'yc5',car:'Genesis G80',brand:'جينيسيس',model:'G80',year:2022,branch:'فرع الحمراء',cat:'فاخرة',price:355,status:'متاحة',color:'أبيض',licExp:false,insExp:true,maint:false,notes:''},
-      {id:'yc6',car:'Lexus NX',brand:'لكزس',model:'NX',year:2021,branch:'فرع السلامة',cat:'عائلية',price:268,status:'مؤجرة',color:'أزرق',licExp:true,insExp:false,maint:false,notes:''},
-      {id:'yc7',car:'Toyota Corolla',brand:'تويوتا',model:'كورولا',year:2024,branch:'فرع الحمراء',cat:'اقتصادية',price:125,status:'متاحة',color:'أبيض',licExp:false,insExp:true,maint:false,notes:''},
-      {id:'yc8',car:'Nissan Patrol',brand:'نيسان',model:'باترول',year:2022,branch:'فرع السلامة',cat:'دفع رباعي',price:387,status:'مؤجرة',color:'فضي',licExp:true,insExp:false,maint:false,notes:''},
-      {id:'yc9',car:'Toyota RAV4',brand:'تويوتا',model:'راف فور',year:2023,branch:'فرع الحمراء',cat:'عائلية',price:198,status:'بالصيانة',color:'رمادي',licExp:false,insExp:false,maint:true,notes:''},
-      {id:'yc10',car:'Chevrolet Tahoe',brand:'شيفروليه',model:'تاهو',year:2019,branch:'فرع السلامة',cat:'دفع رباعي',price:410,status:'مؤجرة',color:'أسود',licExp:false,insExp:true,maint:false,notes:''}
-    ],
-    'fr-aseel':[
-      {id:'ac1',car:'نيسان باترول 2022',brand:'نيسان',model:'باترول',year:2022,branch:'فرع قرطبة',cat:'دفع رباعي',price:387,status:'مؤجرة',color:'فضي',licExp:true,insExp:false,maint:false,notes:''},
-      {id:'ac2',car:'Lexus LX',brand:'لكزس',model:'LX',year:2021,branch:'فرع الروضة',cat:'فاخرة',price:492,status:'بالصيانة',color:'أسود',licExp:false,insExp:false,maint:true,notes:''},
-      {id:'ac3',car:'Kia Sorento',brand:'كيا',model:'سورينتو',year:2023,branch:'فرع الشاطئ',cat:'عائلية',price:145,status:'مؤجرة',color:'أبيض',licExp:false,insExp:true,maint:false,notes:''},
-      {id:'ac4',car:'Mercedes C200',brand:'مرسيدس',model:'C200',year:2020,branch:'فرع قرطبة',cat:'فاخرة',price:487,status:'مؤجرة',color:'رمادي',licExp:true,insExp:false,maint:false,notes:''},
-      {id:'ac5',car:'Lexus RX',brand:'لكزس',model:'RX',year:2022,branch:'فرع الروضة',cat:'عائلية',price:700,status:'بالصيانة',color:'أبيض',licExp:false,insExp:false,maint:true,notes:''},
-      {id:'ac6',car:'Nissan Kicks',brand:'نيسان',model:'كيكس',year:2024,branch:'فرع الشاطئ',cat:'اقتصادية',price:120,status:'متاحة',color:'أزرق',licExp:false,insExp:true,maint:false,notes:''},
-      {id:'ac7',car:'Lexus ES',brand:'لكزس',model:'ES',year:2019,branch:'فرع قرطبة',cat:'فاخرة',price:434,status:'مؤجرة',color:'فضي',licExp:true,insExp:false,maint:false,notes:''},
-      {id:'ac8',car:'Toyota Camry',brand:'تويوتا',model:'كامري',year:2023,branch:'فرع الروضة',cat:'عائلية',price:175,status:'محجوزة',color:'أبيض',licExp:false,insExp:true,maint:false,notes:''},
-      {id:'ac9',car:'Hyundai Tucson',brand:'هيونداي',model:'توسان',year:2022,branch:'فرع الشاطئ',cat:'عائلية',price:160,status:'بالصيانة',color:'رمادي',licExp:false,insExp:false,maint:true,notes:''}
-    ]
-  });
-  const loadFrStore=()=>{
-    try{
-      const raw=JSON.parse(localStorage.getItem(FR_KEY)||'null');
-      if(raw&&Array.isArray(raw.providers)&&raw.cars) return raw;
-    }catch(e){}
-    return {providers:defaultFrProviders(),cars:defaultFrCars(),hidden:{}};
-  };
-  const saveFrStore=s=>{try{localStorage.setItem(FR_KEY,JSON.stringify(s));}catch(e){}};
-  const frReadyPct=p=>p.cars?Math.round((p.ready/p.cars)*100):0;
-  const frReason=c=>{
-    const r=[];
-    if(c.licExp) r.push('رخصة منتهية');
-    if(c.insExp) r.push('تأمين منتهي');
-    if(c.maint||c.status==='بالصيانة') r.push('بالصيانة');
-    return r.length?r:['—'];
-  };
-  const frReasonHtml=c=>frReason(c).map(x=>{
-    if(x==='بالصيانة') return `<span class="fr-pill a">${x}</span>`;
-    if(x==='—') return x;
-    return `<span class="fr-pill r">${x}</span>`;
-  }).join(' ');
-  const frStatusTone=s=>({متاحة:'g',مؤجرة:'n',بالصيانة:'a',محجوزة:'b'}[s]||'n');
-  const frUnready=cars=>(cars||[]).filter(c=>c.licExp||c.insExp||c.maint||c.status==='بالصيانة');
-  const frHashParams=()=>new URLSearchParams((location.hash.split('?')[1]||''));
-  const frProviderId=()=>frHashParams().get('provider')||'';
-  const ensureFrCars=(s,pid)=>{
-    if(s.cars[pid]&&s.cars[pid].length) return s.cars[pid];
-    const p=s.providers.find(x=>x.id===pid); if(!p) return [];
-    const sample=[
-      {base:'تويوتا كامري',brand:'تويوتا',model:'كامري',cat:'عائلية',status:'مؤجرة',licExp:true,insExp:false,maint:false},
-      {base:'هيونداي إلنترا',brand:'هيونداي',model:'إلنترا',cat:'اقتصادية',status:'متاحة',licExp:false,insExp:true,maint:false},
-      {base:'نيسان باترول',brand:'نيسان',model:'باترول',cat:'دفع رباعي',status:'بالصيانة',licExp:false,insExp:false,maint:true},
-      {base:'كيا K5',brand:'كيا',model:'K5',cat:'عائلية',status:'مؤجرة',licExp:true,insExp:false,maint:false},
-      {base:'شيفروليه تاهو',brand:'شيفروليه',model:'تاهو',cat:'دفع رباعي',status:'محجوزة',licExp:false,insExp:true,maint:false}
-    ];
-    const n=Math.max(3,Math.min(8,(p.licExp||0)+(p.insExp||0)+(p.maint||0)?5:3));
-    s.cars[pid]=sample.slice(0,n).map((x,i)=>({
-      id:`${pid}-${i+1}`,car:`${x.base} ${2020+i}`,brand:x.brand,model:x.model,year:2020+i,
-      branch:`فرع ${['الرياض','جدة','الخبر','الدمام','مكة'][i%5]}`,cat:x.cat,price:120+i*35,
-      status:x.status,color:FR_COLORS[i%FR_COLORS.length],licExp:x.licExp,insExp:x.insExp,maint:x.maint,notes:''
-    }));
-    saveFrStore(s);
-    return s.cars[pid];
-  };
-
-  Object.assign(WafraOps,{
-    frOpenProvider:id=>{location.hash='fleetReadiness?provider='+encodeURIComponent(id);},
-    frBack:()=>{location.hash='fleetReadiness';},
-    frHideUnready:id=>{
-      const s=loadFrStore(); s.hidden=s.hidden||{}; s.hidden[id]=!s.hidden[id]; saveFrStore(s);
-      toast(s.hidden[id]?'تم إخفاء غير الجاهزة من العرض.':'تم إظهار غير الجاهزة.');
-      render();
-    },
-    frRenewDocs:(pid,cid)=>{
-      const s=loadFrStore();
-      const list=s.cars[pid]||[];
-      if(cid==='ALL'){
-        list.forEach(c=>{c.licExp=false;c.insExp=false;});
-        toast('تم تجديد وثائق كل السيارات غير الجاهزة.');
-      } else {
-        const c=list.find(x=>x.id===cid); if(!c) return;
-        c.licExp=false; c.insExp=false;
-        toast(`تم تجديد وثائق ${c.car}.`);
-      }
-      saveFrStore(s); render();
-    },
-    frOpenProcess:(pid,cid)=>{
-      const s=loadFrStore();
-      const prov=s.providers.find(p=>p.id===pid);
-      const c=(s.cars[pid]||[]).find(x=>x.id===cid); if(!c||!prov) return;
-      window.__frEdit={pid,cid};
-      openM(modal(`معالجة السيارة – ${c.car}`,`
-        <div style="font:700 12.5px Cairo;color:var(--muted);margin:-4px 0 14px">${prov.name} — ${c.branch}</div>
-        <div class="frow">
-          ${fld('الماركة',`<input id="fr-brand" class="native-input" value="${c.brand||''}">`)}
-          ${fld('الموديل',`<input id="fr-model" class="native-input" value="${c.model||''}">`)}
-        </div>
-        <div class="frow">
-          ${fld('سنة الصنع',`<input id="fr-year" class="native-input" type="number" value="${c.year||''}">`)}
-          ${fld('اللون',`<select id="fr-color" class="native-input">${FR_COLORS.map(x=>`<option value="${x}" ${x===c.color?'selected':''}>${x}</option>`).join('')}</select>`)}
-        </div>
-        <div class="frow">
-          ${fld('الفئة',`<select id="fr-cat" class="native-input">${FR_CATS.map(x=>`<option value="${x}" ${x===c.cat?'selected':''}>${x}</option>`).join('')}</select>`)}
-          ${fld('السعر/يوم (ر.س)',`<input id="fr-price" class="native-input" type="number" min="0" step="0.5" value="${c.price}">`)}
-        </div>
-        ${fld('الحالة',`<select id="fr-status" class="native-input">${FR_STATUS.map(x=>`<option value="${x}" ${x===c.status?'selected':''}>${x}</option>`).join('')}</select>`)}
-        <div style="margin:12px 0 8px;font:800 13px Cairo;color:var(--ink)">الوثائق</div>
-        <label style="display:flex;align-items:center;gap:8px;margin:8px 0;font:700 13px Cairo"><input type="checkbox" id="fr-lic" ${c.licExp?'checked':''}> رخصة السير منتهية</label>
-        <label style="display:flex;align-items:center;gap:8px;margin:8px 0;font:700 13px Cairo"><input type="checkbox" id="fr-ins" ${c.insExp?'checked':''}> التأمين منتهٍ</label>
-        ${fld('أسباب أخرى / ملاحظات',`<textarea id="fr-notes" class="native-input" rows="3" placeholder="أضف ملاحظات حول المعالجة…">${c.notes||''}</textarea>`)}
-      `,`<button class="btn" onclick="WafraOps.frSaveProcess()">حفظ المعالجة</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
-    },
-    frSaveProcess:()=>{
-      const ed=window.__frEdit; if(!ed) return;
-      const s=loadFrStore();
-      const c=(s.cars[ed.pid]||[]).find(x=>x.id===ed.cid); if(!c) return;
-      c.brand=(document.getElementById('fr-brand')?.value||c.brand).trim();
-      c.model=(document.getElementById('fr-model')?.value||c.model).trim();
-      c.year=Number(document.getElementById('fr-year')?.value||c.year);
-      c.color=document.getElementById('fr-color')?.value||c.color;
-      c.cat=document.getElementById('fr-cat')?.value||c.cat;
-      c.price=Number(document.getElementById('fr-price')?.value||c.price);
-      c.status=document.getElementById('fr-status')?.value||c.status;
-      c.licExp=!!document.getElementById('fr-lic')?.checked;
-      c.insExp=!!document.getElementById('fr-ins')?.checked;
-      c.maint=c.status==='بالصيانة';
-      c.notes=(document.getElementById('fr-notes')?.value||'').trim();
-      c.car=`${c.brand} ${c.model} ${c.year}`.trim();
-      saveFrStore(s); closeM(); toast(`تم حفظ معالجة ${c.car}.`); render();
-    },
-    frQuality:()=>toast('تم فتح بلاغات الجودة للمراجعة.'),
-    frRequestRenew:(pid,cid)=>{
-      const s=loadFrStore();
-      const p=s.providers.find(x=>x.id===pid);
-      const c=cid&&(s.cars[pid]||[]).find(x=>x.id===cid);
-      toast(c?`تم إرسال طلب تجديد لـ ${c.car} إلى ${p?p.name:'المورد'}.`:`تم إرسال طلب تجديد وثائق إلى ${p?p.name:'المورد'}.`);
-    },
-    frReportIssue:(pid,cid)=>{
-      const s=loadFrStore();
-      const p=s.providers.find(x=>x.id===pid);
-      const c=(s.cars[pid]||[]).find(x=>x.id===cid);
-      if(!c||!p){ toast('تعذر فتح بلاغ المشكلة.'); return; }
-      window.__frIssue={pid,cid};
-      const types=['رخصة سير منتهية','تأمين منتهٍ','بحاجة صيانة','نظافة/حالة السيارة','أخرى'];
-      let pre='بحاجة صيانة';
-      if(c.licExp) pre='رخصة سير منتهية';
-      else if(c.insExp) pre='تأمين منتهٍ';
-      else if(c.maint||c.status==='بالصيانة') pre='بحاجة صيانة';
-      openM(modal('إبلاغ المزود بمشكلة', `
-        <div style="font:700 12.5px Cairo;color:var(--muted);margin:-4px 0 14px">${c.car} • ${p.name}</div>
-        ${fld('نوع المشكلة', `<select id="fr-issue-type" class="native-input">${types.map(t=>`<option value="${t}" ${t===pre?'selected':''}>${t}</option>`).join('')}</select>`)}
-        ${fld('تفاصيل للمزود (اختياري)', `<textarea id="fr-issue-note" class="native-input" rows="3" placeholder="وصف المشكلة والإجراء المطلوب من المزود..."></textarea>`)}
-        <div class="note info"><span>🔔</span><div>يصل الإشعار إلى حساب المزود في تبويب «إشعارات المزود» ليتصرّف بنفسه.</div></div>
-      `, `<button type="button" class="btn danger" onclick="WafraOps.frSendIssue()">إرسال الإبلاغ</button><button type="button" class="btn ghost" onclick="closeM()">إلغاء</button>`));
-    },
-    frSendIssue:()=>{
-      const ed=window.__frIssue; if(!ed){ toast('لا يوجد بلاغ جاهز للإرسال.'); return; }
-      const s=loadFrStore();
-      const p=s.providers.find(x=>x.id===ed.pid);
-      const c=(s.cars[ed.pid]||[]).find(x=>x.id===ed.cid);
-      if(!c||!p){ toast('تعذر إرسال الإبلاغ.'); return; }
-      const type=document.getElementById('fr-issue-type')?.value||'مشكلة';
-      const details=(document.getElementById('fr-issue-note')?.value||'').trim();
-      s.issues=s.issues||[];
-      s.issues.unshift({
-        id:'ISS-'+Date.now(), pid:ed.pid, cid:ed.cid,
-        car:c.car, provider:p.name, type, details,
-        at:new Date().toLocaleString('ar-SA'), status:'مُرسل'
-      });
-      try{
-        const key='wafra-provider-notifs-v1';
-        const list=JSON.parse(localStorage.getItem(key)||'[]');
-        list.unshift({
-          title:`بلاغ جاهزية: ${type}`,
-          body:`السيارة ${c.car} — ${details||'يرجى معالجة المشكلة'}`,
-          provider:p.name, pid:ed.pid,
-          at:new Date().toLocaleString('ar-SA')
-        });
-        localStorage.setItem(key, JSON.stringify(list.slice(0,50)));
-      }catch(e){}
-      saveFrStore(s);
-      window.__frIssue=null;
-      closeM();
-      toast(`تم إرسال إبلاغ «${type}» إلى ${p.name}.`);
-    }
-  });
-
   S.fleetReadiness=()=>{
-    const s=loadFrStore();
-    const pid=frProviderId();
-
-    if(pid){
-      ensureFrCars(s,pid);
-      const prov=s.providers.find(p=>p.id===pid)||{name:pid,cars:0};
-      let cars=frUnready(s.cars[pid]||[]);
-      if(s.hidden&&s.hidden[pid]) cars=[];
-      const qv=q();
-      if(qv) cars=cars.filter(c=>[c.car,c.branch,c.cat,c.status,...frReason(c)].some(x=>String(x).toLowerCase().includes(qv)));
-      return phead('سيارات غير جاهزة',`${prov.name} — ${cars.length} سيارة تحتاج معالجة (وثائق منتهية أو صيانة)`,[],
-        `<button class="btn" onclick="WafraOps.frRequestRenew('${pid}')">طلب تجديد من المورد</button>
-         <button class="btn" style="background:#20A16E;border:0" onclick="WafraOps.frRenewDocs('${pid}','ALL')">تجديد وثائق الكل</button>
-         <button class="btn ghost" onclick="WafraOps.frQuality()">فتح بلاغات جودة</button>
-         <button class="btn ghost" onclick="WafraOps.exportCurrent('سيارات-غير-جاهزة','Excel')">تصدير</button>
-         <button class="btn ghost" onclick="WafraOps.frBack()">رجوع</button>`)
-      +`<div class="ix-wrap fr-wrap">
-        ${tools('ابحث بالسيارة أو الفرع...')}
-        <div class="ix-panel fr-board"><div class="ix-panel-b">${cars.length?table(
-          ['السيارة','الفرع','الفئة','السنة','السعر','الحالة','سبب عدم الجاهزية','إجراءات'],
-          cars.map(c=>[
-            {v:c.car,c:'strong'},
-            c.branch,
-            c.cat,
-            c.year,
-            {v:`${Number(c.price).toLocaleString('en-US')} ر.س`,c:'num'},
-            `<span class="fr-pill ${frStatusTone(c.status)}">${c.status}</span>`,
-            frReasonHtml(c),
-            `<div class="fr-acts">
-              <button type="button" class="fr-btn" onclick="WafraOps.frRequestRenew('${pid}','${c.id}')">طلب تجديد</button>
-              <button type="button" class="fr-btn danger" onclick="WafraOps.frReportIssue('${pid}','${c.id}')">إبلاغ بالمشكلة</button>
-              <button type="button" class="fr-btn ok" onclick="WafraOps.frRenewDocs('${pid}','${c.id}')">تجديد الوثائق</button>
-              <button type="button" class="fr-btn solid" onclick="WafraOps.frOpenProcess('${pid}','${c.id}')">معالجة</button>
-            </div>`
-          ])
-        ):`<div class="pad" style="text-align:center;color:var(--muted);padding:28px">لا توجد سيارات غير جاهزة للعرض.</div>`}${foot(cars.length,1)}</div></div>
-      </div>`;
-    }
-
-    let providers=s.providers.slice();
-    const qv=q();
-    if(qv) providers=providers.filter(p=>p.name.toLowerCase().includes(qv));
-    const totals={
-      cars:6494, ready:798, docs:766, soon:377, pct:12
-    };
+    const rows=[
+      ['شركة البركة لتأجير السيارات','16',`<span class="ix-dot g">0</span>`,'5',`<span class="ix-dot r">2</span`,`<span class="ix-pct-r">0%</span>`],
+      ['شركة السرعة لتأجير السيارات','62',`<span class="ix-dot g">4</span>`,'9',`<span class="ix-dot r">10</span`,`<span class="ix-pct-r">6%</span>`],
+      ['شركة الينبوع لتأجير السيارات','129',`<span class="ix-dot g">8</span>`,'11',`<span class="ix-dot r">20</span`,`<span class="ix-pct-r">6%</span>`],
+      ['شركة المستقبل لتأجير السيارات','86',`<span class="ix-dot g">8</span>`,'11',`<span class="ix-dot r">6</span`,`<span class="ix-pct-r">9%</span>`],
+      ['شركة الوفرة لتأجير السيارات','575',`<span class="ix-dot g">46</span>`,'57',`<span class="ix-dot r">13</span`,`<span class="ix-pct-r">8%</span>`],
+      ['شركة التميّز لتأجير السيارات','214',`<span class="ix-dot g">28</span>`,'22',`<span class="ix-dot r">11</span`,`<span class="ix-pct-r">13%</span>`],
+      ['شركة الصحراء لتأجير السيارات','320',`<span class="ix-dot g">48</span>`,'30',`<span class="ix-dot r">14</span`,`<span class="ix-pct-r">15%</span>`],
+      ['شركة الوطنية لتأجير السيارات','100',`<span class="ix-dot g">11</span>`,'12',`<span class="ix-dot r">10</span`,`<span class="ix-pct-r">11%</span>`]
+    ];
+    const data=sf(rows,[0]);
     return phead('جاهزية الأسطول','نسبة السيارات الجاهزة للتأجير مقابل المعطّلة والوثائق المنتهية لكل مزود',[])
-      +`<div class="ix-wrap fr-wrap">
-        <div class="ix-kpis" style="grid-template-columns:repeat(5,minmax(0,1fr))">
-          ${kpi('🚗','إجمالي السيارات',totals.cars.toLocaleString('en-US'))}
-          ${kpi('✓','جاهزة',String(totals.ready))}
-          ${kpi('⚠','وثائق منتهية',String(totals.docs))}
-          ${kpi('⏱','تنتهي خلال 30 يوماً',String(totals.soon))}
-          ${kpi('⚙','الجاهزية الكلية',totals.pct+'%')}
-        </div>
+      +`<div class="ix-wrap">
+        <div class="ix-kpis c4">${kpi('🚗','إجمالي السيارات','6,494')}${kpi('✓','جاهزة','797')}${kpi('⚠','وثائق منتهية','766')}${kpi('⚙','الجاهزية الكلية','12%')}</div>
         ${tools('بحث باسم المزود...')}
-        <div class="ix-panel fr-board"><div class="ix-panel-b">${table(
-          ['المزود','السيارات','جاهزة','رخصة منتهية','تأمين منتهٍ','بالصيانة','تنتهي قريباً','الجاهزية','إجراءات'],
-          providers.map(p=>{
-            const pct=frReadyPct(p);
-            return [
-              {v:p.name,c:'strong'},
-              p.cars,
-              `<span class="fr-num g">${p.ready}</span>`,
-              `<span class="fr-num r">${p.licExp}</span>`,
-              `<span class="fr-num r">${p.insExp}</span>`,
-              `<span class="fr-num">${p.maint}</span>`,
-              `<span class="fr-num a">${p.soon}</span>`,
-              `<span class="fr-pct">${pct}%</span>`,
-              `<div class="fr-acts">
-                <button type="button" class="fr-btn" onclick="WafraOps.frOpenProvider('${p.id}')">تفاصيل</button>
-                <button type="button" class="fr-btn ghost" onclick="WafraOps.frHideUnready('${p.id}')">${(s.hidden&&s.hidden[p.id])?'إظهار':'إخفاء غير الجاهزة'}</button>
-              </div>`
-            ];
-          })
-        )}${foot(providers.length,3)}</div></div>
+        <div class="ix-panel"><div class="ix-panel-b">${table(['المزود','السيارات','جاهزة','بالصيانة','وثائق منتهية','الجاهزية','إجراءات'],data.map(r=>[...r,'']))}${foot(25,3)}</div></div>
       </div>`;
   };
 
@@ -7639,26 +7401,6 @@ function pill(value){
             <span>• مار 27: موسم العمرة</span>
           </div>
           ${chart}
-        </div>
-        <div class="ix-panel">
-          <div class="ix-panel-h" style="background:#fff;border-bottom:1px solid #EEF1F7">الطلب المتوقع حسب المدينة</div>
-          <div class="ix-panel-b" style="padding:0;overflow:auto">
-            <table class="ix-fcity">
-              <thead><tr><th>المدينة</th><th>المعروض الحالي</th><th>نوف 26</th><th>ديس 26</th><th>ينا 27</th><th>فبر 27</th><th>مار 27</th><th>أبر 27</th></tr></thead>
-              <tbody>
-                ${[
-                  ['الرياض',210,248,312,286,264,298,320],
-                  ['جدة',168,196,248,220,204,236,252],
-                  ['مكة المكرمة',128,154,198,176,162,188,202],
-                  ['الدمام',62,74,96,88,80,92,98],
-                  ['الخبر',54,66,84,76,70,82,88],
-                  ['المدينة المنورة',78,92,118,104,96,110,118],
-                  ['الطائف',42,52,68,60,54,64,70],
-                  ['بريدة',28,36,48,42,38,46,50]
-                ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><span class="hot">${r[2]}</span></td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td></tr>`).join('')}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>`;
   };
@@ -7760,20 +7502,20 @@ function pill(value){
     const actsCell=r=>{
       if(r.status==='محصلة'){
         return `<div class="vio-acts">
-          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
-          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('إشعار عميل ${r.id}')">إشعار العميل</button>
+          <button type="button" class="vio-btn" onclick="WafraOps.openVioDepositLog('${r.id}')">سجل الوديعة</button>
+          <button type="button" class="vio-btn" onclick="WafraOps.openVioNotify('${r.id}')">إشعار العميل</button>
         </div>`;
       }
       if(r.status==='معترض عليها'){
         return `<div class="vio-acts">
-          <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
+          <button type="button" class="vio-btn" onclick="WafraOps.openVioDepositLog('${r.id}')">سجل الوديعة</button>
           <button type="button" class="vio-btn" onclick="WafraOps.openVioObjection('${r.id}')">عرض الاعتراض</button>
         </div>`;
       }
       return `<div class="vio-acts">
         <button type="button" class="vio-collect" onclick="WafraOps.collectVio('${r.id}')">تحصيل من الوديعة</button>
-        <button type="button" class="vio-btn" onclick="WafraOps.ixAction('إشعار عميل ${r.id}')">إشعار العميل</button>
-        <button type="button" class="vio-btn" onclick="WafraOps.ixAction('سجل وديعة ${r.id}')">سجل الوديعة</button>
+        <button type="button" class="vio-btn" onclick="WafraOps.openVioNotify('${r.id}')">إشعار العميل</button>
+        <button type="button" class="vio-btn" onclick="WafraOps.openVioDepositLog('${r.id}')">سجل الوديعة</button>
         <button type="button" class="vio-btn" onclick="WafraOps.openVioExtend('${r.id}')">تمديد المهلة</button>
         <button type="button" class="vio-btn" onclick="WafraOps.openVioObjection('${r.id}')">اعتراض</button>
       </div>`;
@@ -7815,171 +7557,23 @@ function pill(value){
       </div>`;
   };
 
-  /* ——— التسعير الديناميكي المُراقَب ——— */
-  const DP_LIM_KEY='wafra-dp-limits-v1';
-  const DP_CARS_KEY='wafra-dp-cars-v1';
-  const defaultDpLimits=()=>({
-    'اقتصادية':{min:70,max:200},
-    'عائلية':{min:180,max:350},
-    'فاخرة':{min:300,max:800},
-    'دفع رباعي':{min:220,max:550},
-    'تجارية':{min:120,max:400}
-  });
-  const defaultDpCars=()=>[
-    {id:'dp1',car:'Genesis GV70 2019',provider:'شركة التميز لتأجير السيارات',cat:'فاخرة',price:224},
-    {id:'dp2',car:'MG ZS 2022',provider:'شركة التميز لتأجير السيارات',cat:'عائلية',price:134},
-    {id:'dp3',car:'Nissan X-Trail 2025',provider:'شركة التميز لتأجير السيارات',cat:'دفع رباعي',price:201},
-    {id:'dp4',car:'Toyota Land Cruiser 2020',provider:'شركة التميز لتأجير السيارات',cat:'دفع رباعي',price:198},
-    {id:'dp5',car:'Hyundai Tucson 2021',provider:'شركة التميز لتأجير السيارات',cat:'عائلية',price:155},
-    {id:'dp6',car:'Lexus ES 2018',provider:'شركة التميز لتأجير السيارات',cat:'فاخرة',price:265},
-    {id:'dp7',car:'Kia Cerato 2019',provider:'شركة التميز لتأجير السيارات',cat:'اقتصادية',price:277},
-    {id:'dp8',car:'Toyota Yaris 2020',provider:'شركة التميز لتأجير السيارات',cat:'اقتصادية',price:245},
-    {id:'dp9',car:'Hyundai Accent 2022',provider:'شركة التميز لتأجير السيارات',cat:'اقتصادية',price:230},
-    {id:'dp10',car:'Nissan Sunny 2021',provider:'شركة التميز لتأجير السيارات',cat:'اقتصادية',price:218},
-    {id:'dp11',car:'Chevrolet Tahoe 2019',provider:'شركة التميز لتأجير السيارات',cat:'دفع رباعي',price:620},
-    {id:'dp12',car:'BMW 5 Series 2020',provider:'شركة التميز لتأجير السيارات',cat:'فاخرة',price:920},
-    {id:'dp13',car:'Mercedes C200 2021',provider:'شركة التميز لتأجير السيارات',cat:'فاخرة',price:880}
-  ];
-  const loadDpLimits=()=>{
-    try{const r=JSON.parse(localStorage.getItem(DP_LIM_KEY)||'null'); if(r&&r['اقتصادية']&&r['اقتصادية'].min!=null&&r['اقتصادية'].max!=null) return Object.assign(defaultDpLimits(),r);}catch(e){}
-    return defaultDpLimits();
-  };
-  const saveDpLimits=l=>{try{localStorage.setItem(DP_LIM_KEY,JSON.stringify(l));}catch(e){}};
-  const loadDpCars=()=>{
-    try{const r=JSON.parse(localStorage.getItem(DP_CARS_KEY)||'null'); if(Array.isArray(r)&&r.length) return r;}catch(e){}
-    return defaultDpCars();
-  };
-  const saveDpCars=c=>{try{localStorage.setItem(DP_CARS_KEY,JSON.stringify(c));}catch(e){}};
-  const dpClassify=(car,limits)=>{
-    const lim=limits[car.cat]||{min:0,max:99999};
-    if(Number(car.price)>Number(lim.max)) return {type:'high',label:'تسعير مرتفع',tone:'r',bound:'أقصى',limit:lim.max,target:lim.max};
-    if(Number(car.price)<Number(lim.min)) return {type:'dump',label:'إغراق سعري',tone:'a',bound:'أدنى',limit:lim.min,target:lim.min};
-    return null;
-  };
-  const dpKpi=(ic,bg,label,value)=>`<div class="dp-kpi"><div class="ic" style="background:${bg}">${ic}</div><div><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
-
-  Object.assign(WafraOps,{
-    openDpLimits:()=>{
-      const limits=loadDpLimits();
-      const cats=Object.keys(limits);
-      const cur=window.__dpEditCat||'اقتصادية';
-      const lim=limits[cur]||{min:70,max:200};
-      openM(modal('تعديل الحدود السعرية',`
-        <div style="font:700 13px Cairo;color:var(--muted);margin-bottom:12px">الفئة: ${cur}</div>
-        ${fld('الفئة',`<select id="dp-cat" class="native-input" onchange="WafraOps.dpLimitsCatChange(this.value)">${cats.map(c=>`<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('')}</select>`)}
-        ${note('info','نطاق الفئة','عدّل الحدين الأدنى والأقصى للفئة المختارة (تُطبّق عند الحفظ على الفئة المعروضة).')}
-        <div class="frow">
-          ${fld('الحد الأدنى (ر.س)',`<input id="dp-min" class="native-input" type="number" min="0" step="1" value="${lim.min}">`)}
-          ${fld('الحد الأقصى (ر.س)',`<input id="dp-max" class="native-input" type="number" min="0" step="1" value="${lim.max}">`)}
-        </div>
-      `,`<button class="btn" onclick="WafraOps.saveDpLimits()">تأكيد</button><button class="btn ghost" onclick="closeM()">إلغاء</button>`));
-    },
-    dpLimitsCatChange:cat=>{
-      window.__dpEditCat=cat;
-      const lim=loadDpLimits()[cat]||{min:0,max:0};
-      const minEl=document.getElementById('dp-min');
-      const maxEl=document.getElementById('dp-max');
-      if(minEl) minEl.value=lim.min;
-      if(maxEl) maxEl.value=lim.max;
-      const sub=document.querySelector('#mc .modal-b > div');
-      if(sub&&sub.textContent&&sub.textContent.startsWith('الفئة:')) sub.textContent='الفئة: '+cat;
-    },
-    saveDpLimits:()=>{
-      const cat=document.getElementById('dp-cat')?.value||'اقتصادية';
-      const min=Number(document.getElementById('dp-min')?.value);
-      const max=Number(document.getElementById('dp-max')?.value);
-      if(!Number.isFinite(min)||!Number.isFinite(max)||min<0||max<=0){toast('أدخل حدّين رقميين صالحين.');return;}
-      if(min>=max){toast('الحد الأدنى يجب أن يكون أقل من الحد الأقصى.');return;}
-      const limits=loadDpLimits();
-      limits[cat]={min,max};
-      saveDpLimits(limits);
-      window.__dpEditCat=cat;
-      closeM();
-      toast(`تم حفظ حدود فئة ${cat}: ${min}–${max} ر.س`);
-      render();
-    },
-    dpCorrect:id=>{
-      const limits=loadDpLimits();
-      const cars=loadDpCars();
-      const row=cars.find(x=>x.id===id); if(!row) return;
-      const v=dpClassify(row,limits); if(!v){toast('السعر ضمن النطاق حالياً.');render();return;}
-      row.price=v.target;
-      saveDpCars(cars);
-      toast(`تم تصحيح سعر ${row.car} إلى ${v.target} ر.س (${v.bound} ${v.limit}).`);
-      render();
-    },
-    dpAlert:id=>{
-      const cars=loadDpCars();
-      const row=cars.find(x=>x.id===id); if(!row) return;
-      const v=dpClassify(row,loadDpLimits());
-      toast(`تم إرسال تنبيه إلى ${row.provider} بخصوص ${row.car}${v?` — ${v.label}`:''}.`);
-    }
-  });
-
-  S.fleetDynamic=()=>{
-    const limits=loadDpLimits();
-    const cars=loadDpCars();
-    const catFilter=(window.__ixSel&&window.__ixSel.dpCat)||'';
-    const allViol=cars.map(c=>{const v=dpClassify(c,limits); return v?{...c,...v}:null;}).filter(Boolean);
-    const nHigh=allViol.filter(v=>v.type==='high').length;
-    const nDump=allViol.filter(v=>v.type==='dump').length;
-    let rows=allViol;
-    if(catFilter) rows=rows.filter(r=>r.cat===catFilter);
-    const qv=q();
-    if(qv) rows=rows.filter(r=>[r.car,r.provider,r.cat,r.label].some(x=>String(x).toLowerCase().includes(qv)));
-    const eco=limits['اقتصادية'];
-    return phead('التسعير الديناميكي المُراقَب','المزوّدون يسعّرون ذاتياً — الشاشة تضع حدّاً أدنى وأقصى لكل فئة وترصد الخارج عن النطاق (سعر مرتفع / إغراق سعري)',[],
-      `<button class="btn" onclick="WafraOps.openDpLimits()">تعديل الحدود السعرية</button>`)
-    +`<div class="dp-kpis">
-        ${dpKpi('↗','#FDECEC','أسعار مرتفعة (استغلال)',nHigh)}
-        ${dpKpi('↘','#FFF4DE','إغراق سعري',nDump)}
-        ${dpKpi('🚗','#EAF0FF','سيارات مخالفة',allViol.length)}
-      </div>`
-    +`<div class="dp-hint">${note('info','الحدود الحالية',`اقتصادية ${eco.min}–${eco.max} ر.س · سعر أعلى من الأقصى = استغلال الذروة · سعر أقل من الأدنى = إغراق سعري`)}</div>`
-    +`<div class="ix-wrap">
-        ${tools('ابحث بالسيارة أو المزود…',sel('dpCat',Object.keys(limits),'كل الفئات'))}
-        <div class="ix-panel"><div class="ix-panel-b">${table(
-          ['السيارة','المزوّد','الفئة','السعر','الحدّ','المخالفة','إجراءات'],
-          rows.map(r=>[
-            {v:r.car,c:'strong'},
-            r.provider,
-            r.cat,
-            {v:`<span class="dp-price ${r.type}">${Number(r.price).toLocaleString('en-US')} ر.س</span>`},
-            {v:`${r.bound} ${Number(r.limit).toLocaleString('en-US')} ر.س`,c:'num'},
-            bdg(r.label,r.tone),
-            `<div class="dp-acts"><button type="button" class="ix-gbtn" style="background:#20A16E" onclick="WafraOps.dpCorrect('${r.id}')">تصحيح للحد</button><button type="button" class="ix-wbtn" onclick="WafraOps.dpAlert('${r.id}')">تنبيه المزود</button></div>`
-          ])
-        )}${foot(rows.length,1)}</div></div>
-      </div>`;
-  };
-
   const items=[
     {k:'supplyDemand',t:'خريطة العرض والطلب',i:'▣'},
     {k:'fleetReadiness',t:'جاهزية الأسطول',i:'◎'},
-    {k:'fleetDynamic',t:'التسعير الديناميكي',i:'↕'},
     {k:'fleetUtil',t:'استغلال الأسطول',i:'◔'},
     {k:'demandForecast',t:'التنبؤ بالطلب',i:'↗'},
     {k:'bookingLifecycle',t:'دورة حياة الحجز',i:'⟳'},
-    {k:'customerLoyalty',t:'ولاء وتصنيف العملاء — تعديل الشرائح',i:'★'},
+    {k:'customerLoyalty',t:'ولاء وتصنيف العملاء',i:'★'},
     {k:'commissionTiers',t:'شرائح العمولة',i:'%'},
     {k:'violationsDeposits',t:'المخالفات والودائع',i:'⚑'}
   ];
   let reports=NAV.find(g=>g.g==='التقارير');
   if(!reports){reports={g:'التقارير',items:[]};NAV.push(reports);}
-  items.forEach(it=>{
-    const ex=reports.items.find(x=>x.k===it.k);
-    if(ex) ex.t=it.t; else {
-      if(it.k==='fleetDynamic'){
-        const i=reports.items.findIndex(x=>x.k==='fleetReadiness');
-        reports.items.splice(i>=0?i+1:2,0,it);
-      } else reports.items.push(it);
-    }
-  });
+  items.forEach(it=>{if(!reports.items.some(x=>x.k===it.k))reports.items.push(it);});
   if(window.TITLES) items.forEach(it=>window.TITLES[it.k]=it.t);
-  if(typeof renderNav==='function') renderNav();
 
   S.reportDetail=()=>{
-    const map={supply:'supplyDemand',readiness:'fleetReadiness',dynamic:'fleetDynamic',utilization:'fleetUtil',forecast:'demandForecast',lifecycle:'bookingLifecycle',loyalty:'customerLoyalty',commission:'commissionTiers',violations:'violationsDeposits'};
+    const map={supply:'supplyDemand',readiness:'fleetReadiness',utilization:'fleetUtil',forecast:'demandForecast',lifecycle:'bookingLifecycle',loyalty:'customerLoyalty',commission:'commissionTiers',violations:'violationsDeposits'};
     const k=map[window.__reportKey||'supply']||'supplyDemand';
     return (S[k]||S.supplyDemand)();
   };
