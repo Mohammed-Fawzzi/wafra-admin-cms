@@ -10063,7 +10063,8 @@ function pill(value){
 .st-status i{width:8px;height:8px;border-radius:99px;display:inline-block;background:#E8A23A;flex:0 0 auto}
 .st-status.ok{background:#E8F8F0;border-color:#C6EBD8;color:#148A5A}.st-status.ok i{background:#20A16E}
 .st-status.wait{background:#FFF8E8;border-color:#F3E2B3;color:#8A6A00}.st-status.wait i{background:#E8A23A}
-.st-status.done{background:#EAF0FF;border-color:#D5DEF5;color:var(--navy)}.st-status.done i{background:var(--navy)}
+.st-status.prog{background:#EAF0FF;border-color:#D5DEF5;color:#2C68D8}.st-status.prog i{background:#2C68D8}
+.st-status.done{background:#E8F8F0;border-color:#C6EBD8;color:#148A5A}.st-status.done i{background:#20A16E}
 .st-status-legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
 .st-link{color:#2C68D8;font:800 13.5px Cairo;text-decoration:none}
 .st-link:hover{text-decoration:underline}
@@ -10461,9 +10462,15 @@ function pill(value){
   const STORE_KEY='wafra-settlements-invoices-v5';
   const SETTLEMENT_STATUSES=[
     {key:'wait',label:'قيد المراجعة'},
-    {key:'ok',label:'معتمدة وقيد التحويل'},
+    {key:'prog',label:'معتمدة وقيد التحويل'},
     {key:'done',label:'تم التحويل'}
   ];
+  const settleStatusCls=s=>{
+    if(!s) return 'wait';
+    if(s.statusCls==='prog'||s.status==='معتمدة وقيد التحويل') return 'prog';
+    if(s.statusCls==='done'||s.statusCls==='ok'||s.status==='تم التحويل') return 'done';
+    return s.statusCls||'wait';
+  };
   const INVOICE_STATUSES=[
     {key:'wait',label:'قيد التحويل'},
     {key:'ok',label:'تم التحويل'}
@@ -10491,7 +10498,7 @@ function pill(value){
   const defaultStore=()=>({
     settlements:[
       {id:'SET-2026-08',from:'01/08/2026',to:'31/08/2026',n:500,sales:'135,000.00',pay:'3,750.00',plat:'3,750.00',disc:'450.00',net:'108,300.00',status:'قيد المراجعة',statusCls:'wait',approved:'—',approve:true},
-      {id:'SET-2026-07',from:'01/07/2026',to:'31/07/2026',n:482,sales:'118,400.00',pay:'3,552.00',plat:'3,552.00',disc:'320.00',net:'102,688.00',status:'معتمدة وقيد التحويل',statusCls:'ok',approved:'2026-08-02',approve:false},
+      {id:'SET-2026-07',from:'01/07/2026',to:'31/07/2026',n:482,sales:'118,400.00',pay:'3,552.00',plat:'3,552.00',disc:'320.00',net:'102,688.00',status:'معتمدة وقيد التحويل',statusCls:'prog',approved:'2026-08-02',approve:false},
       {id:'SET-2026-06',from:'01/06/2026',to:'30/06/2026',n:451,sales:'109,800.00',pay:'3,294.00',plat:'3,294.00',disc:'210.00',net:'95,316.00',status:'تم التحويل',statusCls:'done',approved:'2026-07-03',approve:false},
       {id:'SET-2026-05',from:'01/05/2026',to:'31/05/2026',n:438,sales:'104,200.00',pay:'3,126.00',plat:'3,126.00',disc:'180.00',net:'90,474.00',status:'قيد المراجعة',statusCls:'wait',approved:'—',approve:true},
       {id:'SET-2026-04',from:'01/04/2026',to:'30/04/2026',n:410,sales:'96,500.00',pay:'2,895.00',plat:'2,895.00',disc:'1,850.00',net:'82,105.00',status:'تم التحويل',statusCls:'done',approved:'2026-05-05',approve:false}
@@ -10514,6 +10521,8 @@ function pill(value){
         if(!Array.isArray(raw.fines)) raw.fines=defaultFines();
         raw.settlements.forEach(s=>{
           if(s.status==='مسودة قيد المراجعة'){s.status='قيد المراجعة';s.statusCls='wait';}
+          if(s.status==='معتمدة وقيد التحويل'&&s.statusCls!=='prog') s.statusCls='prog';
+          if(s.status==='تم التحويل'&&(s.statusCls==='ok'||!s.statusCls)) s.statusCls='done';
         });
         raw.invoices.forEach(inv=>{
           if(inv.status==='قيد التحويل البنكي'){inv.status='قيد التحويل';inv.statusCls='wait';}
@@ -10532,8 +10541,8 @@ function pill(value){
   const neu=v=>`<span class="st-amt neu">${v}</span>`;
   const stStatus=(t,cls)=>`<span class="st-status ${cls||'wait'}"><i></i>${t}</span>`;
   const stActions=(id,canApprove)=>`<div class="st-actions">
-      <button class="btn sm st-detail" onclick="WafraOps.viewSettlementDetails('${id}')" title="الحجوزات التي طُبّق عليها خصم/تعويض">👁</button>
-      ${canApprove?`<button class="btn sm st-approve" onclick="WafraOps.approveSettlementRow('${id}')" title="اعتماد وإرسال للتحويل">✓</button>`:''}
+      <button class="btn sm st-detail" onclick="WafraOps.viewSettlementDetails('${id}')" title="تفاصيل التسوية — الحجوزات ذات الخصم">👁</button>
+      <button class="btn sm ${canApprove?'st-approve':'st-detail'}" onclick="WafraOps.viewTransferDetails('${id}')" title="تفاصيل التحويل — اعتماد وإرسال للتحويل">${canApprove?'✓':'⇄'}</button>
       <button class="btn ghost sm st-pdf" onclick="WafraOps.exportSettlement('${id}','PDF')" title="تحميل PDF">PDF</button>
       <button class="btn ghost sm st-xls" onclick="WafraOps.exportSettlement('${id}','Excel')" title="تحميل Excel">Excel</button>
     </div>`;
@@ -10648,7 +10657,7 @@ function pill(value){
                 <td>${neg(r.plat)}</td>
                 <td>${neg(r.disc)}</td>
                 <td>${pos(r.net)}</td>
-                <td class="st-col-status">${stStatus(r.status,r.statusCls)}</td>
+                <td class="st-col-status">${stStatus(r.status,settleStatusCls(r))}</td>
                 <td><span class="st-date">${r.approved}</span></td>
                 <td>${stActions(r.id,!!r.approve)}</td>
               </tr>`).join('')||`<tr><td colspan="11" style="text-align:center;padding:28px;color:var(--muted)">لا توجد تسويات مطابقة.</td></tr>`}
@@ -10961,19 +10970,19 @@ function pill(value){
       const row=payStore.settlements.find(x=>x.id===id); if(!row) return;
       const discRows=(payStore.disputes||[]).filter(d=>d.status==='تم القبول'||d.status==='مغلق آلياً'||d.status==='تم الاعتراض').slice(0,6);
       const fallback=[
-        {booking:'8845',customer:'محمد سعيد',id:'DSP-1094',compType:'خصم من إجمالي الحجز',amount:'200.00',net:'1,300'},
-        {booking:'8834',customer:'فاطمة علي',id:'DSP-1093',compType:'كوبون تعويضي',amount:'50.00',net:'950'}
+        {booking:'8845',customer:'محمد سعيد',id:'DSP-1094',compType:'خصم من إجمالي الحجز',amount:'200.00',before:'1,500'},
+        {booking:'8830',customer:'سارة العتيبي',id:'DSP-1093',compType:'كوبون تعويضي',amount:'50.00',before:'950'}
       ];
       const lines=discRows.length?discRows.map(d=>{
         const base=Number(String(d.amount).replace(/,/g,''))||0;
-        const netAmt=(base*6.5).toFixed(0);
-        return {booking:d.booking,customer:d.customer,id:d.id,compType:d.compType,amount:d.amount,net:Number(netAmt).toLocaleString('en-US')};
+        const beforeAmt=Math.max(base*7.5,base+800).toFixed(0);
+        return {booking:d.booking,customer:d.customer,id:d.id,compType:d.compType,amount:d.amount,before:Number(beforeAmt).toLocaleString('en-US')};
       }):fallback;
-      openM(modal(`تفاصيل التسوية<br><span class="sub" style="font:700 13px Cairo;color:var(--muted)">${id} — يُعرض تلقائياً الحجوزات التي طُبّق عليها خصومات/تعويضات فقط</span>`,
-        `<div class="st-board" style="margin:0"><div class="st-scroll"><table class="st-table">
+      openM(modal(`تفاصيل التسوية<br><span class="sub" style="font:700 13px Cairo;color:var(--muted)">${id}</span>`,
+        `<div class="st-board" style="margin:0"><div class="st-scroll"><table class="st-table" style="min-width:720px">
           <thead><tr>
-            <th>رقم الحجز</th><th>العميل</th><th>النزاع المرتبط</th><th>نوع الخصم</th>
-            <th>مبلغ الخصم / التعويض</th><th>المبلغ الصافي بعد الخصم</th>
+            <th>رقم الحجز</th><th>اسم العميل</th><th>النزاع المرتبط</th><th>نوع الخصم</th>
+            <th>مبلغ الخصم / التعويض</th><th>المبلغ السابق قبل الخصم</th>
           </tr></thead>
           <tbody>${lines.map(l=>`<tr>
             <td class="num">#${l.booking}</td>
@@ -10981,7 +10990,7 @@ function pill(value){
             <td><span class="st-bookings">${l.id}</span></td>
             <td>${l.compType}</td>
             <td>${neg(l.amount)}</td>
-            <td>${pos(l.net)}</td>
+            <td>${pos(l.before)}</td>
           </tr>`).join('')}</tbody>
         </table></div></div>`
       ,`<button class="btn ghost" onclick="closeM()">إغلاق</button>`));
@@ -11086,6 +11095,33 @@ function pill(value){
         : `تم رفض اعتراض ${id} وتثبيت الخصم.`);
       render();
     },
+    settlementTransferHtml:(row,opts={})=>{
+      const canAct=!!opts.canApprove;
+      const line=(k,v)=>`<div style="display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid #EEF1F6;font:600 13.5px Cairo"><span style="color:var(--muted)">${k}</span><span style="color:var(--ink);font-weight:800;direction:ltr;text-align:left">${v}</span></div>`;
+      return `${canAct?note('warn','إجراء نهائي','بعد الاعتماد ستُغلق التسوية ويُصدر تلقائياً رقم فاتورة رسمي جديد لا يمكن التراجع عنه.'):''}
+         <div style="background:#F5F7FB;border:1px solid #E4E9F3;border-radius:12px;padding:16px 18px;margin:14px 0;display:flex;justify-content:space-between;align-items:center;gap:12px">
+           <span style="font:700 13.5px Cairo;color:var(--muted)">المبلغ المستحق تحويله</span>
+           <strong style="font:800 24px Cairo;color:var(--ink);direction:ltr">${row.net} ر.س</strong>
+         </div>
+         ${line('فترة التسوية',`${row.from} - ${row.to}`)}
+         ${line('عدد الحجوزات',`${Number(row.n).toLocaleString('en-US')} حجز`)}
+         ${line('إجمالي المبيعات',`${row.sales} ر.س`)}
+         ${line('عمولة بوابة الدفع',`${row.pay} ر.س`)}
+         ${line('عمولة المنصة',`${row.plat} ر.س`)}
+         ${line('الخصومات والتعويضات المعتمدة',`<span style="color:#C62828">${row.disc} ر.س</span>`)}
+         ${line('صافي المستحق للمزود',`<span style="font-size:15px">${row.net} ر.س</span>`)}
+         ${canAct?`<p style="margin:16px 0 0;font:600 12.5px Cairo;color:var(--muted);line-height:1.7">بعد الاعتماد سيتم إصدار رقم فاتورة رسمي جديد تلقائياً وستنتقل التسوية إلى شاشة «متابعة الفواتير» بانتظار التحويل البنكي.</p>`:''}`;
+    },
+    viewTransferDetails:id=>{
+      payStore=loadStore();
+      const row=payStore.settlements.find(x=>x.id===id); if(!row) return;
+      const canApprove=!!row.approve;
+      const feet=canApprove
+        ? `<button class="btn ghost" onclick="closeM()">إلغاء</button><button class="btn" style="background:var(--navy);color:#fff;border:0" onclick="WafraOps.confirmApproveSettlement('${id}')">اعتماد التحويل</button>`
+        : `<button class="btn ghost" onclick="closeM()">إغلاق</button>`;
+      openM(modal(`اعتماد وإرسال للتحويل<br><span class="sub" style="font:700 13px Cairo;color:var(--muted)">${id}</span>`,
+        WafraOps.settlementTransferHtml(row,{canApprove}), feet));
+    },
     approveSettlementRow:id=>{
       payStore=loadStore();
       const row=payStore.settlements.find(x=>x.id===id);
@@ -11096,22 +11132,7 @@ function pill(value){
         location.hash='invoices';
         return;
       }
-      const rowLine=(k,v,extra='')=>`<div style="display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid #EEF1F6;font:600 13px Cairo"><span style="color:var(--muted)">${k}</span><span style="color:var(--ink);font-weight:800 ${extra}">${v}</span></div>`;
-      openM(modal(`اعتماد وإرسال للتحويل<br><span class="sub" style="font:700 13px Cairo;color:var(--muted)">${id}</span>`,
-        `${note('warn','إجراء نهائي','بعد الاعتماد تُغلق التسوية ويُصدر رقم فاتورة رسمي تلقائياً لا يمكن التراجع عنه.')}
-         <div style="background:#F5F7FB;border:1px solid #E4E9F3;border-radius:12px;padding:14px 16px;margin:14px 0;display:flex;justify-content:space-between;align-items:center;gap:12px">
-           <span style="font:700 13px Cairo;color:var(--muted)">المبلغ المستحق تحويله</span>
-           <strong style="font:800 22px Cairo;color:var(--navy);direction:ltr">${row.net} ر.س</strong>
-         </div>
-         ${rowLine('فترة التسوية',`${row.from} - ${row.to}`)}
-         ${rowLine('عدد الحجوزات',`${Number(row.n).toLocaleString('en-US')} حجز`)}
-         ${rowLine('إجمالي المبيعات',`${row.sales} ر.س`)}
-         ${rowLine('عمولة بوابة الدفع',`${row.pay} ر.س`)}
-         ${rowLine('عمولة المنصة',`${row.plat} ر.س`)}
-         ${rowLine('الخصومات والتعويضات المعتمدة',`<span style="color:#C62828">${row.disc} ر.س</span>`)}
-         ${rowLine('صافي المستحق للمزوّد',`<span style="font-size:15px">${row.net} ر.س</span>`)}
-         <p class="sub" style="margin:14px 0 0">بعد الاعتماد يُصدر رقم فاتورة رسمي تلقائياً وتنتقل التسوية إلى شاشة متابعة الفواتير بانتظار التحويل البنكي.</p>`
-      ,`<button class="btn ghost" onclick="closeM()">إلغاء</button><button class="btn" style="background:var(--navy);color:#fff;border:0" onclick="WafraOps.confirmApproveSettlement('${id}')">اعتماد التحويل</button>`));
+      WafraOps.viewTransferDetails(id);
     },
     confirmApproveSettlement:id=>{
       payStore=loadStore();
@@ -11123,7 +11144,7 @@ function pill(value){
       }
       const issued=todayStr();
       row.status='معتمدة وقيد التحويل';
-      row.statusCls='ok';
+      row.statusCls='prog';
       row.approved=issued;
       row.approve=false;
       payStore.invoices.unshift({
@@ -11167,12 +11188,16 @@ function pill(value){
       const inv=payStore.invoices.find(x=>x.id===id);
       if(!inv) return;
       if(!invPending(inv)){toast('هذه المطالبة محوّلة مسبقاً.');return;}
-      openM(modal(`تأكيد التحويل البنكي — ${inv.id}`,`
-        <p class="sub" style="margin:0 0 12px">أرفق رقم المرجع البنكي (Ref ID) وإيصال التحويل. بعد الحفظ تصبح الحالة: تم التحويل.</p>
+      const row=payStore.settlements.find(x=>x.id===inv.setId);
+      const summary=row?WafraOps.settlementTransferHtml(row):`
         <div style="background:#F5F7FB;border:1px solid #E4E9F3;border-radius:12px;padding:14px 16px;margin:0 0 14px;display:flex;justify-content:space-between;align-items:center;gap:12px">
-          <span style="font:700 13px Cairo;color:var(--muted)">المبلغ المفوتر</span>
-          <strong style="font:800 20px Cairo;color:var(--navy);direction:ltr">${inv.amount} ر.س</strong>
-        </div>
+          <span style="font:700 13px Cairo;color:var(--muted)">المبلغ المستحق تحويله</span>
+          <strong style="font:800 20px Cairo;color:var(--ink);direction:ltr">${inv.amount} ر.س</strong>
+        </div>`;
+      openM(modal(`تفاصيل التحويل<br><span class="sub" style="font:700 13px Cairo;color:var(--muted)">${inv.setId||inv.id}</span>`,`
+        ${summary}
+        <hr style="border:0;border-top:1px solid #EEF1F6;margin:16px 0">
+        <p class="sub" style="margin:0 0 12px">أرفق رقم المرجع البنكي (Ref ID) وإيصال التحويل. بعد الحفظ تصبح الحالة: تم التحويل.</p>
         ${fld('المرجع البنكي / رقم الإيصال',`<input id="inv-bank-ref" class="native-input" placeholder="مثال: SA-99887766" value="${inv.bankRef&&inv.bankRef!=='—'?inv.bankRef:''}">`)}
         ${fld('تاريخ التحويل الفعلي',`<input id="inv-transfer-date" class="native-input" type="date" value="${todayStr()}">`)}
         ${fld('إيصال التحويل',`<input id="inv-receipt" class="native-input" type="file" accept=".pdf,.png,.jpg,.jpeg">`)}
